@@ -1,0 +1,3 @@
+"php-mime-mail-parser/php-mime-mail-parser": "^7.0",
+"phpoffice/phpword": "^0.17.0",
+ "phpunit/phpunit": "^7.5"
