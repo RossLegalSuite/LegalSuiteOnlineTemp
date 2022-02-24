@@ -1,0 +1,209 @@
+<template>
+<span>
+
+
+    <b-dropdown :id="$parent.tableId + '-dropdown-menu'" size="sm" right variant="primary" class="mr-2">
+
+        <template v-slot:button-content>
+            <span title="Change the table layout and print, email or download the data">
+                <i class="fa fa-server mr-2" ></i>Table
+            </span>
+        </template>
+
+        <b-dropdown-item-button variant="primary" title="Choose which columns are displayed in the table" @click="$root.tableLayoutModal.openModal($parent.tableId, $parent)"><i class="fa fa-server mr-2"></i>Layout</b-dropdown-item-button>
+        <b-dropdown-divider/>
+
+        <b-dropdown-item-button v-show="printButton" variant="primary" :title="'Print the table in Html format'" @click="printHtml">
+            <i class="fa fa-print mr-2"></i>Print (Html)
+        </b-dropdown-item-button>
+        <b-dropdown-divider v-show="printButton"/>
+
+        <b-dropdown-item-button v-show="printButton" variant="primary" :title="'Generate a PDF report of the ' + $parent.plural + ' which can be downloaded, emailed or printed'" @click="printPdf">
+            <i class="fa fa-file-pdf-o mr-2"></i>PDF Report
+        </b-dropdown-item-button>
+        <b-dropdown-divider v-show="printButton"/>
+
+        <!-- <b-dropdown-item v-show="$parent.exportUrl"  variant="primary" :title="'Export the ' + $parent.plural + ' data to Excel'" :href="$parent.exportUrl"><i class="fa fa-file-excel-o mr-2"></i>Export Data</b-dropdown-item>
+        <b-dropdown-divider v-show="$parent.exportUrl"/> -->
+
+        <b-dropdown-item-button variant="primary" :title="'Refresh the ' + $parent.plural + ' table (in case the data has been changed by another user or process)'" @click="refreshData"><i class="fa fa-refresh mr-2"></i>Refresh Data</b-dropdown-item-button>
+
+    </b-dropdown>
+
+</span>
+</template>
+
+<script>
+
+export default {
+
+
+props: {
+    printButton: {
+        type: Boolean,
+        default: true,
+    },
+    emailButton: {
+        type: Boolean,
+        default: true,
+    },
+    downloadButton: {
+        type: Boolean,
+        default: true,
+    },
+},
+
+    mounted() {
+
+        this.$parent.tableDropDown = this;
+
+    },    
+
+    methods: {
+
+        setOptions() {
+
+            // Note #1: createReportTemplateData specified below is in table-template.js
+            // It generates the templateData using the DataTables rows and columns of the current table
+
+            // Note #2: To generate a report using a specific templateId (e.g. the Debtors Account table )
+            // you can specify a reportTemplateId when creating the table.
+            // Otherwise it will use the reporttemplateid specified in the lolSettings table
+
+            const returnData =  {
+                title: this.$parent.title, 
+                subTitle: this.$parent.subTitle, 
+                notifyMessage: 'Creating PDF document', 
+                folder: 'reports', 
+                fileName: this.$parent.plural + '.pdf',
+                templateId: this.$parent.reportTemplateId || root.lolSettings.reporttemplateid,
+                createTemplateData: this.$parent.createReportTemplateData
+            };
+
+            this.$parent.dataChanged = false;
+
+            return returnData;
+
+        },
+
+        printHtml() {
+
+            // Note #1: createReportTemplateData is in table-template.js
+            // The templateData uses the DataTables rows and columns of the current table
+
+            // Note #2: To generate a report using a specific templateId (e.g. the Debtors Account table )
+            // you can specify a reportTemplateId when creating the table.
+            // Otherwise it will use the reporttemplateid specified in the lolSettings table
+
+            root.$snotify.simple('Please wait...', 'Creating Report', { timeout: 0, icon: 'img/cogs.gif' });
+
+            let templateId = this.$parent.reportTemplateId || root.lolSettings.reporttemplateid;
+
+            axios.post('/lolsystemtemplate/get/' + templateId)
+
+            .then(async response => {
+
+                if ( response.data.errors ) {
+
+                    showError('Error',response.data.errors);
+
+                } else {
+
+                    let templateData = await this.$parent.createReportTemplateData();
+
+                    root.vueRender( response.data.data[0].contents, templateData )
+
+                    .then( (contents) => { 
+
+                        root.$snotify.clear();
+
+                        root.previewHtml.title = this.$parent.singular + ' Report';
+                        root.previewHtml.htmlBody = contents;
+
+                        root.previewHtml.load( this.$parent );
+
+                    }).catch( (error) => {
+                        showError('Error Rendering Html', error);
+                    });
+
+                }
+
+            }).catch(error => { 
+
+                showError('Error',error);
+
+            });
+
+        },
+
+        printPdf() {
+
+            if (this.$parent.recordsFiltered > 2000 ) {
+
+                root.dialogModal.callingComponent = this;
+                root.dialogModal.okCallback = 'generatePdfReport';
+                root.dialogModal.title = 'Warning';
+                root.dialogModal.description = '<p>This report contains ' + this.$parent.recordsFiltered + ' rows.<p>';
+                root.dialogModal.description += '<p>It may take a while to generate.<p>';
+                root.dialogModal.description += '<p>Press <strong>OK</strong> to continue or <strong>Cancel</strong> to abort.<p>';
+                root.dialogModal.show();
+
+            } else {
+
+                //this.generatePdfReport();
+
+                root.$snotify.simple('Please wait...', 'Creating Report', { timeout: 0, icon: 'img/cogs.gif' });
+
+                let templateId = this.$parent.reportTemplateId || root.lolSettings.reporttemplateid;
+
+                axios.post('/lolsystemtemplate/get/' + templateId)
+
+                .then(async response => {
+
+                    if ( response.data.errors ) {
+
+                        showError('Error',response.data.errors);
+
+                    } else {
+
+                        let templateData = await this.$parent.createReportTemplateData();
+
+                        await generatePdfDocument({
+                            templateRecord: response.data.data[0],
+                            templateData: templateData,
+                            folder: 'reports', 
+                            fileName: this.$parent.plural + '.pdf',
+                        })
+                        .then(response => {
+
+                            root.$snotify.clear();
+
+                            root.previewPdf.documentPath = response.url; //Being watched: To load the iFrame
+
+                            root.previewPdf.show();
+
+                        }).catch(error => { 
+
+                            showError('Generating Pdf Error',error);
+
+                        });
+
+                    }
+
+                }).catch(error => { 
+
+                    console.log('Error',error);
+
+                });
+
+            }
+        },
+
+
+        refreshData() {
+            this.$parent.refresh();
+        },
+
+    }
+}  
+</script>

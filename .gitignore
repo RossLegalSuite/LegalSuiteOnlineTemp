@@ -1,0 +1,13 @@
+/public/js
+/public/*.js
+/public/css
+/public/uploads
+/public/storage
+/node_modules
+/vendor
+/storage/logs
+.env
+.phpunit.result.cache
+npm-debug.log
+public/mix-manifest.json
+/dump/~*.*

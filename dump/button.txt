@@ -1,0 +1,1 @@
+<button class="btn btn-primary mr-3" type="button" @click="login" title="Connect to another Company"><i fa class="fa fa-refresh fa-lg mr-2"></i>Change Company</button>

@@ -1,0 +1,2 @@
+Tip: https://stackoverflow.com/questions/7486085/copy-array-by-value
+return JSON.parse(JSON.stringify(root.partyEntities));

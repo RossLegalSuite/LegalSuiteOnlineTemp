@@ -1,0 +1,107 @@
+<template>
+<div>
+
+    <div style="display: flex; align-items: flex-end;" class="mb-2">
+        
+        <div class="form-group" style="display: flex; flex: 1; margin-bottom: 0 !important;">
+
+                <div class="col-md-5" style="padding-left: 0">
+
+                    <label>Date</label>
+                    <pop-over 
+                        content="<h4>Date</h4>
+                        <p>Select a Date to apply to all (or the tagged) Fee Items</p>"
+                        :container="'#' + $parent.id"
+                    />
+                    <date-picker 
+                        ref="datePickerComponent" 
+                        @dp-change="datePickerChanged"
+                        v-model="feeItemsDate" 
+                        :config="$root.datePickerOptions"
+                        title="Change the date of all (or the tagged) Fee Items"
+                    />
+                </div>
+
+                <select-employee
+                    _class="col-md-8"
+                    :id="tableId + '-select-employee'"
+                    popOver="<h4>Allocate Fee Notes</h4>
+                    <p>Choose the Employee the Fee Notes will be allocated to.</p>
+                    <p>If you are debiting Fees on behalf of another Employee, select that Employee here.</p>
+                    <p>The Fee Notes created will then be allocated to this Employee.</p>"
+                    :popOverContainer="'#' + $parent.id"
+                    label="Employee"
+                    title="The Employee the Fee Notes will be allocated to"
+                    :ref="tableId + '-select-employee'" 
+                    :formRef="tableId + '-select-employee'"
+                />
+
+        </div>
+
+        <div style="display: flex; flex: 1; justify-content: flex-end; align-items: center;">
+            <tagged-drop-down :table-id="tableId"/>
+
+        </div>
+    </div>
+
+
+    <table :id="tableId" class="table bordered" style="width:100%"></table>
+
+</div>
+</template>
+
+<script>
+
+
+import tableTemplate from "@components/tables/table-template";
+
+
+export default {
+    
+    mixins: [tableTemplate],
+
+    components: {
+        SelectEmployee: () => import("@pages/employees/SelectEmployee"),
+    },
+
+
+    created() {
+        this.url = null;
+        this.route = null;
+        this.title = 'Fee Items';
+        this.plural = 'Fee Items';
+        this.singular = 'Fee Item';
+    },
+
+    data() {
+        return {
+            previousFeeItemsDate: null,
+            feeItemsDate: null,
+        }
+    },
+
+    methods: {
+
+
+        employeeSelected(selectedRecord) {
+            
+            this.$parent.changeAllocatedEmployee(selectedRecord.recordid, selectedRecord.name);
+
+        },        
+
+
+        datePickerChanged() {
+
+            if ( this.feeItemsDate && this.feeItemsDate != this.previousFeeItemsDate) {
+
+                this.previousFeeItemsDate = this.feeItemsDate
+
+                this.$parent.changeFeeItemsDate(this.feeItemsDate);
+            }
+
+        },
+    },
+
+
+}  
+</script>

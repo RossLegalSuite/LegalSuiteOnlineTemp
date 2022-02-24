@@ -1,0 +1,1204 @@
+<template>
+
+<div :id="id" :class="modal ? 'modal': ''">
+    
+    <div :class="modal ? 'modal-dialog modal-dialog-centered modal-lg' : ''">
+
+        <div :class="modal ? 'modal-content parties-border':'card h-100 border-0'">
+
+            <div v-if="!displayFormOnly" :class="modal ? '':'card-header'">
+
+                <div :class="modal ? 'modal-header parties-bg' : 'd-flex justify-content-between'">
+
+                    <div class="page-title">
+                        <h3>
+                            <span v-if="!editing">Party will be Added</span>
+                            <span v-else v-html="pageTitle()"></span>
+                        </h3>
+                        <i v-if="modal" title="Close this window" class="cp top-right fa fa-times-circle fa-2x text-white" data-dismiss="modal"></i>
+                    </div>
+
+                    <page-close-button v-if="!modal" @closeClicked="closeForm"/>
+
+                </div>
+
+            </div>
+
+            <div class="card-body form-tab-body overflow-auto p-3" :style="modal ? 'height:70vh' : ''">
+
+                <form-tabs :tabs="[tabs[0], ...partyExtraScreenTabs, ...partyTypeExtraScreenTabs, ...partyEntityExtraScreenTabs, tabs[1], tabs[2], tabs[3]]"/>
+
+                <div v-bind:key="extraScreenTab.id" v-for="extraScreenTab in partyExtraScreenTabs" 
+                    :class="'form-tab-content ' + $root.toKebabCase(extraScreenTab.location) + '-extra-screen-container'" 
+                    :id="record.id + '-extra-screen-row-' + extraScreenTab.id"
+                    v-show="activeTab === extraScreenTab.title"
+                >
+
+                    <div :id="'extra-screen-form-container-' + extraScreenTab.id">
+                        <form action="#" :id="'extra-screen-form-' + extraScreenTab.id"/>
+                    </div>
+
+                </div>
+
+                <div v-bind:key="extraScreenTab.id" v-for="extraScreenTab in partyTypeExtraScreenTabs" 
+                    :class="'form-tab-content ' + $root.toKebabCase(extraScreenTab.location) + '-extra-screen-container'" 
+                    :id="record.id + '-extra-screen-row-' + extraScreenTab.id"
+                    v-show="activeTab === extraScreenTab.title"
+                >
+
+                    <div :id="'extra-screen-form-container-' + extraScreenTab.id">
+                        <form action="#" :id="'extra-screen-form-' + extraScreenTab.id"/>
+                    </div>
+
+                </div>
+
+                <div v-bind:key="extraScreenTab.id" v-for="extraScreenTab in partyEntityExtraScreenTabs" 
+                    :class="'form-tab-content ' + $root.toKebabCase(extraScreenTab.location) + '-extra-screen-container'" 
+                    :id="record.id + '-extra-screen-row-' + extraScreenTab.id"
+                    v-show="activeTab === extraScreenTab.title"
+                >
+
+                    <div :id="'extra-screen-form-container-' + extraScreenTab.id">
+                        <form action="#" :id="'extra-screen-form-' + extraScreenTab.id"/>
+                    </div>
+
+                </div>
+
+                <div v-show="activeTab === 'General'" class="form-tab-content">
+
+                    <div class="form-group row">
+
+                        <select-party-entity
+                            popOver="<h4>Entity</h4><p>The Entity of a Party is the legal classification of the Party.</p><p>Some may be juristic persons (such as companies or trusts) while others may be natural persons (such as adults or minors).</p><p>Certain entities can have specific rights, duties and laws which apply to them and so it is important to specify what type of Entity the Party is here.</p>" 
+                            :popOverContainer="modal ? '#' + id : 'body'"
+                            _class="col-md-4"
+                            :id="uniqueId + '-select-party-entity'"
+                            title="The Entity of the Party"
+                            :ref="uniqueId + '-select-party-entity'" 
+                            :form-ref="uniqueId + '-select-party-entity'"
+                            :error="errors.entityId"
+                        />
+
+                        <select-party-type
+                            popOver="<h4>Type</h4><p>The Party Type is used to further classify the legal status of the Party by specifying what <em>Type</em> of Entity the Party is</p>" 
+                            :popOverContainer="modal ? '#' + id : 'body'"
+                            label="Type"
+                            _class="col-md-4 mt-3 mt-md-0"
+                            :id="uniqueId + '-select-party-type'"
+                            title="The type of Entity"
+                            :ref="uniqueId + '-select-party-type'" 
+                            :form-ref="uniqueId + '-select-party-type'"
+                            :error="errors.typeId"
+                        />
+
+                        <text-input v-if="editing" _class="col-md-4 mt-3 mt-md-0" v-model="record.code" name="code" label="Code" :read-only="true" :error="errors.code"
+                        pop-over="
+                            <h4>Code</h4>
+                            <p>A code is used to uniquely identify a Party as well as Matters linked to the Party.</p>
+                            <p>For example, if a Party has the code 'ABC1', it's first Matter will be 'ABC1/0001', it's second 'ABC1/0002' etc.</p>"
+                            :popOverContainer="modal ? '#' + id : 'body'"
+                        />
+                        
+                    </div>
+
+                    <div class="form-group row" v-show="record.entityType === 'N'">
+                        
+                        <text-input _class="col-md-2" v-model="record.title" name="title" label="Title" :error="errors.title"/>
+                        <text-input _class="col-md-5 mt-3 mt-lg-0" v-model="record.firstName" name="firstName" @change="setFriendlyName" label="First Name(s)" :error="errors.firstName"/>
+                        <text-input _class="col-md-5 mt-3 mt-lg-0" v-model="record.lastName" name="lastName" label="Last Name" :error="errors.lastName"/>
+
+                    </div>
+
+                    <div class="form-group row" v-show="record.entityType === 'N'">
+
+                        <text-input _class="col-md-7" v-model="record.friendlyName" name="friendlyName" label="Known As" :error="errors.friendlyName"
+                        pop-over="
+                        <h4>Known As</h4>
+                        <p>An alternative or <em>friendly</em> name for this Party.</p>
+                        <p>The first and last names are the legally registered names of the Party. It can be useful, however, to have a more friendly or colloquial name which can be used when addressing letters or emails to the Party.</p>
+                        <p>For example, a Party may have the first name of Richard, but is known as Dick and it would be more appropriate to use this in correspondence with the Party.</p>"
+                        :popOverContainer="modal ? '#' + id : 'body'"
+                        />
+
+                        <text-input _class="col-md-5" v-model="record.salutation" name="salutation" label="Salutation" :error="errors.salutation"
+                        pop-over="
+                        <h4>Salutation</h4>
+                        <p>The greeting used when addressing letters or emails to this Party.</p>
+                        <p>It can be used in documents and emails that are addressed to this Party</p>
+                        <p>For example, you may use the wording <em><strong>Dear Sir/Madam</strong></em> or <em><strong>Dear Mr Jones</strong></em> depending on the nature of the relationship you have with this Party.</p>"
+                        :popOverContainer="modal ? '#' + id : 'body'"                        
+                        />
+
+                    </div>
+
+                    <div class="form-group row" v-show="record.entityType === 'J'">
+                        
+                        <text-input _class="col-md-12" v-model="record.name" @change="setFriendlyName" name="name" label="Name" :error="errors.name"
+                        pop-over="<h4>Name</h4>
+                        <p>The official or registered name of the Party.</p>"
+                        :popOverContainer="modal ? '#' + id : 'body'"
+                        />
+
+                    </div>
+                        
+                    <div class="form-group row" v-show="record.entityType === 'J'">
+
+                        <text-input _class="col-md-8" v-model="record.friendlyName" name="friendlyName" label="Trading As" :error="errors.friendlyName"
+                                pop-over="<h4>Trading As</h4>
+                                <p>The <em>name</em> field is the legally registered name of the Party. Some jusristic entities also have a <em>trading name</em> which they use for commercial purposes. If so, you should specify it here.</p>"
+                                :popOverContainer="modal ? '#' + id : 'body'"
+                                />
+
+                        <text-input _class="col-md-4" v-model="record.salutation" name="salutation" label="Salutation" :error="errors.salutation"
+                        pop-over="
+                        <h4>Salutation</h4>
+                        <p>The greeting used when addressing letters or emails to this Party.</p>
+                        <p>It can be used in documents and emails that are addressed to this Party</p>
+                        <p>For example, you may use the wording <em><strong>Dear Sir/Madam</strong></em> or <em><strong>Dear Mr Jones</strong></em> depending on the nature of the relationship you have with this Party.</p>"
+                        :popOverContainer="modal ? '#' + id : 'body'"
+                        />
+
+
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-5">
+
+                            <div v-show="record.entityType === 'N'" class="form-group row">
+
+                                <div class="col-md-12">
+                                    <label>Type of Identification</label>
+                                    <select class="form-control" name="idType" v-model="record.idType" title="The item used to uniquely identify the Party"> 
+                                        <option value="I">Identity Document</option>
+                                        <option value="S">Social Security</option>
+                                        <option value="P">Passport</option>
+                                        <option value="D">Drivers Licence</option>
+                                        <option value="B">Birth Certificate</option>
+                                        <option value="T">Temporary Residence</option>
+                                        <option value="X">Tax Certificate</option>
+                                        <option value="A">Armed Forces ID</option>
+                                        <option value="O">Other</option>
+                                    </select>
+                                </div>
+
+                            </div>
+
+                            <div class="form-group row">
+
+                                <div class="col-md-12">
+                                    <label v-if="record.entityType === 'N' && record.idType === 'I'">ID Number</label>
+                                    <label v-else-if="record.entityType === 'N' && record.idType === 'P'">Passport Number</label>
+                                    <label v-else-if="record.entityType === 'N' && record.idType === 'T'">Residency Number</label>
+                                    <label v-else-if="record.entityType === 'N' && record.idType === 'S'">Social Security Number</label>
+                                    <label v-else-if="record.entityType === 'J'">Registration Number</label>
+                                    <label v-else>Number</label>
+                                    <input name="idNumber" title="The identification number of Party" type="text" v-model="record.idNumber" class="form-control">
+                                </div>
+
+                            </div>
+
+                            <div class="form-group row">
+
+                                <div class="col-md-12">
+                                    <label v-html="record.entityType === 'N'? 'Date of Birth' : 'Registration Date'"></label>
+                                    <date-picker :readOnly="record.readOnly ? true: false" ref="datePickerComponent" :id="uniqueId + '-party-form-birth-date-picker'" v-model="record.birthDate" :config="$root.datePickerOptions"/>
+                                    <div v-if="errors.birthDate" v-html="errors.birthDate[0]" class="invalid-feedback"></div>
+                                </div>
+
+                            </div>
+
+                            <div v-show="record.entityType === 'N'" class="form-group row">
+
+                                <select-marriage-type
+                                    _class="col-md-12"
+                                    :id="uniqueId + '-select-marriage-type'"
+                                    title="The type of Marriage"
+                                    :ref="uniqueId + '-select-marriage-type'"
+                                    :form-ref="uniqueId + '-select-marriage-type'"
+                                    :error="errors.marriageId"
+                                />
+
+                            </div>
+
+                            <div v-if="$root.company.salesTaxFlag && $root.company.salesTaxType === 'Vat'" class=" form-group row">
+
+                                <div class="col-md-12">
+
+                                    <label>Vat Status</label>
+                                    <pop-over :container="'#' + id" content="
+                                    <h4>Vat Status</h4>
+                                    <p>If the Party is a Vat Vendor, <em>Output Vat</em> will be posted on vatable Payments made to them.</p>
+                                    "/>
+                                    <v-select 
+                                        :options="vatVendorOptions" 
+                                        :clearable="false"
+                                        :searchable="false"
+                                        v-model="record.vatVendor"
+                                        :reduce="vatVendorOptions => vatVendorOptions.value"
+                                        @option:selected="vatStatusChanged"
+                                    />
+
+                                </div>
+
+                            </div>
+
+                            <div v-show="record.vatVendor" class="form-group row">
+
+                                <text-input _class="col-md-12" v-model="record.vatNumber" name="vatNumber" label="Vat Number" :error="errors.vatNumber"/>
+
+                            </div>
+
+                        </div>
+                        <div class="col-md-7">
+
+                            <fieldset class="mt-3" :class="editing ? 'pt-3' : 'pt-1'"><legend>Contact Details</legend>
+
+                                <party-number-table
+                                    :id="uniqueId + '-party-number-table-form'"
+                                    :ref="uniqueId + '-party-number-table'"
+                                    :formRef="uniqueId + '-party-number-table'"
+                                    :table-id="uniqueId + '-party-numbers-table'"
+                                    :lazyLoadFlag="true"
+                                    :searchInputFocus="false"
+                                />
+
+                            </fieldset>
+
+                        </div>
+
+                    </div>
+
+                    <div v-bind:key="partyExtraScreen.id" v-for="partyExtraScreen in partyExtraScreens" class="row" :id="record.id + '-extra-screen-row-' + partyExtraScreen.id">
+                        <div v-if="partyExtraScreen.position === 'Form'" class="col-md-12">
+
+                            <fieldset class="mt-3 pb-2">
+
+                                <legend>{{partyExtraScreen.title}}</legend>
+
+                                <div :id="'extra-screen-form-container-' + partyExtraScreen.id">
+                                    <form action="#" :id="'extra-screen-form-' + partyExtraScreen.id">
+                                    </form>
+                                </div>
+
+                            </fieldset>
+
+                        </div>
+                    </div>
+
+                    <div v-bind:key="partyTypeExtraScreen.id" v-for="partyTypeExtraScreen in partyTypeExtraScreens" class="row" :id="record.id + '-extra-screen-row-' + partyTypeExtraScreen.id">
+                        <div v-if="partyTypeExtraScreen.position === 'Form'" class="col-md-12">
+
+                            <fieldset class="mt-3 pb-2">
+
+                                <legend>{{partyTypeExtraScreen.title}}</legend>
+
+                                <div :id="'extra-screen-form-container-' + partyTypeExtraScreen.id">
+                                    <form action="#" :id="'extra-screen-form-' + partyTypeExtraScreen.id">
+                                    </form>
+                                </div>
+
+                            </fieldset>
+
+                        </div>
+                    </div>
+
+                    <div v-bind:key="partyEntityExtraScreen.id" v-for="partyEntityExtraScreen in partyEntityExtraScreens" class="row" :id="record.id + '-extra-screen-row-' + partyEntityExtraScreen.id">
+                        <div v-if="partyEntityExtraScreen.position === 'Form'" class="col-md-12">
+
+                            <fieldset class="mt-3 pb-2">
+
+                                <legend>{{partyEntityExtraScreen.title}}</legend>
+
+                                <div :id="'extra-screen-form-container-' + partyEntityExtraScreen.id">
+                                    <form action="#" :id="'extra-screen-form-' + partyEntityExtraScreen.id">
+                                    </form>
+                                </div>
+
+                            </fieldset>
+
+                        </div>
+                    </div>
+
+                </div>
+
+                <div v-show="activeTab === 'Address'" class="form-tab-content">
+                    <div class="row">
+                        <div class="col-lg-12">
+
+                            <div class="row">
+                                <div class="col-lg-6">
+                                
+                                    <fieldset class="mt-3"><legend>Postal Address</legend>
+
+                                        <div class="form-group row">
+                                            <text-input _class="col-md-12" v-model="record.postalLine1" name="postalLine1" label="Line 1" :error="errors.postalLine1"/>
+                                        </div>
+
+                                        <div class="form-group row">
+                                            <text-input _class="col-md-12" v-model="record.postalLine2" name="postalLine2" label="Line 2" :error="errors.postalLine2"/>
+                                        </div>
+
+                                        <div class="form-group row">
+                                            <text-input _class="col-md-9" v-model="record.postalLine3" name="postalLine3" label="Line 3" :error="errors.postalLine3"/>
+                                            <text-input _class="col-md-3" v-model="record.postalCode" name="postalCode" label="Code" :error="errors.postalCode"/>
+                                        </div>
+
+                                        <div class="form-group row">
+
+                                            <div class="col-md-12">
+                                                
+                                                <label>Province</label>
+                                                <select-postal-province
+                                                    :id="id + '-select-postal-province'"
+                                                    placeholder=""
+                                                    :options="postalProvinces" 
+                                                    v-model="postalProvince"
+                                                    track-by="id"
+                                                    :tabindex="-1"
+                                                    label="description"
+                                                    :allow-empty="false"
+                                                    :show-labels="false"
+
+                                                >
+                                                <template slot="noResult">No Provinces found</template>
+                                                <template slot="noOptions">No Provinces found</template>
+                                                </select-postal-province>
+
+                                                <div v-if="errors.postalProvinceId" v-html="errors.postalProvinceId[0]" class="invalid-feedback"></div>
+
+                                            </div>
+
+                                        </div>
+
+                                        <div class="form-group row">
+
+                                            <div class="col-md-12">
+
+                                                <label>Country</label>
+                                                <select-postal-country
+                                                    :id="id + '-select-postal-country'"
+                                                    placeholder=""
+                                                    :options="$root.countries" 
+                                                    v-model="postalCountry"
+                                                    track-by="id"
+                                                    :tabindex="-1"
+                                                    label="description"
+                                                    :allow-empty="false"
+                                                    :show-labels="false"
+                                                    @input="postalCountryChanged"
+                                                    :loading="$root.dropdownIsLoading"
+                                                    :internal-search="false"
+                                                    @search-change="debounceFindCountries"
+
+                                                >
+                                                <template slot="noResult">No Countries found</template>
+                                                </select-postal-country>
+
+                                                <div v-if="errors.postalCountryId" v-html="errors.postalCountryId[0]" class="invalid-feedback"></div>
+
+                                            </div>
+                                        </div>
+
+                                    </fieldset>
+
+                                </div>
+
+                                <div class="col-lg-6">
+
+                                    <fieldset class="mt-3"><legend>Physical Address</legend>
+
+                                        <div class="form-group row">
+                                            <text-input _class="col-md-12" v-model="record.physicalLine1" name="physicalLine1" label="Line 1" :error="errors.physicalLine1"/>
+                                        </div>
+
+                                        <div class="form-group row">
+                                            <text-input _class="col-md-12" v-model="record.physicalLine2" name="physicalLine2" label="Line 2" :error="errors.physicalLine2"/>
+                                        </div>
+
+                                        <div class="form-group row">
+                                            <text-input _class="col-md-9" v-model="record.physicalLine3" name="physicalLine3" label="Line 3" :error="errors.physicalLine3"/>
+                                            <text-input _class="col-md-3" v-model="record.physicalCode" name="physicalCode" label="Code" :error="errors.physicalCode"/>
+                                        </div>
+
+                                        <div class="form-group row">
+
+                                            <div class="col-md-12">
+
+                                                <label>Province</label>
+                                                <select-physical-province
+                                                    :id="id + '-select-physical-province'"
+                                                    placeholder=""
+                                                    :options="physicalProvinces" 
+                                                    v-model="physicalProvince"
+                                                    track-by="id"
+                                                    :tabindex="-1"
+                                                    label="description"
+                                                    :allow-empty="false"
+                                                    :show-labels="false"
+                                                >
+                                                <template slot="noResult">No Provinces found</template>
+                                                <template slot="noOptions">No Provinces found</template>
+                                                </select-physical-province>
+                                                <div v-if="errors.physicalProvinceId" v-html="errors.physicalProvinceId[0]" class="invalid-feedback"></div>
+
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group row">
+
+                                            <div class="col-md-12">
+
+                                                <label>Country</label>
+                                                <select-physical-country
+                                                    :id="id + '-select-physical-country'"
+                                                    placeholder=""
+                                                    :options="$root.countries" 
+                                                    v-model="physicalCountry"
+                                                    track-by="id"
+                                                    :tabindex="-1"
+                                                    label="description"
+                                                    :allow-empty="false"
+                                                    :show-labels="false"
+                                                    @input="physicalCountryChanged"
+                                                    :loading="$root.dropdownIsLoading"
+                                                    :internal-search="false"
+                                                    @search-change="debounceFindCountries"
+
+                                                >
+                                                <template slot="noResult">No Countries found</template>
+                                                </select-physical-country>
+
+                                                <div v-if="errors.physicalCountryId" v-html="errors.physicalCountryId[0]" class="invalid-feedback"></div>
+
+                                            </div>
+
+                                        </div>
+
+                                    </fieldset>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+                <div v-show="activeTab === 'Trust'" class="form-tab-content">
+
+                    <div class="row">
+
+                        <div class="col-md-12">
+
+                            <party-trust-accounts-table
+                                :id="uniqueId + '-party-form-trust-accounts-table'"
+                                :ref="uniqueId + '-party-trust-accounts-table'"
+                                :table-id="uniqueId + '-party-trust-accounts-table'"
+                                :lazyLoadFlag="true"
+                                :formTable="true"
+                                :searchInputFocus="false"
+                            />
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div v-show="activeTab === 'Overview'" class="form-tab-content">
+                    <h4>To Do</h4>
+                </div>
+
+            </div>
+
+            <form-buttons v-if="!displayFormOnly" :editing="editing" :viewing="viewing" record="Party" @ok-clicked="submitForm" @cancel-clicked="closeForm" @delete-clicked="deleteClicked"/>
+
+        </div>
+    </div>
+</div>
+
+</template>
+
+<script>
+
+import { mapMutations } from 'vuex';
+import Multiselect from 'vue-multiselect';
+import { debounce } from 'lodash';
+
+import FormTemplate from "@pages/form-template";
+import modalTemplate from "@components/modals/modal-template";
+
+export default {
+
+    mixins: [FormTemplate, modalTemplate],
+
+    //Fetch while idle
+    //https://vueschool.io/articles/vuejs-tutorials/lazy-loading-individual-vue-components-and-prefetching/
+    //https://medium.com/webpack/link-rel-prefetch-preload-in-webpack-51a52358f84c
+
+    components: {
+        
+        PartyNumberTable: () => import("@pages/parties/PartyNumberTable"),
+        SelectMarriageType: () => import("@pages/parties/SelectMarriageType"),
+        SelectPartyType: () => import("@pages/parties/SelectPartyType"),
+        SelectPartyEntity: () => import("@pages/parties/SelectPartyEntity"),
+        PartyTrustAccountsTable: () => import("@pages/parties/PartyTrustAccountsTable"),
+
+        SelectPostalProvince: Multiselect, SelectPhysicalProvince: Multiselect, SelectPostalCountry: Multiselect, SelectPhysicalCountry: Multiselect,
+    },
+
+    created () {
+        this.debounceFindCountries = debounce((query) => { this.$root.getCountries(query) }, 500);
+    },
+
+    props: {
+        resource: {type: String, default: 'Parties' },
+        uniqueId: String,
+        displayFormOnly: {type: Boolean, default: false },
+    },
+
+    data() {
+        return {
+            vatVendorOptions: [ {label: 'Registered Vat Vendor', value: 1},  {label: 'Not registered for Vat', value: 0} ],
+            partyNumberTable: null,
+            activeTab: 'General',
+            tabs: [
+                {
+                    pageName: "General",
+                    title: "Details",
+                    iconClass: '',
+                    visible: true,
+                    active: true,
+                },
+                {
+                    pageName: "Address",
+                    title: "Address",
+                    iconClass: '',
+                    visible: true,
+                    active: false,
+                },
+                {
+                    pageName: "Trust",
+                    title: "Trust",
+                    iconClass: '',
+                    visible: true,
+                    active: false,
+                },
+                {
+                    pageName: "Overview",
+                    title: "Overview",
+                    iconClass: '',
+                    visible: true,
+                    active: false,
+                },
+            ],
+            postalProvinces:[],
+            postalProvince: {
+                id: null,
+                description: null,
+            },
+            physicalProvinces:[],
+            physicalProvince: {
+                id: null,
+                description: null,
+            },
+            postalCountry: {
+                id: null,
+                description: null,
+            },
+            physicalCountry: {
+                id: null,
+                description: null,
+            },
+
+        };
+    },
+
+    computed: {
+
+        partyType() {
+            return this.record.typeId;
+        },
+
+        partyEntity() {
+            return this.record.entityId;
+        },
+    },
+
+    watch: {
+
+        partyType(newValue) {
+
+            if ( newValue ) {
+
+                this.removeExtraScreens('Party Type').then( () => {
+
+                    this.loadExtraScreens('Party Type').then( () => {
+
+                        if ( this.editing ) this.populateExtraScreens('Party Type');
+
+                    });
+
+                });
+
+            }
+
+        },
+
+        partyEntity(newValue) {
+
+            if ( newValue ) {
+
+                this.removeExtraScreens('Party Entity').then( () => {
+
+                    this.loadExtraScreens('Party Entity').then( () => {
+
+                        if ( this.editing ) this.populateExtraScreens('Party Entity');
+
+                    });
+
+                });
+
+            }
+
+        },
+
+
+        activeTab(newValue) {
+
+            if ( newValue === "Trust" ) {
+
+                setTimeout(this.$refs[this.uniqueId + '-party-trust-accounts-table'].table.columns.adjust);
+
+            }
+        }
+    },
+
+    methods: {
+        
+        ...mapMutations(['setCurrentParty']),
+
+        editRecord(id, displayForm = true) {
+
+            this.editing = true;
+
+            this.setGeneralTab();
+
+            // To Trigger watch() for extra screens
+            this.record.typeId = null; 
+            this.record.entityId = null; 
+
+            axios.post('/parties/get',{id: id})
+
+            .then(response => {
+
+                this.record = response.data[0];
+
+                // DatePicker sets this to 01 Jan 1970 even if model is null
+                // Using .clear() to clear it if null. See http://eonasdan.github.io/bootstrap-datetimepicker/Functions/#clear
+                if (!this.record.birthDate ) {
+
+                    $('#' + this.uniqueId + '-party-form-birth-date-picker').data("DateTimePicker").clear();
+                }
+
+                this.setCurrentParty({
+                    id: this.record.id, 
+                    code: this.record.code,
+                    name: this.record.name
+                });
+
+
+                if ( displayForm) this.displayForm(); 
+
+                this.initFormData();
+
+                setTimeout(() => {
+
+                    // Party Number Table
+                    this.partyNumberTable.arrayTableFlag = false; 
+                    this.partyNumberTable.parentId = id; 
+                    this.partyNumberTable.initialOrder = [[3, "desc"]];
+
+                    this.partyNumberTable.loadDataTable(); 
+
+                });
+            })
+
+        },
+
+        initNewRecord() {
+
+            this.setGeneralTab();
+
+            // To Trigger watch() for extra screens
+            this.record.typeId = null; 
+            this.record.entityId = null; 
+
+
+            this.record = {
+                title: this.record.title ? this.record.title : 'Mr',
+                idType: this.record.idType ? this.record.idType : 'I',
+                entityType: this.record.entityType ? this.record.entityType : 'J',
+                marriageId: this.record.marriageId ? this.record.marriageId : 1,
+                postalProvinceId: this.record.postalProvinceId ? this.record.postalProvinceId : 1,
+                physicalProvinceId: this.record.physicalProvinceId ? this.record.physicalProvinceId : 1,
+                postalCountryId: this.record.postalCountryId ? this.record.postalCountryId : 1,
+                physicalCountryId: this.record.physicalCountryId ? this.record.physicalCountryId : 1,
+                vatVendor: this.$root.company.salesTaxFlag && this.$root.company.salesTaxType === 'Vat' ? 1 : 0,
+            };
+
+            this.displayForm();    
+
+            this.initFormData();
+
+            this.partyNumberTable.arrayTableFlag = true; 
+
+            this.partyNumberTable.loadArrayTable(); 
+
+            setTimeout(() => {
+                if ( this.record.entityType === 'J') {
+                    $('input[name="name"]').focus();
+                } else {
+                    $('input[name="firstName"]').focus();
+                }
+            });
+
+        },
+
+        initFormData() {
+            
+            this.$refs.datePickerComponent.elem.data('DateTimePicker').widgetPositioning(
+                { horizontal: 'left', vertical: 'top' }
+            );
+
+            if ( !this.$root.marriageTypes.length) this.$root.getMarriageTypes();
+            if ( !this.$root.partyEntities.length) this.$root.getPartyEntities();
+            if ( !this.$root.partyTypes.length) this.$root.getPartyTypes();
+            if ( !this.$root.countries.length) this.$root.getCountries();
+
+            this.partyNumberTable = this.$refs[this.uniqueId + '-party-number-table'];
+
+            this.partyNumberTable.tableOptions = {
+                scrollY: '25vh',
+                hideProcessing: true,
+            };
+
+            setTimeout(() => {
+                
+                // Trust Accounts Table
+                let trustAccountsTable = this.$refs[this.uniqueId + '-party-trust-accounts-table'];
+
+                //Set the table Height manually
+                let $thisForm = $('#' + this.id);
+                let $formBody = $thisForm.find('.form-tab-body');
+                trustAccountsTable.tableOptions = {
+                    scrollY: (Math.round( $formBody.outerHeight() ) - 220)  + 'px',
+                };
+
+                trustAccountsTable.subTitle = this.record.code + ' - ' + this.record.name;
+                trustAccountsTable.noEditButtonFlag = true;
+                trustAccountsTable.parentId = this.record.id;
+
+                trustAccountsTable.loadDataTable(); 
+            });
+
+            if ( this.editing ) {
+
+                this.selectPartyEntity.record = {
+                    id: this.record.entityId,
+                    description: htmlDecode(this.record.entityDescription),
+                };
+                
+                this.selectPartyType.record = {
+                    id: this.record.typeId,
+                    description:this.record.typeDescription,
+                    type: htmlDecode(this.record.partyType)
+                };
+
+                this.postalCountry = {
+                    id: this.record.postalCountryId,
+                    description: this.record.postalCountry,
+                };
+
+                this.setPostalProvinceDropDown( this.record.postalCountryCode );
+
+                this.physicalCountry = {
+                    id: this.record.physicalCountryId,
+                    description: this.record.physicalCountry,
+                };
+
+                this.setPhysicalProvinceDropDown( this.record.physicalCountryCode );
+
+
+                this.selectMarriageType.record = {
+                    id: this.record.marriageId,
+                    description: htmlDecode(this.record.marriageDescription)
+                };
+
+            } else {
+
+                this.setPartyEntityDropdown(this.record.entityType);
+
+                this.setPartyTypeDropdown(this.record.entityType); 
+
+                this.selectMarriageType.record = {
+                    id: null,
+                    description: null,
+                };
+
+                axios.post("/countries/get", { 
+
+                    code: root.company.countryCode 
+
+                }).then(response => {
+
+                    this.postalCountry = this.physicalCountry = {
+                        id: response.data[0].id,
+                        description: htmlDecode(response.data[0].description),
+                    };
+
+                    this.record.postalCountryId = this.postalCountry.id;
+                    this.record.postalCountry = this.postalCountry.description;
+
+                    this.record.physicalCountryId = this.physicalCountry.id;
+                    this.record.physicalCountry = this.physicalCountry.description;
+
+                    if ( response.data[0].code ) this.setPostalProvinceDropDown( response.data[0].code );
+                    if ( response.data[0].code ) this.setPhysicalProvinceDropDown( response.data[0].code );
+
+                });
+
+            }
+
+            this.removeExtraScreens('Party').then( () => {
+
+                this.loadExtraScreens('Party').then( () => {
+
+                    if ( this.editing ) this.populateExtraScreens('Party');
+
+                });
+
+            });
+
+
+        },
+
+        setGeneralTab() {
+            this.activeTab = 'General';
+            this.tabs[0].active = true;
+            this.tabs[1].active = false;
+            this.tabs[2].active = false;
+            this.tabs[3].active = false;
+
+            this.tabs[2].visible = this.editing ? true : false;
+            this.tabs[3].visible = this.editing ? true : false;
+        },
+
+        marriageTypeSelected(id, description) {
+
+            this.record.marriageId = id;
+
+            this.selectMarriageType.record = {
+                id: id,
+                description: htmlDecode(description),
+            };
+
+        },
+
+        setPostalProvinceDropDown( countryCode ) {
+
+            this.postalProvinces = root.provinces.filter(province => province.countryCode === countryCode);
+
+            if ( this.editing ) {
+
+                this.postalProvince = {
+                    id: this.record.postalProvinceId,
+                    description: this.record.postalProvince,
+                };
+
+            } else {
+
+                this.postalProvince = {
+                    id: this.postalProvinces.length ? this.postalProvinces[0].id : null,
+                    description: this.postalProvinces.length ? this.postalProvinces[0].description : null,
+                };
+
+            }
+
+        },
+
+        setPhysicalProvinceDropDown( countryCode ) {
+
+            this.physicalProvinces = root.provinces.filter(province => province.countryCode === countryCode);
+
+            if ( this.editing ) {
+
+                this.physicalProvince = {
+                    id: this.record.physicalProvinceId,
+                    description: this.record.physicalProvince,
+                };
+
+            } else {
+
+
+                this.physicalProvince = {
+                    id: this.physicalProvinces.length ? this.physicalProvinces[0].id : null,
+                    description: this.physicalProvinces.length ? this.physicalProvinces[0].description : null,
+                };
+
+            }
+
+        },
+
+        partyEntitySelected(id, description, type) {
+
+            if ( this.record.entityType !== type || this.record.partyType !== type) {
+                this.setPartyTypeDropdown(type);
+            }
+
+            this.record.entityId = id;
+            this.record.entityType = type;
+
+            this.$forceUpdate();
+
+        },
+
+        partyTypeSelected(id, description, type) {
+
+            if ( this.record.entityType !== type || this.record.partyType !== type) {
+                this.setPartyEntityDropdown(type);
+            }
+
+            this.record.typeId = id;
+            this.record.partyType = type;
+
+        },
+
+        setPartyTypeDropdown(entityType) {
+
+            let defaultType = entityType === 'J' ? 'BUSINESS' : 'MALE';
+
+            axios.post("/party_types/get", { 
+
+                code: defaultType 
+
+            }).then(response => {
+
+                this.selectPartyType.record = {
+                    id: response.data[0].id,
+                    description: htmlDecode(response.data[0].description),
+                    type: response.data[0].type,
+                };
+
+                this.record.partyType = this.selectPartyType.record.type;
+                this.record.typeId = this.selectPartyType.id;
+            });
+
+        },
+
+        setPartyEntityDropdown(partyType) {
+
+            let defaultEntityType = partyType === 'J' ? 'privateCompany' : 'adult';
+
+            axios.post("/party_entities/get", { 
+
+                code: defaultEntityType 
+
+            }).then(response => {
+
+                this.selectPartyEntity.record = {
+                    id: response.data[0].id,
+                    description: htmlDecode(response.data[0].description),
+                    type: response.data[0].type,
+                };
+
+                this.record.entityType = this.selectPartyEntity.record.type;
+                this.record.entityId = this.selectPartyEntity.id;
+            });
+
+        },
+
+        postalCountryChanged(newValue) {
+
+            this.postalProvinces = root.provinces.filter(province => province.countryCode === newValue.code);
+
+            this.postalProvince = {
+                id: this.postalProvinces.length ? this.postalProvinces[0].id : null,
+                description: this.postalProvinces.length ? this.postalProvinces[0].description : null,
+            };
+
+        },
+
+        physicalCountryChanged(newValue) {
+
+            this.physicalProvinces = root.provinces.filter(province => province.countryCode === newValue.code);
+
+            this.physicalProvince = {
+                id: this.physicalProvinces.length ? this.physicalProvinces[0].id : null,
+                description: this.physicalProvinces.length ? this.physicalProvinces[0].description : null,
+            };
+
+        },
+
+        submitForm() {
+
+            this.record.entityId = this.selectPartyEntity.record.id;
+            this.record.typeId = this.selectPartyType.record.id;
+
+            console.log('this.partyNumberTable.partyNumber',this.partyNumberTable.partyNumber);
+            console.log('this.partyNumberTable.partyNumber.table',this.partyNumberTable.partyNumber.table);
+
+            let partyNumberTable = this.partyNumberTable.arrayTableFlag ? this.partyNumberTable.partyNumber.table : this.partyNumberTable.table;
+
+            let rowData = partyNumberTable.data();
+
+            let existingEmailMethods = rowData.filter(row => row.method === 'Email');
+
+            if ( existingEmailMethods.length ) {
+
+                let existingDefaultMethod = rowData.filter(row => row.method === 'Email' && row.defaultFlag == '1');
+
+                if ( !existingDefaultMethod.length ) {
+
+                    showError('No Default Email Address','<p>Please specify which email address is the <em>default email address</em> for this Party.</p><p>Edit an email address in the Contact Details section and select "Default"</p>');
+
+                    return;
+
+                }
+
+            }
+
+            let contactNumbers = [];
+
+            if ( this.partyNumberTable.arrayTableFlag ) {
+
+                partyNumberTable.rows().every( function ( index ) {
+
+                    let thisRow = this.data();
+            
+                    contactNumbers.push({
+                        method: thisRow.method,
+                        description: thisRow.description,
+                        defaultFlag: thisRow.defaultFlag,
+                    })
+
+                });
+                
+            }
+
+            let numbers = { contactNumbers: contactNumbers };
+
+            this.record.marriageId = this.selectMarriageType.record.id;
+            this.record.postalProvinceId = this.postalProvince.id;
+            this.record.physicalProvinceId = this.physicalProvince.id;
+            this.record.postalCountryId = this.postalCountry.id;
+            this.record.physicalCountryId = this.physicalCountry.id;
+
+
+            let allExtraScreens = [...this.partyExtraScreens, ...this.partyTypeExtraScreens, ...this.partyEntityExtraScreens];
+
+            allExtraScreens.forEach(extraScreen => {
+                extraScreen.fields = $('#extra-screen-form-' + extraScreen.id).serializeArray();
+            });
+
+            let extraScreens = {extraScreens: JSON.stringify(allExtraScreens)};
+
+            axios.post('/parties/store', { ...this.record, ...numbers, ...extraScreens })
+            
+            .then(response => {
+
+                if (response.data.errors) {
+
+                    this.activeTab = 'General';
+                    this.tabs[0].active = true;
+
+                    if (response.data.errors.general) { showError( 'Error', response.data.errors.general[0]);} else { this.errors = response.data.errors; }
+
+                } else {
+
+                    this.$root.setTableToRefresh('matter_parties', 'matter-parties-table');
+
+                    this.errors = {};
+
+                    this.setCurrentParty({
+                        id: response.data.id, 
+                        code: response.data.code,
+                        name: response.data.name
+                    });
+
+                    if (this.table) {
+                        this.highlightTableRow(response.data.id, response.data.code);
+                    } else {
+                        this.closeForm();
+                    }
+
+                }
+
+            }).catch(error => { showError('Error saving ' + this.table.singular, error); });
+
+        },
+
+        highlightTableRow( id, code ) {
+
+            axios.post('/parties/getTablePosition', {
+                column: code
+            })
+
+            .then(response => {
+
+                this.table.jumpToRow(id, response.data);
+
+                this.closeForm();
+                
+            });
+
+        },       
+
+        vatStatusChanged(vatStatus) {
+
+            if ( !vatStatus.value ) this.record.vatNumber = '';
+
+        },
+
+        setFriendlyName() {
+
+            if (this.editing) return;
+            
+            if (!this.record.friendlyName) {
+                
+                if ( this.record.entityType === 'J') {
+                    
+                    this.record.friendlyName = this.record.name;
+                    $('input[name="friendlyName"]').val(this.record.name);
+
+                } else {
+                    
+                    this.record.friendlyName = this.record.firstName;
+                    $('input[name="name"]').val(this.record.firstName);
+                }
+
+            }
+
+            if (!this.record.salutation) {
+                
+                this.record.salutation = 'Dear ' + ( this.record.entityType === 'J' ? 'Sir/Madam' : this.record.firstName );
+                $('input[name="salutation"]').val(this.record.salutation);
+
+            }
+
+        },
+
+        refreshFormTables() {
+
+            this.$refs[this.uniqueId + '-party-form-trust-accounts-table'].table.ajax.reload();
+            
+        },
+
+        pageTitle() {
+            return (this.record.code) ? this.record.code + ' - ' + this.record.name : '';
+        },
+
+    },
+
+}  
+</script>

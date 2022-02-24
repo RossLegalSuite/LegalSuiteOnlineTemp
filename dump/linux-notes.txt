@@ -1,0 +1,158 @@
+Amazon Linux 2 Server
+---------------------
+Public html folder: /var/www/html
+
+
+Useful linux Commands
+
+See: https://maker.pro/linux/tutorial/basic-linux-commands-for-beginners
+
+Check your version of linux
+---------------------------
+cat /etc/system-release
+
+Change to root user
+------------------
+sudo -i
+
+Restart Apache
+--------------
+sudo apachectl restart
+
+Create a file
+-------------
+touch /home/myfile.txt
+
+To add text to the file:
+echo "Hello Word" >> /home/myfile.txt
+
+To check contents of the file:
+cat /home/myfile.txt
+
+Find a file
+------------
+find / -type f -name wp-config.php
+find / -type f -name wkhtmltox
+
+Find a directory
+----------------
+find / -type d -name etc
+find / -type d -name wkhtmltopdf
+
+Check the permissions of a file
+--------------------------------
+stat -c "%a %n" /home/myfile.txt
+
+Change permissions of a file
+----------------------------
+See: https://www.inmotionhosting.com/support/website/linux/file-permissions
+See: https://www.inmotionhosting.com/support/website/ssh/changing-permissions-and-ownership
+Syntax: chmod ### file/folder
+# chmod 755 file.txt
+
+Change permissions of a directory
+---------------------------------
+# chmod 777 /home/mydirectory
+
+Change permissions of a directory & all its files
+-------------------------------------------------
+# chmod -R 777 /home/mydirectory
+
+
+Change ownership of a file
+----------------------------
+Syntax: chown user:user file/folder
+# chown user5:nobody file.txt
+
+
+Completely delete a sub directory:
+----------------------------------
+# rm -rf test
+
+Runing multiple commands
+------------------------
+If you want the second command to only run if the first command is successful, 
+separate the commands with the logical AND operator, which is two ampersands ( && ). 
+
+mkdir MyFolder && cd MyFolder
+
+
+
+Change to the root directory
+----------------------------
+# cd ~
+
+To see what folder you are in
+------------------------------
+# pwd
+
+List all (and hidden) files:
+----------------------------
+# ls -al 
+
+List all files (and show the owner):
+----------------------------
+# ls -alh 
+
+View a files contents
+---------------------
+(Show top 10 lines)
+# head file.txt 
+
+
+Creating a script file
+----------------------
+1) Create the file
+
+$ touch ~/bin/publish
+
+2) Set permissions to everyone
+
+chmod +x ~/bin/publish
+
+3) Edit the file
+
+$ nano ~/bin/publish
+
+#!/bin/bash
+# Deploy from Git
+php artisan down
+git pull origin master
+composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
+php artisan migrate --force
+php artisan route:clear
+php artisan route:cache
+php artisan config:clear
+php artisan config:cache
+npm run prod
+php artisan up
+
+
+Change file permissions for PHP files
+--------------------------------------
+# cd /home
+# find /home/*/public_html -type f -name '*.php' | xargs chmod 0644 -- 
+# find /home/*/public_html -type d | xargs chmod 0755 --
+
+
+Update and upgrade your system by running :
+------------------------------------------
+# sudo apt-get update 
+# sudo apt-get upgrade
+
+
+===========================================
+Useful Laravel functions
+===========================================
+
+View the log file
+-----------------
+[admin@vps1984 public_html]$ head storage/logs/laravel-2019-07-16.log
+
+OR . . . 
+
+[admin@vps1984 public_html]$ more storage/logs/laravel-2019-07-16.log
+
+(Use spacebar to scroll through the file. Ctrl-C to quit)
+
+

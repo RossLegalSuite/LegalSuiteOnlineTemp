@@ -1,0 +1,487 @@
+<?php
+
+namespace App\Http\Controllers\App;
+
+use App\Models\MatterParty;
+use App\Models\MatterPartyExtraScreen;
+use App\Custom\DataTablesHelper;
+use Illuminate\Http\Request;
+use DB;
+use App\Custom\Utils;
+use Datatables;
+use Validator;
+//use Illuminate\Validation\Rule;
+
+
+class MatterPartyController extends Controller {
+
+    private function addColumns(&$query)
+    {
+        $query->addSelect('matter_parties.*');
+            
+        $query->addSelect(DB::raw("CONCAT(matters.fileRef, ' - ', matters.description) as matter"));
+        $query->addSelect( "matters.fileRef as fileRef");
+
+        $query->addSelect( "parties.code as code");
+        $query->addSelect( "parties.name as name");
+        $query->addSelect(DB::raw("CONCAT(parties.code, ' - ', parties.name) as party"));
+        $query->addSelect( "party_roles.description as role");
+        $query->addSelect( "party_roles.code as roleCode");
+
+        $query->addSelect( DB::raw("CASE WHEN emailAddress.description IS NOT NULL THEN emailAddress.description ELSE '' END as `email`"));
+        $query->addSelect( DB::raw("CASE WHEN mobileNumber.description IS NOT NULL THEN mobileNumber.description ELSE '' END as `mobile`"));
+
+    }
+
+    private function addMergeColumns(&$query)
+    {
+
+        // Matter Joins
+        $query
+        ->leftJoin('branches', 'matters.branchId', '=', 'branches.id')
+        ->leftJoin('document_sets', 'matters.documentSetId', '=', 'document_sets.id')
+        ->leftJoin('matter_types', 'matters.matterTypeId', '=', 'matter_types.id')
+        ->leftJoin('matter_parties as clientParty', function ($join) {
+            $join->on('matters.id', '=', 'clientParty.matterId')
+                ->where('clientParty.roleId', session('clientRoleId') )
+                ->where('clientParty.rank', 1);
+            })
+        ->leftJoin('parties as client', 'clientParty.partyId', '=', 'client.id')
+        ->leftJoin('matter_employees as ownerEmployee', function ($join) {
+            $join->on('matters.id', '=', 'ownerEmployee.matterId')
+                ->where('ownerEmployee.roleId', session('ownerRoleId') )
+                ->where('ownerEmployee.rank', 1);
+            })
+
+        ->leftJoin('employees as owner', 'ownerEmployee.employeeId', '=', 'owner.id');
+
+        $prefix = 'matterParty-&gt;';
+
+        // Matter Columns
+        $query->addSelect("matters.id as {$prefix}matterId")
+        ->addSelect("matters.fileRef as {$prefix}matterFileRef")
+        ->addSelect("matters.description as {$prefix}matterDescription")
+        ->addSelect(DB::raw("CONCAT(matters.fileRef, ' - ', matters.description) as `{$prefix}matter`"))
+        ->addSelect( DB::raw("DATE_FORMAT( CONVERT_TZ(matters.instructed,'+00:00','" . session('timeZone') . "'), '" . Utils::sqlDateFormat() . "') as `{$prefix}matterInstructed`") )
+        ->addSelect( "client.code as {$prefix}matterClientCode")
+        ->addSelect( "client.name as {$prefix}matterClientName")
+        ->addSelect( "client.salutation as {$prefix}matterClientSalutation")
+        ->addSelect(DB::raw("CONCAT(client.code, ' - ', client.name) as `{$prefix}matterClient`"))
+        ->addSelect("owner.name as {$prefix}matterEmployeeName")
+        ->addSelect("branches.description as {$prefix}matterBranchDescription")
+        ->addSelect("document_sets.description as {$prefix}matterDocumentSetDescription")
+        ->addSelect("matter_types.description as {$prefix}matterMatterTypeDescription");
+
+        // Party Joins
+        $query
+        ->leftJoin('marriage_types', 'parties.marriageId', '=', 'marriage_types.id')
+        ->leftJoin('party_entities', 'parties.entityId', '=', 'party_entities.id')
+        ->leftJoin('party_types', 'parties.typeId', '=', 'party_types.id')
+        ->leftJoin('provinces as physicalProvince', 'parties.physicalProvinceId', '=', 'physicalProvince.id')
+        ->leftJoin('provinces as postalProvince', 'parties.postalProvinceId', '=', 'postalProvince.id')
+        ->leftJoin('countries as physicalCountry', 'parties.physicalCountryId', '=', 'physicalCountry.id')
+        ->leftJoin('countries as postalCountry', 'parties.postalCountryId', '=', 'postalCountry.id');
+
+        // Party Columns
+        $query->addSelect( "parties.id as {$prefix}partyId")
+        ->addSelect( "parties.code as {$prefix}partyCode")
+        ->addSelect( "parties.name as {$prefix}partyName")
+        ->addSelect("parties.firstName as {$prefix}partyFirstName")
+        ->addSelect("parties.lastName as {$prefix}partyLastName")
+        ->addSelect("parties.title as {$prefix}partyTitle")
+        ->addSelect("parties.friendlyName as {$prefix}partyFriendlyName")
+        ->addSelect("parties.salutation as {$prefix}partySalutation")
+        ->addSelect("parties.idNumber as {$prefix}partyIdNumber")
+        ->addSelect( DB::raw("CASE 
+        WHEN parties.idType = 'I' THEN 'Identity Document'
+        WHEN parties.idType = 'S' THEN 'Social Security'
+        WHEN parties.idType = 'P' THEN 'Passport'
+        WHEN parties.idType = 'D' THEN 'Drivers Licence'
+        WHEN parties.idType = 'B' THEN 'Birth Certificate'
+        WHEN parties.idType = 'T' THEN 'Temporary Residence'
+        WHEN parties.idType = 'X' THEN 'Tax Certificate'
+        WHEN parties.idType = 'A' THEN 'Armed Forces ID'
+        WHEN parties.idType = 'O' THEN 'Other'
+        ELSE parties.idType END as `{$prefix}partyIdTypeDescription`"))
+        ->addSelect( DB::raw("DATE_FORMAT( CONVERT_TZ(parties.birthdate,'+00:00','" . session('timeZone') . "'), '" . Utils::sqlDateFormat() . "') as `{$prefix}partyBirthDate`"))
+        ->addSelect("party_entities.description as {$prefix}partyEntityDescription")
+        ->addSelect("party_types.description  as {$prefix}partyTypeDescription")
+        ->addSelect("marriage_types.description as {$prefix}partyMarriageDescription")
+        ->addSelect("parties.physicalLine1 as {$prefix}partyPhysicalLine1")
+        ->addSelect("parties.physicalLine2 as {$prefix}partyPhysicalLine2")
+        ->addSelect("parties.physicalLine3 as {$prefix}partyPhysicalLine3")
+        ->addSelect("parties.physicalCode as {$prefix}partyPhysicalCode")
+        ->addSelect("physicalProvince.description as {$prefix}partyPhysicalProvince")
+        ->addSelect("physicalCountry.description as {$prefix}partyPhysicalCountry")
+        ->addSelect("parties.postalLine1 as {$prefix}partyPostalLine1")
+        ->addSelect("parties.postalLine2 as {$prefix}partyPostalLine2")
+        ->addSelect("parties.postalLine3 as {$prefix}partyPostalLine3")
+        ->addSelect("parties.postalCode as {$prefix}partyPostalCode")
+        ->addSelect("postalProvince.description as {$prefix}partyPostalProvince")
+        ->addSelect("postalCountry.description as {$prefix}partyPostalCountry")
+        ->addSelect( DB::raw("CASE WHEN emailAddress.description IS NOT NULL THEN emailAddress.description ELSE '' END as `{$prefix}partyEmail`"))
+        ->addSelect( DB::raw("CASE WHEN mobileNumber.description IS NOT NULL THEN mobileNumber.description ELSE '' END as `{$prefix}partyMobile`"));
+
+
+        $query->addSelect( "party_roles.code as {$prefix}roleCode")
+        ->addSelect( "party_roles.description as {$prefix}roleDescription");
+
+
+    }
+
+    public function get(Request $request)
+    {
+
+        $query = DB::table('matter_parties')
+        ->join('matters', 'matters.id', '=', 'matter_parties.matterId')
+        ->join('parties', 'parties.id', '=', 'matter_parties.partyId')
+        ->join('party_roles', 'party_roles.id', '=', 'matter_parties.roleId')
+        ->leftJoin('party_numbers as emailAddress', function ($join)  {
+            $join->on('parties.id', '=', 'emailAddress.partyId')
+                ->whereRaw('emailAddress.id IN (select max(id) from party_numbers WHERE methodId = ' . session('emailMethodId') . ' AND partyId = parties.id AND defaultFlag = 1 group by methodId)');
+            })
+        ->leftJoin('party_numbers as mobileNumber', function ($join)  {
+            $join->on('parties.id', '=', 'mobileNumber.partyId')
+                ->whereRaw('mobileNumber.id IN (select max(id) from party_numbers WHERE methodId = ' . session('mobileMethodId') . ' AND partyId = parties.id AND defaultFlag = 1 group by methodId)');
+        });
+
+        if ( $request->dataFormat === 'mergeArray') {
+
+            $this->addMergeColumns($query);
+
+            $query->orderBy('parties.code');
+            
+        } else {
+            $this->addColumns($query);
+        }
+
+
+        if ($request->id) $query->where('matter_parties.id',$request->id);
+
+        if ($request->matterId) $query->where('matter_parties.matterId',$request->matterId);
+
+        if ($request->partyId) $query->where('matter_parties.partyId',$request->partyId);
+
+        if ($request->roleId) $query->where('matter_parties.roleId',$request->roleId);
+
+        DataTablesHelper::AddCommonWhereClauses($query, $request);
+        //Utils::LogSqlQuery($query);
+
+        if ($request->dataFormat === "dataTables") {
+
+            $datatables = Datatables::of($query);
+
+            if ( $request->tableFilter ) {
+
+                $datatables->filterColumn('party', function($query, $keyword) {
+                    $sql = "CONCAT(parties.code, ' - ', parties.name) like ?";
+                    $query->whereRaw($sql, ["%{$keyword}%"]);
+                })
+                ->filterColumn('matter', function($query, $keyword) {
+                    $sql = "CONCAT(matters.fileRef, ' - ', matters.description) like ?";
+                    $query->whereRaw($sql, ["%{$keyword}%"]);
+                });
+
+            }
+
+            return $datatables->make(true);
+
+        } else  {
+
+            return DataTablesHelper::ReturnData($query, $request);
+        }
+    }
+
+    public function moveUp(Request $request)
+    {
+
+        $returnData = new \stdClass();
+        $returnData->error = null;
+
+        try {
+
+            return DB::transaction( function() use ($returnData, $request)
+            {
+
+                $matterParty1 = MatterParty::find($request->id);
+        
+                $matterParty2 = MatterParty::where('matterId',$matterParty1->matterId)
+                ->where('roleId',$matterParty1->roleId)
+                ->where('rank',$matterParty1->rank - 1)
+                ->first();
+
+                if ( !$matterParty1 ) {
+
+                    $returnData->error = 'First Party not found';
+
+                } else if ( !$matterParty2 ) {
+
+                    $returnData->error = 'Second Party not found';
+
+                } else {
+        
+                    $rank1 = $matterParty1->rank;
+                    $rank2 = $matterParty2->rank;
+
+                    // Not needed because in a Transaction
+                    // $matterParty2->rank = 0;
+                    // $matterParty2->save();
+            
+                    $matterParty1->rank = $rank2;
+                    $matterParty1->save();
+            
+                    $matterParty2->rank = $rank1;
+                    $matterParty2->save();
+
+                }
+
+                return json_encode($returnData);
+
+            });
+    
+        } catch (\Illuminate\Database\QueryException $e) {
+
+            $returnData->error = Utils::MySqlError($e);
+            return json_encode($returnData);            
+
+        }
+
+
+
+
+    }
+
+    public function store(Request $request)
+    {
+
+        $returnData = new \stdClass();
+        
+        $data = $request->all();
+
+        $rules = [
+            'matterId' => 'required',
+            'partyId' => 'required',
+            'roleId' => 'required',
+            'rank' => 'numeric|required',
+        ];
+        
+        $messages = [
+            'matterId.required' => 'No Matter was specified',
+            'partyId.required' => 'Please select a Party',
+            'roleId.required' => 'Please select a Role for this Party',
+            'rank.required' => 'Please provide a Rank for this Party',
+            'rank.numeric' => 'The Rank must be numeric',
+        ];
+
+
+        $validator = Validator::make($data, $rules, $messages); 
+        
+        if ($validator->fails()) {
+
+            $returnData->errors = $validator->errors();
+            return json_encode($returnData);            
+
+        }
+
+
+        // Check if adding a second Client
+
+        //$clientRole = DB::table('party_roles')->where('code', 'CLI')->first();
+
+        if ( $request->roleId == session('clientRoleId') ) {
+
+            $query = MatterParty::where('matterId',$request->matterId)
+            ->where('roleId',$request->roleId);
+
+            if ( isset($request->id) ) $query->where('id','<>',$request->id);
+            
+            $existingClientRole = $query->first();
+    
+            if ( $existingClientRole ) {
+
+                $validator->errors()->add('duplicate', '<p>This Matter already has a Client assigned to it.</p><p>A Matter can only have one Client.</p>');
+
+                $returnData->errors = $validator->errors();
+    
+                return json_encode($returnData);            
+    
+            }
+
+        }
+
+        // Check for duplicate Party Roles
+        $query = MatterParty::where('matterId',$request->matterId)
+        ->where('partyId',$request->partyId)
+        ->where('roleId',$request->roleId);
+
+        if ( isset($request->id) ) $query->where('id','<>',$request->id);
+
+        $existingPartyRole  = $query->first();
+
+        if ( $existingPartyRole ) {
+
+            $validator->errors()->add('duplicate', 'This Party already plays this Role on this Matter');
+
+            $returnData->errors = $validator->errors();
+
+            return json_encode($returnData);            
+
+        }
+
+
+        try {
+        
+            if ( isset($request->id) ) {
+                $matterParty = MatterParty::find($request->id);
+            } else {
+                $matterParty = new MatterParty;
+            }
+
+            $matterParty->matterId = $request->matterId;
+            $matterParty->partyId = $request->partyId;
+            $matterParty->roleId = $request->roleId;
+            $matterParty->reference = $request->reference;
+            
+            $matterParty->rank = $request->rank;
+
+            $matterParty->save();
+
+
+            $matterParties = MatterParty::where('matterId',$request->matterId)
+            ->orderBy('roleId')
+            ->orderBy('rank')
+            ->get();
+
+            $correctRank = 0;
+            $thisRoleId = null;
+
+            foreach ($matterParties as $matterParty) {
+
+                //logger('$matterParty roleId/rank',[$matterParty->roleId,$matterParty->rank]);
+
+                if ( (int) $matterParty->roleId !== $thisRoleId) {
+                    $thisRoleId = $matterParty->roleId;
+                    $correctRank = 0;
+                }
+
+                $correctRank++;
+
+                if ( (int) $matterParty->rank !== $correctRank) {
+
+                    //logger('Would have corrected',[$matterParty->roleId,$matterParty->rank, $correctRank]);
+
+                    $matterParty->rank = $correctRank;
+                    $matterParty->save();
+
+                }
+                
+            }        
+
+            if ( isset($request->extraScreens) ) {
+
+                foreach(json_decode($request->extraScreens) as $extraScreen) {
+
+                    foreach($extraScreen->fields as $field) {
+
+                        MatterPartyExtraScreen::updateOrCreate(
+                            ['matterPartyId' => $matterParty->id, 'extraScreenId' => $extraScreen->id, 'name' => $field->name],
+                            ['value' => $field->value]
+                        );
+
+                    }
+
+                }
+
+            }
+
+
+            return json_encode($matterParty);
+
+        } catch (\Illuminate\Database\QueryException $e) {
+
+            $validator->errors()->add('general', Utils::MySqlError($e));
+
+            $returnData->errors = $validator->errors();
+            return json_encode($returnData);            
+
+        }        
+
+
+    }
+
+    public function destroy(Request $request)
+    {
+
+        $returnData = new \stdClass();
+        $returnData->error = null;
+
+        //$clientRole = DB::table('party_roles')->where('code', 'CLI')->first();
+
+        if ( $request->roleId == session('clientRoleId') && (int) $request->rank === 1) {
+
+            $returnData->error = '<p>You cannot delete the Client for a Matter.</p><p>A Matter must have a Client.</p>';
+            return json_encode($returnData);            
+
+
+        }
+
+        try {
+
+            return DB::transaction( function() use ($returnData, $request)
+            {
+
+                MatterParty::findOrFail($request->id)->delete();
+
+                // Adjust the ranking of the other Parties with this Role
+                $matterParties = MatterParty::where('matterId',$request->matterId)
+                ->where('roleId',$request->roleId)
+                ->orderBy('rank')
+                ->get();
+
+                $correctRank = 0;
+    
+                foreach ($matterParties as $matterParty) {
+
+                    $correctRank++;
+
+                    if ( (int) $matterParty->rank !== $correctRank) {
+
+                        $matterParty->rank = $correctRank;
+                        $matterParty->save();
+
+                    }
+                    
+                }        
+
+                return json_encode($returnData);
+
+            });
+            
+        } catch (\Illuminate\Database\QueryException $e) {
+
+            $returnData->error = Utils::MySqlError($e);
+            return json_encode($returnData);            
+            
+        } catch(\Exception $e)  {
+
+            $returnData->error = $e->getMessage();
+            return json_encode($returnData);
+
+        }
+
+    }
+
+
+    public function getTablePosition(Request $request)
+    {
+
+        return DB::table('matter_parties')
+        ->where('matterId', $request->matterId)
+        ->where('rank', '<' , $request->rank)
+        ->orderBy('partyId')
+        ->orderBy('roleId')
+        ->count();
+
+    }    
+
+}

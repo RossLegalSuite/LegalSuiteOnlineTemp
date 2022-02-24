@@ -1,0 +1,116 @@
+<template>
+
+<div class="modal" :id="id">
+
+    <div class="modal-dialog modal-dialog-left modal-lg">
+
+        <div class="modal-content" style="border-color:indianred">
+
+            <div class="modal-header indianred">
+                <h2 class="modal-title page-title"><i class="fa fa-server mr-2"></i>Select Employees</h2>
+                <i title="Close this window" class="cp top-right fa fa-times-circle fa-2x text-white" data-dismiss="modal"></i>
+            </div>
+
+            <div class="modal-body p-3" style="height: 60vh; overflow-y: auto;">
+
+                    <select-employees-table 
+                        :tableId="id + '-employees-table'" 
+                        :lazyLoadFlag="true" 
+                        :tagging="true" 
+                        :ref="id + '-select-employees-table'" 
+                        :formRef="id + '-select-employees-table'"
+                    />
+
+            </div>
+
+            <div class="modal-footer justify-content-between">
+
+                <div>
+                    <modal-table-filter-footer/>
+                </div>
+
+                <div>
+
+                    <button v-show="selectedRows.length || selectedAllFlag" class="btn btn-success form-button mr-2" type="button" @click="selectClicked" :title="'Select ' + selectedRows.length + ' tagged Employee' + (selectedRows.length > 1 ? 's' : '')"><i class="fa fa-check-circle fa-lg mr-2"></i>
+                        Select
+                        <span class="badge badge-danger ml-2">{{ selectedAllFlag ? 'All' : selectedRows.length}}</span>
+                    </button>
+
+                    <button class="btn btn-danger form-button" type="button" @click="hide" title="Cancel selection"><i class="fa fa-times-circle fa-lg mr-2"></i>Cancel</button>
+
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+</template>
+
+<script>
+
+import modalTemplate from "@components/modals/modal-template";
+
+export default {
+
+    mixins: [modalTemplate],
+
+    components: {
+        SelectEmployeesTable: () => import("./SelectEmployeesTable"),
+    },
+
+    data() {
+        return {
+            table: null,
+            selectedRows: [],
+            selectedAllFlag: false,
+        };
+    },
+
+    mounted () {
+        this.$parent.selectEmployees = this;
+    },    
+
+    methods: {
+
+        selectEmployees() {
+
+            this.open();
+
+            this.table.setButtonTitle = 'Select this Employee';
+            this.table.setButtonText = 'Select';
+            this.table.setButtonFunction = 'selectRecord';
+            
+            this.table.loadDataTable();
+
+        },
+
+        selectClicked() {
+
+            this.hide();
+
+            // Return empty array if all are selected
+            if ( this.selectedAllFlag ) {
+
+                    this.table.setUserFilters();
+
+                    this.$parent.employeesSelected([], this.table);
+                
+                } else {
+                    
+                    this.$parent.employeesSelected(this.selectedRows);
+
+            }
+
+            this.selectedAllFlag = false;
+            this.selectedRows = [];
+
+        },
+
+    },
+
+}  
+</script>
+

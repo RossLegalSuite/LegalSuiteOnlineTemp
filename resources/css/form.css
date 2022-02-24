@@ -1,0 +1,70 @@
+.form-control {
+    border: 1px solid slategray;
+}
+
+
+.form-control.search-input {
+    border-radius: 0.2rem !important;
+}
+
+.form-group label {
+    font-weight: 600;
+    margin-bottom: 0.25rem !important;
+}
+
+
+.form-group {
+    margin-bottom: 0.75rem !important;
+    background-color: transparent;
+}
+
+
+.form-control:disabled {
+    border: 1px solid slategray;
+    background-color: #e9ecef !important;
+}
+
+.form-control[readonly] {
+    border: 1px solid slategray;
+    background-color: white !important;
+}
+
+.form-button .btn-sm{
+    min-width: 5rem;
+}
+
+.form-button {
+    min-width: 7rem;
+    box-shadow: 4px 4px 3px rgba(0, 0, 0, 0.25);
+}
+
+.form-check-label {
+    margin-left: 5px;
+}
+
+.form-input-number {
+    text-align: right; 
+    font-weight: bold;
+}    
+
+/* https://stackoverflow.com/questions/13509883/how-to-vertically-align-a-html-radio-button-to-its-label */
+.form-check-inline .form-check-inline-input {
+    display:table-cell; 
+    vertical-align:middle;
+}
+
+/* For inline forms - see user.show for an example */
+.form-row {
+    display: flex !important;
+    justify-content: flex-end !important;
+    /* padding: .5em; */
+    margin-bottom: 0.5rem !important;
+}
+.form-row > label {
+    padding: .5em 1em .5em 0;
+    flex: 1 !important;
+    white-space: nowrap;
+}
+.form-row > input {
+    flex: 2 !important;
+}

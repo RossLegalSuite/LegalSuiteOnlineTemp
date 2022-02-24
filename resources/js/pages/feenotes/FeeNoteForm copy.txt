@@ -1,0 +1,784 @@
+<template>
+
+<div :id="id" :class="modal ? 'modal': ''">
+    
+    <div :class="modal ? 'modal-dialog modal-dialog-centered modal-lg' : ''">
+
+        <div :id="id + '-form-border'" :class="modal ? 'modal-content feenotes-border' : 'card h-100 border-0'">
+
+            <div :id="id + '-form-header'" :class="modal ? 'feenotes-bg' : 'card-header'">
+
+                <div :class="modal ? 'modal-header' : 'd-flex justify-content-between'">
+
+                    <div class="page-title">
+                        <h3>
+                            <span v-if="isPosted()">Posted Fee Note</span>
+                            <span v-else-if="!editing">Fee Note will be Added</span>
+                            <span v-else>Fee Note will be Changed</span>
+                        </h3>
+                        <i v-if="modal" :id="id + '-modal-close-button'" title="Close this window" class="cp top-right fa fa-times-circle fa-2x text-white" data-dismiss="modal"></i>
+                    </div>
+
+                    <page-close-button v-if="!modal" @closeClicked="closeForm"/>
+
+                </div>
+
+            </div>
+
+            <div class="card-body form-tab-body overflow-auto">
+                <form-tabs :tabs="tabs"/>
+
+                <div v-show="activeTab === 'General'" class="form-tab-content">
+
+                    <div class="form-group row">
+                        <radio-buttons 
+                            :popOver="`<h4>Type</h4><p>The type of Fee Note</p>`"
+                            :popOverContainer="'#' + id"
+                            _class="col-md-12" 
+                            :readOnly="isPosted()"
+                            :record="record" 
+                            column="type1" 
+                            :buttons="[
+                                {value:'F', text: 'Fee'},
+                                {value:'D', text: 'Disbursement'},
+                                {value:'R', text: 'Revenue Stamp'},
+                                {value:'C', text: 'Creditor'},
+                            ]" 
+                            name="Type" 
+                            label="Type" 
+                            @change="typeChanged"
+                        />
+                    </div>
+
+
+                    <div class="form-group row">
+
+                        <div class="col-md-4">
+                            <label>Date</label>
+                            <date-picker :readOnly="isPosted()" ref="datePickerComponent" v-model="record.formatteddate" :config="$root.datePickerOptions"/>
+                        </div>
+
+                        <select-employee
+                            :readOnly="isPosted()"
+                            :id="id + '-select-employee'"
+                            _class="col-md-4"
+                            popOver="<h4>Employee</h4>
+                            <p>The Employee this Fee Note is assigned to</p>"
+                            label="Employee"
+                            :ref="uniqueId + '-select-employee'" 
+                            :formRef="uniqueId + '-select-employee'"
+                        />                        
+
+                        <select-income-account
+                            :readOnly="isPosted()"
+                            v-show="displayIncomeAccount()"
+                            :id="id + '-select-income-account'"
+                            _class="col-md-4"
+                            popOver="The Income Account this Fee is allocated to"
+                            ref="feenote-form-select-income-account" 
+                            form-ref="feenote-form-select-income-account"
+                        />
+
+                        <select-disbursement-account
+                            :readOnly="isPosted()"
+                            v-show="displayDisbursementAccount()"
+                            :id="id + '-select-disbursement-account'"
+                            _class="col-md-4"
+                            popOver="The Ledger Account this Disbursement is allocated to"
+                            ref="feenote-form-select-disbursement-account" 
+                            form-ref="feenote-form-select-disbursement-account"
+                        />
+
+                        <select-revenue-stamp-account
+                            :readOnly="isPosted()"
+                            v-show="displayRevenueStampAccount()"
+                            :id="id + '-select-revenue-stamp-account'"
+                            _class="col-md-4"
+                            popOver="The Ledger Account this Revenue Stamp is allocated to"
+                            ref="feenote-form-select-revenue-stamp-account" 
+                            form-ref="feenote-form-select-revenue-stamp-account"
+                        />
+
+                        <select-creditor
+                            :readOnly="isPosted()"
+                            v-show="displayCreditors()"
+                            :id="id + '-select-creditor'"
+                            _class="col-md-4"
+                            popOver="The Creditor this Fee Note is allocated to"
+                            ref="feenote-form-select-creditor" 
+                            form-ref="feenote-form-select-creditor"
+                        />
+
+
+
+                    </div>
+
+                    <div class="form-group row">
+
+                        <select-matter
+                            :readOnly="isPosted()"
+                            popOver="The Matter this Fee Note is linked to"
+                            :id="id + '-select-matter'"
+                            _class="col-md-6"
+                            ref="feenote-form-select-matter" 
+                            form-ref="feenote-form-select-matter"
+                        />
+
+                        <select-cost-centre
+                            :readOnly="isPosted()"
+                            popOver="The Cost Centre this Fee Note belongs to"
+                            v-show="displayCostCentre()"
+                            :id="id + '-select-cost-centre'"
+                            _class="col-md-6"
+                            ref="feenote-form-select-cost-centre" 
+                            form-ref="feenote-form-select-cost-centre"
+                        />
+
+                    </div>
+
+
+                    <div class="form-group row">
+
+                        <text-area 
+                            _class="col-md-12" 
+                            popOver="<h4>Description</h4><p>A description of the Fee Note.</p>"
+                            :readOnly="isPosted()"
+                            rows="4" 
+                            cols="50" 
+                            v-model="record.description" 
+                            name="description" 
+                            label="Description"
+                            ref="feeNoteDescription"
+                            :lookupLibraryFlag="true"
+                            lookupLibraryCategory="FeeNote Description"
+                        />
+
+                    </div>
+
+                    <div class="form-group row">
+
+                        <text-input 
+                            _class="col-md-4"
+                            popOver="<h4>Amount</h4><p>The amount of the Fee Note.</p>"
+                            input-class="form-input-number" 
+                            :value="isPosted() ? $root.formatMoney(record.amount) : record.amount" 
+                            label="Amount"
+                            ref="feeNoteAmount"
+                        />
+
+                        <text-input 
+                            v-show="isPosted()" 
+                            popOver="<h4>Vat Rate</h4><p>The Vat Rate that applies to this Fee Note.</p>"
+                            _class="col-md-4" 
+                            :readOnly="true"
+                            :value="record.vatratedescription" 
+                            label="Vat Rate"
+                        />
+
+
+                        <div v-show="!isPosted()" class="col-md-4">
+
+                            <label>Vat Rate</label>
+                            <pop-over 
+                                :container="'#' + id" 
+                                content="<h4>Vat Rate</h4><p>The Vat Rate that applies to this Fee Note.</p>"
+                            />
+                            <v-select 
+                                :options="vatRates" 
+                                :clearable="false"
+                                :searchable="false"
+                                v-model="record.vatrate"
+                                :reduce="vatRates => vatRates.value"
+                            />
+
+
+                        </div>
+
+                        <text-input 
+                            v-show="isPosted()" 
+                            _class="col-md-4" 
+                            popOver="<h4>Vat Inc/Excl</h4><p>Specify whether the Amount includes or excludes Vat.</p>"
+                            :readOnly="true"
+                            :value="record.vatie == 'E' ? 'Excluding' : 'Including'" 
+                            label="Inc/Excl Vat"
+                        />
+
+
+                        <div v-show="!isPosted()" class="col-md-4">
+
+                            <label>Inc/Excl Vat</label>
+                            <pop-over 
+                                :container="'#' + id" 
+                                content="<h4>Vat Inc/Excl</h4><p>Specify whether the Amount includes or excludes Vat.</p>"
+                            />
+                            <v-select 
+                                :options="vatIe" 
+                                :clearable="false"
+                                :searchable="false"
+                                v-model="record.vatie"
+                                :reduce="vatIe => vatIe.value"
+                            />
+
+                        </div>
+
+                    </div>
+
+
+
+                </div>  
+
+                <div v-show="activeTab === 'Details'" class="form-tab-content">
+
+                    <div class="row">
+
+                        <div class="col-xxl-6">
+
+                            <fieldset><legend>xxxx</legend></fieldset>
+
+
+                        </div>
+
+                        <div class="col-xxl-6 mt-xl-3 mt-xxl-0">
+
+                            <fieldset><legend>xxx</legend>
+                            </fieldset>
+
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="modal-footer justify-content-between">
+                <div>
+
+                    <button v-show="editing && !isPosted()" class="btn btn-primary form-button mr-3" type="button" @click="deleteClicked">
+                        <span title="Delete this Fee Note"><i class="fa fa-trash fa-lg mr-2"></i>Delete</span>
+                    </button>
+
+                </div>
+                <div>
+
+                    <button v-if="!isPosted()" class="btn btn-yellow form-button mr-3" @click="okClicked(false)" type="button" title="Save the Item and continue editing"><i class="fa fa-check-square fa-lg mr-2"></i>Save</button>
+
+                    <button v-if="!isPosted()" class="btn btn-success form-button mr-3" @click="okClicked(true)" type="button" title="Save the Item and close the Window"><i class="fa fa-check-circle fa-lg mr-2"></i>OK</button>
+
+                    <button v-if="savedFlag || editing" class="btn btn-danger form-button" @click="closeForm" type="button" title="Close this screen"><i class="fa fa-times-circle fa-lg mr-2"></i>Close</button>
+
+                    <button v-else class="btn btn-danger form-button" @click="closeForm" type="button" title="Exit without saving"><i class="fa fa-times-circle fa-lg mr-2"></i>Cancel</button>
+
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+    
+</div>
+
+</template>    
+
+<script>
+
+import { mapGetters } from 'vuex';
+import FormTemplate from "@pages/form-template";
+import modalTemplate from "@components/modals/modal-template";
+
+export default {
+
+    mixins: [FormTemplate, modalTemplate],
+    
+    components: {
+        SelectMatter: () => import("@pages/matters/SelectMatter"),
+        SelectCostCentre: () => import("@pages/matters/SelectCostCentre"),
+        SelectIncomeAccount: () => import("@pages/matters/SelectIncomeAccount"),
+        SelectDisbursementAccount: () => import("@pages/matters/SelectDisbursementAccount"),
+        SelectRevenueStampAccount: () => import("@pages/matters/SelectRevenueStampAccount"),
+        SelectCreditor: () => import("@pages/matters/SelectCreditor"),
+        SelectEmployee: () => import("@pages/employees/SelectEmployee"),
+
+    },
+
+    props: {
+        resource: {type: String, default: 'Fee Notes' },
+        uniqueId: String,
+
+    },    
+
+    data() {
+        return {
+            // amount: 0,
+            // taxAmount: 0,
+            // totalAmount: 0,
+            // amountString: '',
+            // taxAmountString: '',
+            // totalAmountString: '',
+            // taxRatePercentage: 0,
+            // salesTaxDescription: '&nbsp;',
+            vatRates: root.vatRates,
+            vatIe: [ { value: 'E', label: 'Excluding' }, { value: 'I', label: 'Including' }],
+            activeTab: 'General',
+            tabs: [
+                {
+                    pageName: "General",
+                    title: "Transaction",
+                    iconClass: '',
+                    visible: true,
+                    active: true,
+                },
+                {
+                    pageName: "Details",
+                    title: "Details",
+                    iconClass: '',
+                    visible: true,
+                    active: false,
+                },
+
+            ],
+        }
+    },
+
+    computed: {
+
+        ...mapGetters(['currentMatter']),
+    },
+
+    methods: {
+
+        editRecord(id) {
+
+            this.setGeneralTab();
+
+            axios.post('/feenote/get',{recordid: id})
+
+            .then(response => {
+
+                this.record = response.data.data[0];
+
+                this.$refs.feeNoteDescription.setReadOnly = this.isPosted();
+                this.$refs.feeNoteAmount.setReadOnly = this.isPosted();
+
+                this.selectEmployee.record = {
+                    recordid: this.record.employeeid,
+                    name: htmlDecode(this.record.employeename),
+                };
+
+
+                this.selectMatter.matter = {
+                    id: this.record.matterid,
+                    fileref: this.record.matterfileref,
+                    description: this.record.matterdescription,
+                };
+
+                this.selectCostCentre.record = {
+                    recordid: this.record.costcentreid,
+                    description: this.record.costcentre,
+                };
+
+                if ( this.record.type1 == 'F') {
+                    
+                    this.selectIncomeAccount.record = {
+                        recordid: this.record.code2,
+                        description: root.business.filter(record => record.recordid == this.record.code2)[0].description,
+                    };
+
+                } else if ( this.record.type1 == 'D') {
+
+                    this.selectDisbursementAccount.record = {
+                        recordid: this.record.code2,
+                        description: root.business.filter(record => record.recordid == this.record.code2)[0].description,
+                    };
+
+                } else if ( this.record.type == 'R') {
+
+                    this.selectRevenueStampAccount.record = {
+                        recordid: this.record.code2,
+                        description: root.business.filter(record => record.recordid == this.record.code2)[0].description,
+                    };
+
+                } else if ( this.record.type == 'C') {
+
+                    this.selectCreditor.record = {
+                        recordid: this.record.code2,
+                        description: root.creditors.filter(record => record.recordid == this.record.code2)[0].description,
+                    };
+
+                }
+
+                this.initFormData();
+
+            }).catch( (error) => {
+                showError('Error',error)
+            });
+
+        },
+
+        initNewRecord() {
+
+            this.record = {
+                formatteddate: moment().format(root.control.dateformat),
+                employeeid: root.loggedInEmployeeId,
+                matterid: this.currentMatter.recordid || null,
+                costcentreid: this.record.costcentreid || null,
+                code2: this.record.code2 || root.control.incomeaccid,
+                description: null,
+                feecodeid:  0,
+                feeitemid:  0,
+                documentid:  0,
+                partyid:  null,
+                type1: 'F',
+                amount: null,
+                postedflag: '0',
+                unitid:  0,
+                overrideincomeaccflag:  0,
+                vatrate:'1',
+                vatie: root.control.feevatieoption == '1' ? 'I' : 'E',
+            };
+
+            if ( this.record.code2 ) {
+
+                this.selectIncomeAccount.record = {
+                    recordid: this.record.code2,
+                    description: root.incomeAccounts.filter(record => record.recordid == this.record.code2)[0].description,
+                };
+
+            } else {
+
+                this.selectIncomeAccount.record = {
+                    recordid: null,
+                    description: '',
+                };
+
+            }
+
+            // if ( this.record.matterid ) {
+
+            //     this.getIncomeAccount().then( ( response ) => {
+
+            //         this.record.code2 = response.recordid;
+
+            //         this.selectIncomeAccount.record = {
+            //             recordid: this.record.code2,
+            //             description: root.incomeAccounts.filter(record => record.recordid == this.record.code2)[0].description,
+            //         };
+
+            //     }).catch( (error) => {
+
+            //         showError('Error',error)
+            //     });
+
+
+            // } else {
+
+            //     this.selectIncomeAccount.record = {
+            //         recordid: this.record.code2,
+            //         description: root.incomeAccounts.filter(record => record.recordid == this.record.code2)[0].description,
+            //     };
+
+            // }
+
+            this.selectMatter.matter = this.currentMatter.recordid ? 
+            {
+                recordid: this.currentMatter.recordid,
+                fileref: this.currentMatter.fileref,
+                description: this.currentMatter.description,
+            } : {
+                recordid: null,
+                fileref: '',
+                description: '',
+            };
+
+
+            this.selectCostCentre.record = this.record.costcentreid ?
+            {
+                recordid: this.record.costcentreid,
+                description: root.costCentres.filter(record => record.recordid == this.record.costcentreid)[0].description,
+            } : {
+                recordid: null,
+                description: '',
+            };
+
+            this.selectEmployee.record = {
+                recordid: root.loggedInEmployeeId,
+                name: htmlDecode(root.loggedInEmployeeName),
+            };
+
+            this.initFormData();
+
+            setTimeout(() => $('#' + this.id + ' textarea[name="description"]').focus() );
+
+        },
+
+        initFormData() {
+
+            this.selectMatter.callingComponent = this;
+
+            this.displayForm();
+
+        },
+
+
+        typeChanged(newValue) {
+
+            console.log("typeChanged newValue",newValue);
+
+            if ( newValue == 'R' ) {
+
+            }
+
+
+        },
+
+        matterSelected(selectedRecord) {
+
+            this.record.matterid = selectedRecord.recordid;
+
+
+            // Set the Cost Centre
+            if ( root.loggedInEmployeeUseMatterCostCentreFlag ) {
+
+                if ( selectedRecord.costcentreid ) {
+
+                    this.record.costcentreid = selectedRecord.costcentreid;
+
+                    this.selectCostCentre.record = {
+                        recordid: this.record.costcentreid,
+                        description: root.costCentres.filter(record => record.recordid == this.record.costcentreid)[0].description,
+                    }
+
+                }
+
+            }
+
+            // Set the default description
+            if ( !this.record.description ) {
+
+                let language = root.languages.filter(record => record.recordid == selectedRecord.accountslanguageid);
+
+                if ( language.length) {
+
+                    if ( this.record.type1 == 'F' ) {
+                        this.record.description = language[0].feedescription;
+                    } else if ( this.record.type1 == 'D' || this.record.type1 == 'R') {
+                        this.record.description = language[0].disbursementdescription;
+                    } else if ( this.record.type1 == 'C' ) {
+                        this.record.description = language[0].businesscreditordescription;
+                    }
+                }
+
+            }
+
+            // Set the Vat Rate
+            if ( this.record.type1 == 'R') {
+
+                if ( root.control.vatmethod != 'N' ) {
+                    this.record.vatrate = 'E';
+                }
+
+            }
+
+            if ( root.control.vatmethod != 'N' ) {
+
+                if (selectedRecord.vatexemptflag == '0' ) {
+                    
+                    this.record.vatrate = 'E';
+
+                } else if (selectedRecord.vatexemptflag == '1' ) {
+
+                    this.record.vatrate = 'Z';
+
+                }
+
+                console.log("this.record.vatrate - do we need to refresh drop down?",this.record.vatrate);
+
+            }
+
+
+            this.getIncomeAccount().then( ( response ) => {
+
+                this.record.code2 = response.recordid;
+                this.record.overrideincomeaccflag = response.overrideincomeaccflag;
+
+            }).catch( (error) => {
+
+                showError('Error getting Income Account',error)
+            });
+
+
+        },        
+
+
+        getIncomeAccount() {
+
+            return new Promise((resolve, reject) => {
+
+                axios.post("/utils/getIncomeAccount",{
+                    matterId: this.record.matterid, 
+                    employeeid: this.record.employeeid
+                })
+
+                .then(response => {
+
+                    if (response.data.errors) {
+
+                        reject(response.data.errors );
+
+                    } else {
+
+                        resolve({
+                            recordid: response.data.data.recordid,
+                            overrideincomeaccflag: response.data.data.overrideincomeaccflag
+                        })
+                    }
+
+                }).catch(error => { 
+
+                    reject(error);
+
+                });
+
+            });
+
+        },
+
+
+        isPosted() {
+            return this.record?.postedflag == '1' ? true : false;
+        },
+
+        displayIncomeAccount() {
+            return this.record?.type1 == 'F' ? true : false;
+        },
+
+        displayDisbursementAccount() {
+            return this.record?.type1 == 'D' ? true : false;
+        },
+
+        displayRevenueStampAccount() {
+            return this.record?.type1 == 'R' ? true : false;
+        },
+
+        displayCreditors() {
+            return this.record?.type1 == 'C' ? true : false;
+        },
+
+        displayCostCentre() {
+
+            if ( this.record?.type1 == 'F') {
+                return true;
+            } else if ( this.record?.type1 == 'D' && root.control.expenditureoption != '2') {
+                return true;
+            } else {
+                return false;
+            }
+            
+            
+        },
+
+        isVatable() {
+/*
+            FN:FeeCodeID = 0
+            FN:FeeItemID = 0
+            FN:DocumentID = 0
+            FN:PartyID = PAR:RecordID
+            FN:EmployeeID = GLO:EmployeeID
+            FN:CostCentreId = MAT:CostCentreID
+            FN:Type1 = 'F'
+            FN:UnitID = 0
+            
+            FN:UnitQuantity = 0 
+            FN:Code2 = GetIncomeAccount(FN:MatterID,FN:EmployeeID)
+
+            FN:VATIE = 'E'
+            IF CTL:VatMethod = 'N'
+                FN:VATRATE = 'N'
+            ELSIF MAT:VatExemptFlag = 1
+                FN:VATRATE = 'E'
+            ELSIF MAT:VatExemptFlag = 2
+                FN:VATRATE = 'Z'
+            END
+            IF ~FN:VATRATE THEN FN:VATRATE = '1'.
+
+            FN:NetAmount = LOC:Amount
+            FN:Amount = FN:NetAmount
+
+            */
+        },
+
+
+
+        okClicked( closeFlag = true ) {
+
+            this.record.date = this.record.formatteddate;
+
+            root.$snotify.simple('Please wait...', 'Saving Fee Note', { timeout: 10000, icon: 'img/cogs.gif' });
+
+            axios.post('/feenote/store', this.record)
+            
+            .then(response => {
+
+                if (response.data.errors) {
+
+                    this.setGeneralTab();
+
+                    showError( 'Error', response.data.errors );
+
+                } else {
+
+                    root.$snotify.clear();
+
+                    this.errors = {};
+
+                    if (!this.editing && !this.savedFlag) {
+
+                        this.highlightRow(response.data.data[0].recordid, {
+                            where: ["date,>,0","date,<," + response.data.data[0].date],
+                            orderBy: ['date'],
+                        });
+
+                    } else {
+
+                        this.table.refreshRow(response.data.data[0].recordid);
+
+                    }
+
+                    if (closeFlag) {
+
+                        this.hide();
+
+                    } else {
+
+                        this.savedFlag = true;
+                    }
+
+                }
+
+            }).catch(error => { showError('Error saving ' + this.table.singular, error); });
+
+        },
+
+        canDelete() {
+        
+            return new Promise((resolve, reject) => {
+
+                if ( this.record.postedflag  == '1') {
+
+                    reject('This Fee Note has been posted. It cannot be deleted');
+
+                } else {
+
+                    resolve();
+
+                }
+
+            });
+
+        },
+
+
+    },
+
+}
+
+</script>

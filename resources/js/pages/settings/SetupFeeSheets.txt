@@ -1,0 +1,71 @@
+<template>
+
+<div  class="card h-100 border-0">
+    
+    <div class="card-header">
+        <div class="d-flex justify-content-between">
+            <h3>Fee Sheets</h3>
+            <page-close-button @closeClicked="hide"/>
+        </div>
+    </div>
+
+    <div class="card-body overflow-auto p-3">
+
+        <fee-sheet-table
+            table-id="settings-fee-sheet-table"
+            :lazyLoadFlag="true"
+            ref="settings-fee-sheet-table"
+            :formRef="'settings-fee-sheet-form'"
+        />
+
+    </div>
+
+    <fee-sheet-form 
+        :id="_uid + '-settings-fee-sheet-form'"
+        ref="settings-fee-sheet-form" 
+        parentTableRef="settings-fee-sheet-table"
+        :modal="true"
+    />
+
+</div>
+    
+</template>
+
+<script>
+
+export default {
+
+    components: {
+        FeeSheetTable: () => import("@pages/feesheets/FeeSheetTable"),
+        FeeSheetForm: () => import("@pages/feesheets/FeeSheetForm"),
+    },
+
+
+    data() {
+        return {
+            activePage: 'FeeSheets',
+            table: null,
+        }
+    },    
+
+    methods: {
+
+        hide() {
+
+            this.$root.$refs['right-hand-tab-container'].$refs['right-hand-tabs'].closePage(this.activePage);
+
+        },
+
+
+        newRecordButtonClicked: function () {
+
+            this.$refs['settings-fee-sheet-form'].table = this.table;
+
+            this.$refs['settings-fee-sheet-form'].insertClicked();
+
+        },
+
+    },    
+
+}
+</script>

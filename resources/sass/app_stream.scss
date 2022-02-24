@@ -1,0 +1,27 @@
+// Bootstrap setup
+
+@import "~bootstrap/scss/functions";
+
+// Stream setup
+@import "stream/variables";
+
+// Custom setup
+@import "user-variables";
+
+// Bootstrap core
+@import "~bootstrap/scss/bootstrap";
+
+//Bootstrap Vue
+@import '~bootstrap-vue/src/index.scss';
+
+// Stream
+@import "stream/stream-minimal";
+
+// Custom core
+@import "user";
+
+//Jquery UI
+//@import "~jquery-ui/themes/base/all.css";
+
+//@import "node_modules/font-awesome/scss/font-awesome.scss";
+@import "~font-awesome/scss/font-awesome.scss";

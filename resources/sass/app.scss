@@ -1,0 +1,53 @@
+// Bootstrap setup
+ @import "node_modules/bootstrap/scss/functions";
+
+
+// Variables
+@import 'variables';
+
+// Bootstrap
+@import 'node_modules/bootstrap/scss/bootstrap';
+
+// Custom css
+@import "user";
+
+// 5 Oct 2020 - The FontAwesome $fa-font-path was causing sass-loader errors
+//$fa-font-path:        "../fonts" !default;
+
+// It says you need to have absolute paths so "../fonts" was causing an error
+// So just using the cdn path to get around this
+
+// *** Changed this in node_modules/font-awesome/scss/variables.scss ***
+//$fa-font-path:        "//netdna.bootstrapcdn.com/font-awesome/4.7.0/fonts" !default; // for referencing Bootstrap CDN font files directly
+
+// Also had to downgrade the version of the sass-loader
+//npm uninstall --save-dev sass-loader
+//npm install --save-dev sass-loader@7.1.0
+// See: https://stackoverflow.com/questions/60357186/how-can-i-fix-error-npm-run-dev-in-laravel-6
+
+@import "node_modules/font-awesome/scss/font-awesome.scss";
+
+
+// // Bootstrap setup
+
+// @import "~bootstrap/scss/functions";
+
+// // Stream setup
+// @import "stream/variables";
+
+// // Custom setup
+// @import "user-variables";
+
+// // Bootstrap core
+// @import "~bootstrap/scss/bootstrap";
+
+// //Bootstrap Vue
+// @import '~bootstrap-vue/src/index.scss';
+
+// // Stream
+// @import "stream/stream-minimal";
+
+// // Custom core
+// @import "user";
+
+// @import "~font-awesome/scss/font-awesome.scss";

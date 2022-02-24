@@ -1,0 +1,126 @@
+USE [Legalsuite]
+GO
+
+DROP PROCEDURE IF EXISTS [dbo].[sp_UploadDocument]
+GO
+
+-- Successful test - has a savedName
+--exec dbo.sp_UploadDocument 154650
+
+-- Unsuccessful test  - does not a savedName
+--exec dbo.sp_UploadDocument 144797
+
+
+create procedure [dbo].[sp_UploadDocument]
+(
+	@RecordID int 
+)
+AS
+
+SET NOCOUNT ON; -- Important for returning data back to the API
+
+declare @FileName varchar(max)
+declare @FileNameNoDir varchar(max)
+declare @EmployeeID varchar(20)
+declare @FileRef varchar(1000)
+declare @FirmCode varchar(100)
+declare @PosDriveLetter varchar(10)
+declare @Pos int
+declare @drivepath varchar(1000)
+declare @driveletter varchar(10)
+declare @username varchar(50)
+declare @password varchar(50)
+declare @domain varchar(50)
+declare @Url varchar(1000)
+
+declare @Path varchar(max)
+SELECT @Path = LEFT(physical_name, (LEN(physical_name)-(charindex('\', reverse(physical_name))))) FROM sys.master_files where DataBase_ID = DB_ID() and data_space_id=1
+
+declare @FileContents varchar(max)
+SET @FileContents = '@echo off' + CHAR(13) +CHAR(10);
+
+declare @CMDName varchar(MAX)
+declare @DATName varchar(MAX)
+
+declare @Time varchar(10)
+select @Time = convert(varchar, DateDiff(ms,CONVERT(varchar,GetDate(),1),GetDate()))
+
+Select TOP 1 @FileName=SavedName,@EmployeeID=convert(varchar, DocLog.EmployeeID),@FileRef=FileRef from DocLog INNER JOIN Matter ON Matter.RecordID = MatterID WHERE DocLog.RecordID=@RecordID
+Select TOP 1 @FirmCode =Control.FirmCode FROM Control 
+if (ISNULL(@FileName,'') <> '')
+BEGIN
+	Set @CMDName = 'ftpupload'+@EmployeeID+'_'+convert(varchar, @RecordID)+'_'+ @Time+'.bat'
+	Set @DATName = 'ftpcmd'+@EmployeeID+'_'+convert(varchar, @RecordID)+'_'+@Time+'.dat'
+	IF (LEFT(@FileName,6) = '%ROOT%')
+	BEGIN
+		Select TOP 1 @FileName = ApplicationPath+RIGHT(@FileName,LEN(@FileName)-6) FROM Employee WHERE RecordID = @EmployeeID
+	END
+
+	select @Pos= charindex(':',@FileName)
+	if (@Pos > 0)
+	BEGIN	
+		select @PosDriveLetter = LEFT(@FileName,@Pos-1)
+		Select top 1 @driveletter = DriveLetter,@drivepath=DrivePath,@username=OverrideUsername,@password=OverridePassword,@domain = OverrideDomain from DriveMappings WHERE DriveLetter = @PosDriveLetter
+		if (ISNULL(@driveLetter,'') <> '')
+		BEGIN
+			if (ISNULL(@Username,'') = '')
+			BEGIN				
+				Select top 1 @username = DriveUsername,@password =DrivePassword,@domain=DriveDomain from Control				
+			END
+			declare @Working varchar(2000)
+			set @Working = 'net use '+@driveletter+': '+@drivepath
+			if (len(@username)> 0 and len(@password)> 0)
+			begin
+				set @Working = CONCAT(@Working,' /User:'+@username)
+				if (len(@domain) > 0)
+				begin
+					set @Working = CONCAT(@Working,'@'+@domain)
+				end
+				set @Working = CONCAT(@Working,' ',@password)
+			end
+			--select @Working
+			set @FileContents = CONCAT(@FileContents,@Working,' '+ CHAR(13) +CHAR(10))
+		END	
+		SET @FileContents = @FileContents +
+		'echo user liveupdate> '+ @DATName  + CHAR(13) + CHAR(10) +
+		'echo legalsuite>> '+ @DATName  + CHAR(13) + CHAR(10) +
+		'echo bin>> '+ @DATName  + CHAR(13) + CHAR(10) +
+		'echo cd clientdocs>> '+ @DATName  + CHAR(13) + CHAR(10) +
+		'echo mkdir %2>> '+ @DATName  + CHAR(13) + CHAR(10) +
+		'echo cd %2>> '+ @DATName  + CHAR(13) + CHAR(10) +
+		'echo mkdir %3>> '+ @DATName  + CHAR(13) + CHAR(10) +
+		'echo cd %3>> '+ @DATName  + CHAR(13) + CHAR(10) +
+		'echo put "%~1">> '+ @DATName  + CHAR(13) + CHAR(10) +
+		'echo quit>> '+ @DATName  + CHAR(13) + CHAR(10) +
+		'ftp -n -s:'+@DATName+' legalsuite.co.za' + CHAR(13) + CHAR(10) +
+		'del '+ @DATName 
+
+		execute dbo.spWriteStringToFile @FileContents, @Path,@CMDName
+
+		declare @Cmd varchar(1000)
+
+		SET @Cmd = 'cd "' + @Path + '" && ' + @CMDName+' "' + @FileName + '" ' + @FirmCode + ' ' + REPLACE(@FileRef,'/','')
+
+		-- Run with no output
+		EXEC master..xp_cmdshell @Cmd,no_output
+
+		SELECT @FileNameNoDir = RIGHT(@FileName, (charindex('\', reverse(@FileName)))-1)
+
+		SET @Url = 'https://www.legalsuite.co.za/clientdocs/' + @FirmCode + '/' + REPLACE(@FileRef,'/','') + '/' + @FileNameNoDir 
+
+		Update Doclog set Url = @Url WHERE RecordID = @RecordID
+
+		-- Return the url to the API
+		Select @Url as data
+
+
+	END		
+    ELSE
+        BEGIN
+            Select 'No Drive Letter found in the Saved Name' as error
+        END
+    END
+ELSE
+    BEGIN
+        Select 'The File Name could not be identified' as error
+    END

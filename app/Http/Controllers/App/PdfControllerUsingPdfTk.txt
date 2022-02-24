@@ -1,0 +1,190 @@
+<?php
+
+namespace App\Http\Controllers\App;
+
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+
+use mikehaertl\pdftk\Pdf;
+// Uses php-pdftk (https://github.com/mikehaertl/php-pdftk)
+//Note: Pdftk binary must be installed and in the web server path
+//See: https://www.pdflabs.com/docs/install-pdftk-on-redhat-or-centos/
+
+
+//pdftk "A"="https://ettorney.s3.af-south-1.amazonaws.com/acme/1/Matter(ACM10001).pdf" "B"="https://ettorney.s3.af-south-1.amazonaws.com/acme/1/Matter(ACM10001).pdf" cat A B "output"
+
+class PdfController extends Controller {
+
+    public function combineNewAttampt(Request $request)
+    {
+
+        $returnData = new \stdClass();
+
+        $returnData->error = null;
+        $returnData->saveAs = $request->saveAs;
+        $returnData->path =  'uploads/' . strtolower( session('companyCode') . '/' . $request->folder );
+
+        $files = [];
+
+        $counter = -1;
+        
+        $cloudStorage = Storage::disk(session('region'));
+        $localStorage = Storage::disk('public');
+
+        // 18 June 2020 - Was trying to download and then combine using pdftk
+        // Now trying with pdfMerger
+        // https://ourcodeworld.com/articles/read/587/how-to-merge-multiple-pdfs-in-laravel
+
+        foreach(json_decode($request->pdfFiles) as $file) {
+
+            logger('$file',[$file->path . '/' . $file->fileName]);
+
+            $thisFile = $cloudStorage->get($file->path . '/' . $file->fileName);
+
+            $result = $localStorage->store($thisFile);
+
+        }
+
+
+
+        /*
+        foreach(json_decode($request->pdfFiles) as $file) {
+
+            $counter++;
+
+            $handle = $this->getHandle($counter);
+
+            $files[$handle] = $file;
+
+        }
+
+        $pdf = new Pdf($files);
+
+        foreach($files as $letter => $fileName) {
+
+            if ( !$pdf->cat($letter) ) $returnData->error = $pdf->getError();
+        
+        }
+
+        if ( !isset($returnData->error) ) {
+
+            if ( !$pdf->saveAs($returnData->path . '/' . $returnData->saveAs) ) {
+
+                $returnData->error = $pdf->getError();
+
+            }
+
+        }
+        */
+        
+        return json_encode($returnData);
+    }
+
+    public function combine(Request $request)
+    {
+
+        $returnData = new \stdClass();
+
+        $returnData->error = null;
+        $returnData->saveAs = $request->saveAs;
+        $returnData->path =  'uploads/' . strtolower( session('companyCode') . '/' . $request->folder );
+
+        $files = [];
+
+        $counter = -1;
+
+        foreach(json_decode($request->pdfFiles) as $file) {
+
+            $counter++;
+
+            $handle = $this->getHandle($counter);
+
+            $files[$handle] = $file;
+
+        }
+
+        $pdf = new Pdf($files);
+
+        foreach($files as $letter => $fileName) {
+
+            if ( !$pdf->cat($letter) ) $returnData->error = $pdf->getError();
+        
+        }
+
+        if ( !isset($returnData->error) ) {
+
+            if ( !$pdf->saveAs($returnData->path . '/' . $returnData->saveAs) ) {
+
+                $returnData->error = $pdf->getError();
+
+            }
+
+        }
+
+        
+        return json_encode($returnData);
+    }
+
+    private function getHandle($counter)
+    {
+
+        $letters = range('A', 'Z'); //['A','B' ... 'Z']
+        $returnData = '';
+        $chunks = 0;
+        
+        if ($counter <= 25 ) {
+        
+            $returnData = $letters[$counter];
+        
+        } else {
+        
+            $chunks = intdiv($counter,25) + 1;
+            
+            $letter =  ($counter % 25) - 1;
+        
+            for ($i=0; $i < $chunks; $i++) { 
+                
+                $returnData .= $letters[$letter];
+        
+            }
+        
+        }
+
+        return $returnData;
+
+    }
+
+    public function setPassword(Request $request)
+    {
+
+        $returnData = new \stdClass();
+        $returnData->error = null;
+
+        $pdf = new Pdf($request->fileName);
+
+        $pdf->setPassword($request->password);
+        $pdf->allow($request->allow);
+
+        if ( !$pdf->saveAs($request->fileName) ) {
+
+            $returnData->error = $pdf->getError();
+
+        }
+
+
+        /****** Allow options *******************
+        Printing – Top Quality Printing
+        DegradedPrinting – Lower Quality Printing
+        ModifyContents – Also allows Assembly
+        Assembly
+        CopyContents – Also allows ScreenReaders
+        ScreenReaders
+        ModifyAnnotations – Also allows FillIn
+        FillIn
+        AllFeatures – Allows the user to perform all of the above, and top quality printing.
+       ******************************************/
+
+    }
+
+
+}

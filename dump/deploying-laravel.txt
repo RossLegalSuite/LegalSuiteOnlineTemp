@@ -1,0 +1,144 @@
+====================================================================================
+Deploying for the first time
+====================================================================================
+
+See: https://laraveldaily.com/how-to-deploy-laravel-projects-to-live-server-the-ultimate-guide/
+
+Note: Do not log in as root - run as the user of the site (e.g. admin) - Composer gives a warning about this.
+
+c:\>ssh admin@160.119.253.115
+
+1) Clone the git repository into an EMPTY public_html directory
+
+$ cd public_html (Change to this directory)
+
+$ git clone https://github.com/LegalSuite/RickLaravelDashboard .
+
+
+2) Create .env file with the MySQL setting for this server
+$ cp .env.example .env
+$ vim .env
+
+3) Make sure allow_url_fopen is enabled in php.ini (use WHM MultiPHP INI Editor to do this)
+
+4) Make sure the fileinfo and mbstring PHP extensions are installed (Use EasyApache 4 to do this)
+
+5) Make sure the PHP mssql pdo driver (ea-php56-php-mssql.x86_64) is installed (tech support did this for me)
+
+6) Check that storage and bootstrap/cache are writable. Use these commands:
+chmod 777 -R storage
+chmod 777 -R bootstrap/cache
+
+7) Run Composer
+$ composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
+
+8) Generate an app key
+$ php artisan key:generate
+
+9) Run NPM Install
+$ npm install
+
+10) Npm Run Production
+$ npm run prod
+
+If you get an error, try:
+rm -rf node_modules
+rm package-lock.json
+npm cache clear --force
+npm install
+
+See: https://github.com/JeffreyWay/laravel-mix/issues/1072
+
+
+11) Change Apache Document Root from \public_html to \public_html\public 
+
+See: Changing the Apache document root.txt
+
+====================================================================================
+Updating The website
+====================================================================================
+
+From https://gist.github.com/BenSampo/aa5f72584df79f679a7e603ace517c14
+
+1) SSH into the web server as admin
+
+ssh admin@ettorney.co.za
+
+2) Run these commands
+
+# Change to the project directory
+cd public_html
+
+# Turn on maintenance mode
+php artisan down
+
+# Pull the latest changes from the git repository
+# git reset --hard
+# git clean -df
+git pull origin master
+
+# Install/update composer dependecies
+composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
+
+# Run database migrations
+php artisan migrate --force
+
+# Clear caches
+php artisan cache:clear
+
+# Clear expired password reset tokens
+php artisan auth:clear-resets
+
+# Clear and cache routes
+php artisan route:clear
+php artisan route:cache
+
+
+# Clear and cache config
+php artisan config:clear
+php artisan config:cache
+
+
+# Install node modules
+# npm install
+
+# Build assets using Laravel Mix
+# npm run prod
+
+# Turn off maintenance mode
+php artisan up
+
+Creating a script file to do it all
+-----------------------------------
+1) Create the file
+
+$ touch ~/bin/deploy
+
+2) Set permissions to everyone
+
+chmod +x ~/bin/deploy
+
+3) Edit the file
+
+$ nano ~/bin/deploy
+
+#!/bin/bash
+# Deploy from Git
+php artisan down
+git pull origin master
+composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
+php artisan migrate --force
+php artisan route:clear
+php artisan route:cache
+php artisan config:clear
+php artisan config:cache
+npm run prod
+
+
+Now you can use
+1) # deploy
+
+2) Press Ctrl-C
+
+3) #up (runs php artisan up)
+

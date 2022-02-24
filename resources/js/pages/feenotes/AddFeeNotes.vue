@@ -1,0 +1,797 @@
+<template>
+
+
+<div class="modal" :id="id">
+
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+
+        <div class="modal-content" style="border-color:indianred">
+
+            <div class="modal-header indianred">
+                <h2 class="modal-title page-title"><i class="fa fa-server mr-2"></i>
+                    <span v-html="pageTitle()"></span>
+                </h2>
+                <i title="Close this window" class="cp top-right fa fa-times-circle fa-2x text-white" data-dismiss="modal"></i>
+            </div>
+
+            <div :id="id + '-modal-body'" class="modal-body p-3" style="height: 60vh; overflow-y: auto;">
+
+                    <add-fee-notes-table 
+                        :id="id + '-add-fee-notes-form'" 
+                        :tableId="id + '-add-fee-notes-table'" 
+                        :lazyLoadFlag="true" 
+                        ref="add-fee-notes-table" 
+                    />
+
+            </div>
+
+            <div class="modal-footer justify-content-between">
+
+                <div>
+                    
+                    <button  class="btn btn-primary form-button mr-3" @click="searchAndReplace()" type="button" title="Search and replace text in the Fee Note descriptions">
+                        <i class="fa fa-refresh mr-2"></i>Search & Replace
+                    </button>
+
+                    <button  v-show="replacedTextFlag" class="btn btn-danger form-button mr-3" @click="undoSearchAndReplace" type="button" title="Restore the Descriptions to their previous wording">
+                        <i class="fa fa-recycle fa-lg mr-2"></i>Undo Search & Replace
+                    </button>
+
+                </div>
+
+                <div>
+
+                    <button  v-show="feeItemsFlag" class="btn btn-success form-button mr-3" @click="addFeeNotes" type="button" title="Create the Fee Notes"><i class="fa fa-check-circle fa-lg mr-2"></i>Add Fee Notes</button>
+
+                    <button class="btn btn-danger form-button" type="button" @click="hide" title="Abort"><i class="fa fa-times-circle fa-lg mr-2"></i>Cancel</button>
+
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <edit-fee-item-form 
+        :id="id + '-edit-fee-item-form'"
+        ref="edit-fee-item-form" 
+        parentTableRef="add-fee-notes-table"
+        :modal="true"
+    />
+
+    <search-and-replace-modal 
+        :id="id + '-search-and-replace-modal'"
+    />
+
+
+</div>
+
+</template>
+
+<script>
+
+
+
+
+import modalTemplate from "@components/modals/modal-template";
+
+export default {
+
+    mixins: [modalTemplate],
+
+    components: {
+        AddFeeNotesTable: () => import("./AddFeeNotesTable"),
+        EditFeeItemForm: () => import("./EditFeeItemForm"),
+        SearchAndReplaceModal: () => import("@components/modals/SearchAndReplaceModal"),
+    },
+
+    data() {
+        return {
+            table: null,
+            tableId: null,
+            savedTableData: [],
+            replacedTextFlag: false,
+            replacedText: '',
+            feeItemsTable: null,
+            feeItems: [],
+            feeItemsFlag: false,
+            selectedRows: [],
+            selectedAllFlag: false,
+        };
+    },
+
+    mounted () {
+        this.$parent.addFeeNotes = this;
+    },    
+
+    methods: {
+
+        loadDataTable( feeItems, matter, feeItemsDate) {
+
+            let _this = this;
+
+            setTimeout(() => { $('#' + this.id + " .popover-icon").popover(); }, 100);
+
+            //if ( $.isEmptyObject(this.table.selectEmployee.record) ) {
+                this.table.selectEmployee.record = {
+                    recordid: matter.employeeId,
+                    name: matter.employeename
+                };
+            //}
+
+
+            this.table.feeItemsDate = this.table.previousFeeItemsDate = feeItemsDate;
+
+            this.tableId = this.id + '-add-fee-notes-table';
+            this.savedTableData = [];
+            this.selectedRows = [];
+            this.selectedAllFlag = false;
+            this.replacedText = '';
+            this.replacedTextFlag = false;
+
+            this.feeItemsFlag = feeItems.length;
+
+            this.feeItems = feeItems;
+
+            // this.feeItems = JSON.parse(JSON.stringify(feeItems));
+
+            // console.log("3 this.feeItems",this.feeItems);
+
+            //Set the table Height manually
+            let $thisTable = $('#' + this.tableId);
+            let $thisModalBody = $('#' + this.id + '-modal-body');
+
+            let modalBodyOffset = $thisModalBody.offset();
+            let modalBodyOffsetTop = Math.round( modalBodyOffset.top );
+
+            let tableOffset = $thisTable.offset();
+            let tableOffsetTop = Math.round( tableOffset.top );
+            let modalBodyHeight = Math.round( $thisModalBody.outerHeight());
+
+            let tableSpaceAbove = tableOffsetTop - modalBodyOffsetTop;
+            let tableSpaceAvailable = modalBodyHeight - tableSpaceAbove;
+
+            let scrollY = (tableSpaceAvailable  - 25) + 'px';
+            
+            this.feeItemsTable = $('#' + this.tableId).DataTable({
+                autoWidth: false,
+                destroy: true,
+                dom: "t",
+                data: _this.feeItems,
+                serverSide: false,
+                paging: false,
+                select: {
+                    style: 'multi',
+                    selector: 'td:first-child'
+                },
+                scrollX: true,
+                responsive: false,
+                scrollY: scrollY,
+                scroller: false,
+                scrollCollapse: false,
+                rowId: 'recordid',
+                ordering: false,
+                order: [[0, "asc"]],
+                language: {
+                    emptyTable: "No Fee Items found",
+                    processing: "",
+                    zeroRecords: "",
+                    loadingRecords: "",
+                },
+
+                initComplete: function(settings) {
+
+                    const tableId = $(this)[0].id;
+                    const api = this.api();
+
+                    api.table().off('user-select').on('user-select', (e, dt, type, cell, originalEvent) => {
+                        
+                        let rowId = $(originalEvent.target).parent().attr('id');
+
+                        if (_this.selectedRows.includes(rowId)) {
+
+                            // Need array of record id's to return from the parent Select screen
+                            for (var i = 0; i < _this.selectedRows.length; i++) {
+                                if (_this.selectedRows[i] === rowId) {
+                                    _this.selectedRows.splice(i, 1);
+                                }
+                            }
+                            
+                        } else {
+
+                            _this.selectedRows.push('' + rowId);
+
+                        }
+
+                        // User has tagged or untagged a row so reset the selectedAllFlag
+                        _this.selectedAllFlag = false;
+
+
+                    });    
+
+                    $('#' + tableId + '_wrapper .dataTables_scrollHead thead th.select-checkbox').prop('title', 'Tag/UnTag All').off('click').on('click', () => {
+
+                        //Return if no data in the table
+                        if ( !_this.feeItemsTable.rows().any() ) return;
+
+                        _this.selectedRows = [];
+
+                        if ( _this.selectedAllFlag ) {
+
+                            _this.feeItemsTable.rows().deselect();
+
+                        } else {    
+                            
+                            _this.feeItemsTable.rows().select();
+
+                            _this.selectedRows = _this.feeItemsTable.rows({ selected: true }).ids().toArray();
+                            
+                        }
+
+                        _this.selectedAllFlag = !_this.selectedAllFlag; // Toggle the selectedAllFlag
+
+                    });
+
+                },
+
+                drawCallback: function() {
+
+                    const api = this.api();
+                    const tableId = $(this)[0].id;
+
+                    let body = $(api.table().body());
+
+                    if (typeof body.unhighlight === 'function') body.unhighlight();
+            
+                    if (_this.replacedText) {
+            
+                        body.highlight(_this.replacedText);
+
+                        _this.replacedText = '';
+
+                    }
+
+                    $("." + tableId + '-units-amount-input').off('input').on('input', function() {
+
+                        let inputAmount = $(this).val();
+
+                        if ( !inputAmount ) return; // In case they backspace and it is blank
+
+                        let id = $(this).attr('data-id');
+
+                        let rowData = _this.feeItemsTable.row('#' + id).data();
+
+                        rowData.customUnitsAmount = rowData.unitquantity = inputAmount || '0';
+
+                        _this.updateTableUnitsDescription(rowData);
+
+                        _this.calculateRowTotals(rowData);
+
+                    });
+
+                    $("." + tableId + '-units-amount-increase').off('click').on('click', function() {
+
+                        let id = $(this).attr('data-id');
+
+                        let rowData = _this.feeItemsTable.row('#' + id).data();
+
+                        let unitsAmount = parseFloat(rowData.customUnitsAmount || rowData.unitquantity );
+
+                        unitsAmount++;
+
+                        rowData.unitquantity = rowData.customUnitsAmount = unitsAmount.toString();
+
+                        _this.updateTableAmountInput(rowData);
+
+                        _this.updateTableUnitsDescription(rowData);
+
+                        _this.calculateRowTotals(rowData);
+
+                    });
+
+                    $("." + tableId + '-units-amount-decrease').off('click').on('click', function() {
+
+                        let id = $(this).attr('data-id');
+
+                        let rowData = _this.feeItemsTable.row('#' + id).data();
+
+                        let unitsAmount = parseFloat(rowData.customUnitsAmount || rowData.unitquantity );
+
+                        unitsAmount--;
+
+                        if ( unitsAmount < 0 ) unitsAmount = 0;
+
+                        rowData.unitquantity = rowData.customUnitsAmount = unitsAmount.toString();
+
+                        _this.updateTableAmountInput(rowData);
+
+                        _this.updateTableUnitsDescription(rowData);
+
+                        _this.calculateRowTotals(rowData);
+
+                    });
+
+                },
+
+                createdRow: ( row, data ) => {
+
+                    if ( _this.selectedAllFlag ) {
+
+                        $(row).addClass('selected');
+
+                    } else if ( $.inArray('' + data.recordid, _this.selectedRows) !== -1 ) {
+
+                        $(row).addClass('selected');
+                    }
+
+                },
+
+                columnDefs: [
+                    {
+                        title: "",
+                        name: 'sorter',
+                        data: null,
+                        visible: false,
+                        orderable: false,
+                        searchable: false,
+                        printable: false,
+                        targets: 0,
+                        //width: "5%",
+                        render: function (data) {
+                            return '';
+                        }
+                    },
+                    {
+                        title: "",
+                        name: 'tag-row',
+                        class: "select-checkbox text-center text-no-ellipse",
+                        data: null,
+                        visible: true,
+                        orderable: false,
+                        searchable: false,
+                        printable: false,
+                        targets: 1,
+                        width: "5%",
+                        render: function (data) {
+                            return '';
+                        }
+                    },
+                    {
+                        title: "Action",
+                        data: null,
+                        class: "text-center",
+                        width: "10%",
+                        targets: 2,
+                        render: function (data) {
+                                return '<span class="badge badge-success action-button-badge" onclick="componentFunctionById(' + _this._uid + ',\'editFeeItem\',' + data.recordid + ')"  title ="Edit this Fee Item">Edit</span>';
+                        }
+                    },
+                    {
+                        title: "Date",
+                        name: "date",
+                        data: null,
+                        width: "12%",
+                        targets: 3,
+                        render: function (data) {
+                            return data.formatteddate;
+                        }
+                    },
+
+                    {
+                        title: "Employee",
+                        name: "employeename",
+                        data: null,
+                        width: "12%",
+                        targets: 4,
+                        render: function (data) {
+                            return htmlDecode(data.employeename);
+                        }
+                    },
+
+                    {
+                        title: "Description",
+                        name: "feeitem.description",
+                        data: null,
+                        width: "30%",
+                        targets: 5,
+                        render: function (data) {
+                            return htmlDecode(data.description);
+                        }
+                    },
+
+                    {
+                        title: "No of Units",
+                        width: "10%",
+                        filterExclude: true,
+                        orderable: false,
+                        searchable: false,
+                        data: null,
+                        targets: 6,
+                        render: function (data) {
+                            if ( data.unitsflag == '1' ) {
+                                return '<div class="input-group table-dialog-height">' +
+                                    '<input type="number" min="0" value="' + 
+                                    data.unitquantity + 
+                                    '" id="' + 
+                                    _this.tableId + '-units-amount-input-' + data.recordid + 
+                                    '" data-id="' + data.recordid + 
+                                    '" class="table-dialog-height table-input-padding ' +  _this.tableId + '-units-amount-input form-control form-control-sm form-input-number">' +
+                                    '<div class="input-group-append">' +
+                                        '<div class="spinner-input-group-append table-dialog-height">' +
+                                            '<div><i data-id="' + data.recordid + '" class="' +  _this.tableId + '-units-amount-increase arrow arrow-up cp" style="margin-top: 2px;" title="Increase amount"></i></div>' +
+                                            '<div><i data-id="' + data.recordid + '" class="' +  _this.tableId + '-units-amount-decrease arrow arrow-down cp" style="margin-top: -2px;" title="Decrease amount"></i></div>' +
+                                        '</div>' +
+                                    '</div>' +
+                                '</div>';
+                            } else {
+                                return '';
+                            }
+                        }
+                    },
+
+
+                    {
+                        title: "Units",
+                        name: "feeitem.unitdescription",
+                        data: null,
+                        orderable: false,
+                        width: "15%",
+                        targets: 7,
+                        render: function (data) {
+                            if ( data.unitdescription) {
+
+                                return '<div id="' + _this.tableId + '-units-description-' + data.recordid + '">' +
+                                (data.unitquantity == 1 ? '1 ' + data.unitsingular : data.unitquantity + ' ' + data.unitplural) +
+                                ' @ ' + formatMoney((data.customAmountPerUnit ? data.customAmountPerUnit : data.amount),false).toString() +
+                                '</div>';
+
+                            } else {
+                                return '';
+                            }
+                        }
+                    },
+                    {
+                        title: "Amount",
+                        name: "feeitem.amount",
+                        filterType: 'Number',
+                        class: "text-number",
+                        data: null,
+                        width: "15%",
+                        targets: 8,
+                        render: function (data) {
+                            return '<div id="' + _this.tableId + '-total-amount-' + data.recordid + '">' +
+                            formatMoney(data.amount,false).toString() +
+                            '</div>';
+                        }
+                    },
+                ]
+            });
+
+        },
+
+        editFeeItem(id) {
+
+            this.highlightTableRow(id);
+
+            let rowData = null;
+
+            rowData = this.feeItemsTable.row('#' + id).data();
+
+            if (typeof rowData === 'object') {
+
+                rowData.recordid = id;
+
+                const thisForm = this.$refs['edit-fee-item-form'];
+                
+                thisForm.table = this.$refs['add-fee-notes-table'];
+
+                thisForm.editRecord(rowData);
+
+            } else {
+
+                showError( 'System Error', 'Fee Item (' + id + ') not found trying to Edit row');
+
+            }
+
+        },
+
+        feeItemEdited( record ) {
+
+            // Note: The record is passed by address, not value
+            // So we are actually manipulating the row in the data table
+
+            this.feeItemsTable.row('#' + record.recordid).invalidate();
+
+            this.feeItemsTable.draw();
+
+
+        },
+
+        updateTableAmountInput(rowData) {
+
+            $("#" + this.tableId + '-units-amount-input-' + rowData.recordid).val(rowData.unitquantity);
+
+        },
+
+        updateTableUnitsDescription(rowData) {
+
+            let description = rowData.unitquantity == 1 ? '1 ' + rowData.unitsingular : rowData.unitquantity + ' ' + rowData.unitplural;
+            description += ' @ ' + formatMoney((rowData.customAmountPerUnit ? rowData.customAmountPerUnit : rowData.amount),false).toString() 
+
+            $("#" + this.tableId + '-units-description-' + rowData.recordid).text(
+                description
+            );
+        },
+
+
+        calculateRowTotals(rowData) {
+
+            let perUnitAmount = parseFloat(rowData.customAmountPerUnit || rowData.amount);
+
+            rowData.customAmountPerUnit = formatDecimal(perUnitAmount).toString();
+
+            let unitsFactor = parseFloat(rowData.customUnitsFactor || rowData.factor);
+
+            let newAmount = perUnitAmount * parseFloat(rowData.unitquantity) / parseFloat(unitsFactor);
+
+
+            rowData.amount = formatDecimal(newAmount);
+
+            //let taxAmount =  newAmount * parseFloat(rowData.vatpercentage) / 100;
+
+            //rowData.taxAmount = formatDecimal(taxAmount);
+
+            //rowData.totalAmount = formatDecimal(newAmount + taxAmount);
+
+
+            // Update the Amount
+            $("#" + this.tableId + '-total-amount-' + rowData.recordid).text(formatMoney(rowData.amount,false));
+        },
+
+
+        highlightTableRow(id) {
+
+            $('#' + this.tableId + ' tbody tr.highlighted').removeClass('highlighted');
+
+            $('#' + this.tableId + ' tbody tr#' + id).addClass('highlighted');
+
+        },
+        
+
+        deleteFeeItem(id) {
+
+            this.feeItemsTable.row('#' + id).remove().draw();
+
+            // Check if they might have deleted all Fee Items
+            this.feeItemsFlag = this.feeItemsTable.rows().any();
+
+        },
+
+        deleteTaggedRecords() {
+
+            let rows = [];
+
+            this.selectedRows.forEach(id => {
+                rows.push('#' + id);
+            });
+
+            this.feeItemsTable.rows(rows).remove().draw();
+
+            // Check if they might have deleted all Fee Items
+            this.feeItemsFlag = this.feeItemsTable.rows().any();
+
+
+        },
+
+        searchAndReplace( taggedRecordsFlag = false ) {
+
+            this.unHighlightTable();
+            
+            this.searchAndReplaceModal.display( taggedRecordsFlag );
+
+        },
+
+        searchAndReplaceOkClicked(searchFor, replaceWith, taggedRecordsFlag, caseInsensitiveFlag) {
+
+            let _this = this;
+
+            //Used to highlight the replaced text
+            this.replacedText = replaceWith;
+
+            // Used to display the Undo button
+            this.replacedTextFlag = false;
+
+            let searchForRegEx = new RegExp(searchFor, 'g' + caseInsensitiveFlag);
+
+            let params = taggedRecordsFlag ? { selected: true } : null;
+
+            //https://stackoverflow.com/questions/7486085/copy-array-by-value
+            this.savedTableData = JSON.parse(JSON.stringify(this.feeItemsTable.data().toArray()));
+
+            //https://datatables.net/reference/api/rows().every()
+            this.feeItemsTable.rows( params ).every( function () {
+
+                let data = this.data();
+
+                let newDescription = data.description.replace(searchForRegEx,replaceWith);
+
+                // Check to see if anything was replaced
+                if ( newDescription !== data.description ) {
+
+                    _this.replacedTextFlag = true;
+
+                    data.description = newDescription;
+
+                    this.invalidate(); // Invalidate the data DataTables has cached for this row
+
+                }
+
+                
+            });
+
+            if ( this.replacedTextFlag ) {
+                this.feeItemsTable.draw();
+            } else {
+                root.$snotify.error('"' + searchFor + '" not found');
+            }
+
+        },
+
+        undoSearchAndReplace() {
+
+            this.replacedTextFlag = false;
+
+            this.feeItemsTable.clear();
+
+            this.feeItemsTable.rows.add( this.savedTableData ).draw();
+
+            root.$snotify.success('Search & Replace undone ');
+
+        },
+
+        changeFeeItemsDate( newDate ) {
+
+            let params = this.selectedRows.length ? { selected: true } : null;
+
+            //https://datatables.net/reference/api/rows().every()
+            this.feeItemsTable.rows( params ).every( function () {
+
+                let data = this.data();
+
+                data.formatteddate = newDate;
+                data.date = convertToClarionDate(newDate);
+
+                this.invalidate(); // Invalidate the data DataTables has cached for this row
+
+                
+            });
+
+            root.$snotify.simple('Dates changed to ' + newDate, 'Updated', { timeout: 2000, icon: 'img/check.png' });
+
+            this.feeItemsTable.draw();
+
+        },
+
+        changeAllocatedEmployee(id, name) {
+
+            let params = this.selectedRows.length ? { selected: true } : null;
+
+            //https://datatables.net/reference/api/rows().every()
+            this.feeItemsTable.rows( params ).every( function () {
+
+                let data = this.data();
+
+                data.employeeid = id;
+                data.employeename = name;
+
+                this.invalidate(); // Invalidate the data DataTables has cached for this row
+
+            });
+
+            root.$snotify.simple('Allocated Employee changed to ' + name, 'Updated', { timeout: 2000, icon: 'img/check.png' });
+
+            this.feeItemsTable.draw();
+
+        },
+
+        unHighlightTable() {
+
+            const body = $(this.feeItemsTable.table().body());
+
+            if (typeof body.unhighlight === 'function') body.unhighlight();
+
+        },
+
+        addFeeNotes() {
+
+            this.hide();
+
+            root.$snotify.simple('Saving the Fee Notes', 'Please wait...', { timeout: 0, icon: 'img/cogs.gif' });
+
+            axios.post('/utils/call/addFeeNotes', {
+                source: 'W',
+                feeItems: this.feeItemsTable.data().toArray(),
+            })
+            
+            .then(response => {
+
+                root.$snotify.clear();
+
+                if (response.data.errors) {
+
+                    showError( 'Error', response.data.errors);
+
+                } else {
+
+                    if (this.$parent.table.initialOrder[0][1] == 'asc') {
+
+                        this.highlightRow(response.data.data[0].RecordId, {
+                            where: ["date,>,0","date,<," + response.data.data[0].date],
+                            orderBy: ['date'],
+                        });
+
+                    } else {
+
+                        this.highlightRow(response.data.data[0].RecordId, {
+                            where: ["date,>,0","date,>," + response.data.data[0].date],
+                            orderBy: ['date'],
+                        });
+
+                    }
+
+                }
+
+            }).catch(error => { 
+                showError('Error adding Fee Notes', error); 
+            });
+
+        },
+
+        // Note: Copied from form-template
+        highlightRow( id, params ) {
+
+            axios.post('/' + this.$parent.table.tableName + '/get', { 
+                ...params, 
+                whereRaw: this.$parent.table.tableFilter, 
+                method: 'count'
+            })
+
+            .then(response => {
+
+                if (response.data.errors) { 
+
+                    showError( 'Error', response.data.errors);
+
+                } else {
+
+                    this.$parent.table.jumpToRow(id, response.data.data);
+
+                }
+
+            }).catch( (error) => {
+                showError('Error getting Table Position', error); 
+            });
+
+
+        },    
+
+
+        pageTitle() {
+
+            if (this.feeItems.length) {
+                
+                return this.feeItems.length === 1 ? 'Fee Note will be Added' : 'Fee Notes will be Added';
+
+            } else {
+
+                return '';
+            }
+
+        },
+
+
+    },
+
+}  
+</script>
+

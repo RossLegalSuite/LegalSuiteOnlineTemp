@@ -1,0 +1,53 @@
+git init
+git add README.md
+git commit -m "first commit"
+git remote add origin https://github.com/LaravelDaily/DeploymentDemo.git
+git push -u origin master
+
+or using SSH
+------------
+...
+git remote add origin git@github.com:Furburger/TradeBot.git
+git push -u origin master
+
+
+Make a new git folder (instead of cloning)
+-------------------------------------------
+git init
+git remote add origin https://github.com/LegalSuite/RickLaravelDashboard
+git pull
+
+
+======================================================
+Switching remote URLs from HTTPS to SSH
+=========================================================
+
+1) Create a SSH keypair
+---------------------------
+ssh-keygen -t rsa -C "rick@legalsuite.co.za"
+
+2) Change to SSH repository
+---------------------------
+List your existing remotes in order to get the name of the remote you want to change.
+
+$ git remote -v
+> origin  https://github.com/LegalSuite/RickLaravelDashboard.git (fetch)
+> origin  https://github.com/LegalSuite/RickLaravelDashboard.git (push)
+Change your remote's URL from HTTPS to SSH with the git remote set-url command.
+
+$ git remote set-url origin git@github.com:LegalSuite/RickLaravelDashboard.git
+Verify that the remote URL has changed.
+
+$ git remote -v
+# Verify new remote URL
+> origin  git@github.com:LegalSuite/RickLaravelDashboard.git (fetch)
+> origin  git@github.com:LegalSuite/RickLaravelDashboard.git (push)
+
+3) Check you can SSH in
+-----------------------
+ssh -T git@github.com
+
+4) If on a new PC - set your git credentials
+--------------------------------------------
+git config --global user.name "Furburger"
+git config --global user.email johndoe@example.com

@@ -1,0 +1,249 @@
+// **************** 4 May 2020 - MOVED TO CUSTOM.JS ****************************************
+
+// var printTableTable; // Used to destroy the print table (if required)
+
+// function printTable(options) {
+
+//     if (typeof options.method === 'undefined') options.method = 'all';
+//     if (typeof options.customMethod === 'undefined') options.customMethod = '';
+//     if (typeof options.reportSubTitle === 'undefined') options.reportSubTitle = '';
+//     if (typeof options.reportFilter === 'undefined') options.reportFilter = '';
+//     if (typeof options.order === 'undefined') options.order = [[1, "asc"]];
+
+//     // To avoid array hell...
+//     var dataTablesOrder = [];
+//     dataTablesOrder.push(options.order[0].slice(0));
+
+//     if (options.tableStyle === 'table') {
+
+//         if (options.columnDefs[0].title === "" || options.columnDefs[0].title === "Tag") {
+
+//             // Remove the View Button or Tag column
+//             options.columnDefs.shift();
+
+//             // Adjust the ordering column
+//             dataTablesOrder[0][0] -= 1;
+
+//             for (let index = 0; index < options.columnDefs.length; index++) {
+
+//                 options.columnDefs[index].targets -= 1;
+
+//             }
+//         }
+
+//     }
+
+
+
+//     let textSubTitle = stripHtml(options.reportSubTitle);
+
+//     let autoPrint = (options.destination === 'print') ? true : false;
+
+//     let dom = '';
+
+//     if (options.destination === 'excel') {
+
+//         dom = "Bt";
+
+//     } else {
+
+//         dom = options.tableStyle === 'card' ? "t" : "Bt";
+
+//     }
+
+//     let buttons = [
+//         {
+//             extend: 'excelHtml5',
+//             className: 'btn btn-success datatables-excel-button',
+//             text: '<i class="fa fa-file-excel-o mr-2"></i>Excel',
+//             exportOptions: { columns: ':visible' }
+//         },
+//         {
+//             extend: 'print',
+//             className: 'btn btn-primary datatables-print-button datatables-preview-button',
+//             text: '<i class="fa fa-print mr-2"></i>Print',
+//             title: options.reportTitle,
+//             messageBottom: options.messageBottom,
+//             message: '<strong>Company:</strong> ' + getCookie('company') + '<br><strong>Printed By:</strong> ' + getCookie('login') + '<br><strong>Printed On:</strong> ' + moment().format('YYYY-MM-DD HH:mm:ss') + options.reportFilter,
+//             autoPrint: autoPrint,
+//             exportOptions: { columns: ':visible' },
+//             customize: function (win) {
+
+//                 //$(win.document.head).prepend( '<link rel="icon" type="image/png" href="/img/favicon.png"></link>' );
+
+//                 $(win.document.body)
+//                     .css('font-size', '11pt')
+//                 // .prepend(
+//                 //     '<img src="http://bittex.co.za/images/bittexreportlogo.png" style="position:absolute; top:18; right:9;" />'
+//                 // );
+
+//                 $(win.document.body).find('h1').addClass('text-center mb-0');
+
+//                 if (textSubTitle) {
+
+//                     $(win.document.body).find('h1').append('<h2>(' + textSubTitle + ')</h2>');
+//                 }
+
+//                 $(win.document.body).find('table').css('font-size', 'inherit');
+
+//                 $(win.document.body).find('table').addClass('compact')
+
+//             }
+
+//         }
+//     ];
+
+//     axios.post(options.url, {
+//         method: options.method,
+//         customMethod: options.customMethod,
+//         widget: options.settings,
+//         order: options.order,
+//         columns: options.columnDefs,
+//         recordId: options.recordId,
+//     })
+
+//     .then((response) => {
+
+
+//     // let response = await axios({
+//     //     url: options.url, 
+//     //     method: 'post',
+//     //     data: {
+//     //         method: options.method,
+//     //         customMethod: options.customMethod,
+//     //         widget: options.settings,
+//     //         order: options.order,
+//     //         columns: options.columnDefs,
+//     //         recordId: options.recordId,
+//     //     },
+//     //     timeout: 180000,
+//     // });
+
+    
+
+//         $('#datatables-print-container').show();
+
+//         if (printTableTable) {
+
+//             printTableTable.destroy();
+
+//             $('#datatables-print').empty();
+//         }
+
+
+
+//         printTableTable = $('#datatables-print').DataTable({
+//             destroy: false,
+//             dom: dom,
+//             buttons: { buttons: buttons },
+//             data: response.data.data,
+//             serverSide: false,
+//             select: false,
+//             paging: false,
+//             scrollX: false,
+//             responsive: false,
+//             scrollY: false,
+//             scroller: false,
+//             ordering: true,
+//             order: dataTablesOrder,
+//             drawCallback: null,
+//             initComplete: null,
+//             columnDefs: options.columnDefs
+//         });
+
+//         let cardReportTitle = '<h1 class="text-center mb-0" id="iframe-header">' + options.reportTitle + '</h1>';
+//         cardReportTitle += (textSubTitle) ? '<h2 class="text-center">(' + textSubTitle + ')</h2>' : '';
+//         cardReportTitle += '<div class="mb-3"><strong>Company:</strong> ' + getCookie('company') + '<br><strong>Printed By:</strong> ' + getCookie('login') + '<br><strong>Printed On:</strong> ' + moment().format('YYYY-MM-DD HH:mm:ss') + options.reportFilter + '</div>';
+
+
+//         if (options.destination === 'excel') {
+
+//             $('#datatables-print_wrapper .dt-buttons button.buttons-excel').click();
+
+//         } else if (options.destination === 'preview') {
+
+//             if (options.tableStyle === 'table') {
+
+//                 $('#datatables-print_wrapper .dt-buttons button.buttons-print').click();
+
+//             } else {
+
+//                 $("#datatables-print-container .dataTables_scrollBody").printThis({
+//                     pageTitle: options.reportTitle,
+//                     header: cardReportTitle,
+//                 });
+
+//             }
+
+//         } else if (options.destination === 'print') {
+
+//             if (options.tableStyle === 'table') {
+
+//                 $('#datatables-print_wrapper .dt-buttons button.buttons-print').click();
+
+//             } else {
+
+//                 $("#datatables-print-container .dataTables_scrollBody").printThis({
+//                     pageTitle: options.reportTitle,
+//                     header: cardReportTitle,
+//                 });
+//             }
+
+//         } else if (options.destination === 'email') {
+
+//             $('#messageModalTitleText').text('Sending email');
+//             $('#messageModalTitle').removeClass('text-danger').removeClass('text-success');
+//             $('#messageModalTitleIcon').removeClass('fa-times-circle').removeClass('fa-check-circle');
+//             $('#messageModalBody').html('Please wait...');
+//             $('#messageModal').modal('show');
+
+//             let tableHead = '<thead><tr>';
+
+//             printTableTable.columns().every( function () {
+
+//                 var visible = this.visible();
+
+//                 if (visible) {
+//                     tableHead += '<th class="' + $(this.header()).attr('class') + '">' + this.header().innerHTML + '</th>';      
+//                 }
+
+//             });
+
+//             tableHead += '</tr></thead>';
+
+//             let tableBody = $("#datatables-print-container .dataTables_scrollBody tbody").html();
+
+//             let tableHtml = '<table>' + tableHead + tableBody + '</table>';
+
+//             axios.post('/mail/sendHtml', {
+//                 to: options.emailTo,
+//                 cc: options.emailCc,
+//                 bcc: options.emailBcc,
+//                 subject: options.emailSubject,
+//                 message: options.emailMessage,
+//                 attachment: options.emailAttachment,
+//                 reportTitle: cardReportTitle,
+//                 reportFooter: options.messageBottom,
+//                 tableHtml: tableHtml
+//             })
+
+//             .then(response => {
+
+//                 showSuccess( 'Success', 'Email was sent successfully.');
+                
+//             })
+            
+//             .catch(error => {
+                
+//                 showError( 'Error', 'An error was encountered sending the email.<br><br><strong>Error:</strong> ' + error);
+
+//             });
+
+//         }
+
+//         $('#datatables-print-container').hide();
+
+//     });
+
+// }
+

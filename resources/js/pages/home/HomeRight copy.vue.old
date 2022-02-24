@@ -1,0 +1,286 @@
+<template>
+    <div class="filofax-page pt-5">
+        <div class="notepad-container">
+            <div class="notepad" style="width:50%;">
+                <div class="notepad-tape"></div>
+                <div class="notepad-red-line notepad-red-line1 first-notepad-red-line"></div>
+                <div class="notepad-red-line notepad-red-line2"></div>
+                <div class="notepad-heading">Reminders . . .</div>
+                <ul id="notepad-lines">
+                    <li></li>
+                    <li class="notepad-indent"><i class="fa fa-check"></i><p>Do month-end procedure</p></li>
+                    <li></li>
+                    <li class="notepad-indent"><i class="fa fa-check"></i><p>Attend to Matter (BRA1/001 - Jones vs Smith)</p></li>
+                    <li></li>
+                    <li class="notepad-indent"><i class="fa fa-envelope"></i><p>Send email to Mr Van Bredar</p></li>
+                    <li></li>
+                    <li class="notepad-indent"><i class="fa fa-warning"></i><p>Your trial period expires in 24 days</p></li>
+                    <li></li>
+                    <li></li>
+                </ul>
+                <div class="notepad-left-shadow"></div>
+                <div class="notepad-right-shadow"></div>
+            </div>
+        </div>
+    </div>
+
+</template>
+
+<script>
+
+
+export default {
+
+	name: "home-left",
+}
+
+</script>
+
+<style scoped>
+
+.sticky-paper-container {
+	width:420px;
+	margin:0 auto;
+	padding-top:20px;
+}
+
+.sticky-paper {
+	position:relative;
+	width:400px;
+	height:400px;
+	background-color: #fffacd;
+	border:1px solid #e3e3e3;
+	_opacity:0.5;
+}
+
+.sticky-paper > ul {
+	list-style-type:none;
+}
+
+.red-line {
+	height:400px;
+	width:1px;
+	background-color:#ef8b8b;
+	float:left;
+	margin-left:4px;
+}
+.first-red-line {
+	margin-left:40px;
+}
+ul#lines {
+	margin-top:40px;
+}
+ul#lines li {
+	height:28px;
+	line-height:28px;
+	color:#4d84c8;
+	_font-family:Georgia;
+	_font-style:italic;
+	font-size:16rem;
+	width:325px;
+	border-top:1px solid lightskyblue ;
+	padding-left:25px;
+}
+.tape{
+	position:absolute;
+	top:-15px; right:130px;
+	width: 130px;
+	height: 35px;
+	background-color:#fff;
+	opacity:0.6;
+	border-left: 1px dashed rgba(0, 0, 0, 0.1);
+	border-right: 1px dashed rgba(0, 0, 0, 0.1);
+	-webkit-box-shadow: 0px 0px 1px 0px #cccccc;
+	-moz-box-shadow: 0px 0px 1px 0px #cccccc;
+	box-shadow: 0px 0px 1px 0px #cccccc;
+	-webkit-transform: rotate(-2deg) skew(0,0) translate(0%,-5px);
+	-moz-transform: rotate(-2deg) skew(0,0) translate(0%,-5px);
+	-o-transform: rotate(-2deg) skew(0,0) translate(0%,-5px);
+	transform: rotate(-2deg) skew(0,0) translate(0%,-5px);
+}
+.sticky-paper-left-shadow {
+	width: 140px;
+	height: 140px;
+	bottom:-5px; left:-12px;
+	position:absolute;
+	z-index:-6;
+	display: inline-block;
+	-webkit-box-shadow: -10px -10px 10px rgba(0, 0, 0, 0.4);
+	-moz-box-shadow: -10px -10px 10px rgba(0, 0, 0, 0.4);
+	box-shadow: -10px -10px 10px rgba(0, 0, 0, 0.4);
+	-moz-transform: scale(1) rotate(274deg) translate(20px, 25px) skew(9deg, 0deg);
+	-webkit-transform: scale(1) rotate(274deg) translate(20px, 25px) skew(9deg, 0deg);
+	-o-transform: scale(1) rotate(274deg) translate(20px, 25px) skew(9deg, 0deg);
+	-ms-transform: scale(1) rotate(274deg) translate(20px, 25px) skew(9deg, 0deg);
+	transform: scale(1) rotate(274deg) translate(20px, 25px) skew(9deg, 0deg);
+}
+.sticky-paper-right-shadow {
+	width: 140px;
+	height: 140px;
+	bottom:-13px; right:-4px;
+	position:absolute;
+	z-index:-6;
+	display: inline-block;
+	-webkit-box-shadow: -10px -10px 10px rgba(0, 0, 0, 0.4);
+	-moz-box-shadow: -10px -10px 10px rgba(0, 0, 0, 0.4);
+	box-shadow: -10px -10px 10px rgba(0, 0, 0, 0.4);
+	-moz-transform: scale(1) rotate(184deg) translate(20px, 25px) skew(9deg, 0deg);
+	-webkit-transform: scale(1) rotate(184deg) translate(20px, 25px) skew(9deg, 0deg);
+	-o-transform: scale(1) rotate(184deg) translate(20px, 25px) skew(9deg, 0deg);
+	-ms-transform: scale(1) rotate(184deg) translate(20px, 25px) skew(9deg, 0deg);
+	transform: scale(1) rotate(184deg) translate(20px, 25px) skew(9deg, 0deg);
+}
+
+.StickyPaperIndent {
+	position:relative;
+}
+
+.StickyPaperIndent p {
+	position:relative;
+	margin-left: 20px;
+}
+
+.StickyPaperIndent i {
+	position:absolute;
+	top:6px;
+	left: 22px;
+	margin:0;
+}
+
+
+
+
+.notepad-container {
+	width:100%;
+	padding-top:20px;
+}
+
+.notepad {
+	position:relative;
+	width:60%;
+	min-width:300px;
+
+	margin:0 auto;
+
+	background-color:lemonchiffon;
+	border:1px solid #e3e3e3;
+}
+
+.notepad > ul {
+	list-style-type:none;
+}
+
+.notepad-red-line {
+	position:absolute;
+	top:0px;
+	bottom:0px;
+	width:1px;
+	background-color:indianred;
+
+}
+
+.notepad-red-line1 {
+	left:40px;
+}
+.notepad-red-line2 {
+	left:44px;
+}
+
+
+.notepad-heading {
+	padding-left:65px;
+	color:darkblue;
+	font-size:2rem;
+	_font-family: cursive;
+	font-family: Consolas, "Andale Mono", "Lucida Console", "Lucida Sans Typewriter", Monaco, "Courier New", monospace;
+}
+
+
+
+ul#notepad-lines {
+	_margin-top:40px;
+}
+ul#notepad-lines li {
+	width:90%;
+	height:28px;
+	line-height:28px;
+	color:darkblue;
+	font-size:1rem;
+	font-family: Consolas, "Andale Mono", "Lucida Console", "Lucida Sans Typewriter", Monaco, "Courier New", monospace;
+	border-top:1px solid lightskyblue ;
+	padding-left:25px;
+}
+.notepad-tape{
+	position:relative;
+
+	width: 25%;
+	height: 35px;
+
+	top:-15px; 
+	
+	margin:0 auto;
+	
+	background-color:#fff;
+	opacity:0.6;
+	border-left: 1px dashed rgba(0, 0, 0, 0.1);
+	border-right: 1px dashed rgba(0, 0, 0, 0.1);
+	-webkit-box-shadow: 0px 0px 1px 0px #cccccc;
+	-moz-box-shadow: 0px 0px 1px 0px #cccccc;
+	box-shadow: 0px 0px 1px 0px #cccccc;
+	-webkit-transform: rotate(-2deg) skew(0,0) translate(0%,-5px);
+	-moz-transform: rotate(-2deg) skew(0,0) translate(0%,-5px);
+	-o-transform: rotate(-2deg) skew(0,0) translate(0%,-5px);
+	transform: rotate(-2deg) skew(0,0) translate(0%,-5px);
+}
+.notepad-left-shadow {
+	width: 140px;
+	height: 140px;
+	bottom:-5px; left:-12px;
+	position:absolute;
+	z-index:-6;
+	display: inline-block;
+	-webkit-box-shadow: -10px -10px 10px rgba(0, 0, 0, 0.4);
+	-moz-box-shadow: -10px -10px 10px rgba(0, 0, 0, 0.4);
+	box-shadow: -10px -10px 10px rgba(0, 0, 0, 0.4);
+	-moz-transform: scale(1) rotate(274deg) translate(20px, 25px) skew(9deg, 0deg);
+	-webkit-transform: scale(1) rotate(274deg) translate(20px, 25px) skew(9deg, 0deg);
+	-o-transform: scale(1) rotate(274deg) translate(20px, 25px) skew(9deg, 0deg);
+	-ms-transform: scale(1) rotate(274deg) translate(20px, 25px) skew(9deg, 0deg);
+	transform: scale(1) rotate(274deg) translate(20px, 25px) skew(9deg, 0deg);
+}
+.notepad-right-shadow {
+	width: 140px;
+	height: 140px;
+	bottom:-13px; right:-4px;
+	position:absolute;
+	z-index:-6;
+	display: inline-block;
+	-webkit-box-shadow: -10px -10px 10px rgba(0, 0, 0, 0.4);
+	-moz-box-shadow: -10px -10px 10px rgba(0, 0, 0, 0.4);
+	box-shadow: -10px -10px 10px rgba(0, 0, 0, 0.4);
+	-moz-transform: scale(1) rotate(184deg) translate(20px, 25px) skew(9deg, 0deg);
+	-webkit-transform: scale(1) rotate(184deg) translate(20px, 25px) skew(9deg, 0deg);
+	-o-transform: scale(1) rotate(184deg) translate(20px, 25px) skew(9deg, 0deg);
+	-ms-transform: scale(1) rotate(184deg) translate(20px, 25px) skew(9deg, 0deg);
+	transform: scale(1) rotate(184deg) translate(20px, 25px) skew(9deg, 0deg);
+}
+
+.notepad-indent {
+	position:relative;
+}
+
+.notepad-indent p {
+	position:relative;
+	margin-left: 20px;
+}
+
+.notepad-indent i {
+	position:absolute;
+	top:6px;
+	left: 22px;
+	margin:0;
+}
+
+
+
+</style>

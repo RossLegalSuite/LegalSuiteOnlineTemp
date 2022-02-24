@@ -1,0 +1,106 @@
+export default Vue.extend({
+
+    methods: {
+
+        getFilterName(columnName) {
+
+            let columnDefIndex = this.parent.columnDefs.findIndex( columnDef => columnDef.name === columnName);
+
+            if ( columnDefIndex === -1 ) {
+                console.error('columnDef named ' + columnName + ' not found in addFilter() in FilterOptions');
+                return 'UnknownColumnName' + toCamelCase(columnName) + 'Filter';
+            } 
+            return toCamelCase(this.parent.singular + this.parent.columnDefs[columnDefIndex].title) + 'Filter';
+        },
+
+        addFilter(columnName, key, value, value1 = null, method = 'Equals', period = null) {
+
+            let columnDefIndex = this.parent.columnDefs.findIndex( columnDef => columnDef.name === columnName);
+
+            if ( columnDefIndex === -1 ) {
+                console.error('columnDef named ' + columnName + ' not found in addFilter() in FilterOptions');
+                return;
+            } 
+
+            let columnDef = this.parent.columnDefs[columnDefIndex];
+            
+            let record = {
+                key: key,
+                fromDate: columnDef.filterType === 'Date' ? value : null,
+                toDate: columnDef.filterType === 'Date' ? value1 : null,
+                period: columnDef.filterType === 'Date' ? period : null,
+                fromAmount: columnDef.filterType === 'Number' ? value : null,
+                toAmount: columnDef.filterType === 'Number' ? value1 : null,
+                value: value,
+                method: method,
+                join: 'and',
+                targets: columnDef.targets,
+                title: columnDef.title,
+                name: columnDef.filterColumnName ? columnDef.filterColumnName : columnDef.name,
+                calculatedColumn: columnDef.calculatedColumn ? columnDef.calculatedColumn : false,
+                filterType: columnDef.filterType ? columnDef.filterType : 'String',
+                filterTitle: columnDef.filterTitle ? columnDef.filterTitle : columnDef.title,
+            };
+
+            let tableFilters = getTableFilter(this.parent.tableId);
+
+            let filter = this.getFilter(key);
+
+            if ( filter == null ) {
+
+                record.index = tableFilters.length;
+
+                tableFilters.push(record);
+
+            } else {     
+
+                tableFilters[filter.index] = record;
+
+            }
+
+            setTableFilter(this.parent.tableId, tableFilters);
+
+        },
+
+        getFilter(key) {
+
+            let tableFilters = getTableFilter(this.parent.tableId)
+
+            let filterIndex = tableFilters.findIndex( tableFilter => tableFilter.key === key);
+
+            if ( filterIndex > -1 ) {
+
+                return {index: filterIndex, settings: tableFilters[filterIndex]};
+
+            }
+
+            return null;
+        },
+
+        deleteFilter(key) {
+
+            let tableFilter = this.getFilter(key);
+
+            if ( tableFilter ) {
+                
+                this.$root.tableFilterSettings.tableId = this.parent.tableId;
+
+                this.$root.tableFilterSettings.deleteTableFilter(tableFilter.index,false)
+
+            }
+
+        },
+
+
+        loadMoreFilters() {
+
+            this.close();
+
+            this.$root.tableFilterSettings.openModal(this.parent.tableId, this.parent)
+
+        },
+
+
+    }
+
+})

@@ -1,0 +1,1015 @@
+<template>
+<section>
+    <div class="modal" :id="id">
+        <div class="modal-dialog modal-dialog-centered modal-lgr">
+            <div :class="'modal-content ' + borderColor">
+
+            <div :class="'modal-header ' + headerColor">
+                <div class="page-title">
+                    <h3>
+                        <i class='fa fa-envelope-o mr-2'></i>
+                        <span v-html="title"></span>
+                    </h3>
+                    <i :id="id + '-modal-close-button'" title="Close this window" class="cp top-right fa fa-times-circle fa-2x text-white" data-dismiss="modal"></i>
+                </div>
+            </div>
+
+            <div class="modal-body" style="height:75vh; overflow: unset">
+
+                <div class="form-group row">
+
+                    <div v-if="!mailMergeFlag" class="col-md-4">
+
+                        <label for="to-email-input">To</label>
+
+                        <pop-over content="
+                                <h4>To</h4>
+                                <p>Enter the email address(es) of the main recipient(s).</p>
+                                <p>Multiple email addresses must be separated by commas.</p>"
+                        />
+
+
+                        <div class="input-group">
+
+                            <b-form-input id="to-email-input" :state="toState" title="Separate multiple emails with commas" v-model="toAddress" type="text" /> 
+
+                            <div class="input-group-append">
+                                <button
+                                    tabindex="-1"
+                                    @click="$refs['select-email-to'].load()"
+                                    type="button"
+                                    title="Lookup email addresses"
+                                    class="btn btn-primary"
+                                ><i class="fa fa-cog"></i></button>
+                            </div>
+                        </div>
+                        <div v-if="toError" v-html="toError" class="invalid-feedback"></div>
+
+                    </div>
+
+
+                    <div v-else class="col-md-4">
+
+                        <label>To</label>
+                        <pop-over content="
+                                <h4>Multiple Recipients</h4>
+                                <p>Choose an email address to preview the email for that Party.</p>"
+
+                        />
+                        <v-select
+                            title="Choose an email address to preview the email for that Party."
+                            :options="multipleRecipients" 
+                            :clearable="false" 
+                            :searchable="false" 
+                            :reduce="multipleRecipients => multipleRecipients.value"
+                            v-model="selectedRecipient"
+                            @option:selected="multipleRecipientsChanged"
+                        />
+
+                    </div>
+
+
+                    <div class="col-md-4">
+
+                        <label for="cc-email-input">Cc</label>
+
+                        <pop-over content="
+                                <h4>CC</h4>
+                                <p>Enter the email address(es) of recipient(s) who are being copied in.</p>
+                                <p>Multiple email addresses must be separated by commas.</p>"
+                        />
+
+                        <div class="input-group">
+
+                            <b-form-input id="cc-email-input" :state="ccState" title="Separate multiple emails with commas" v-model="ccAddress" type="text" /> 
+
+                            <div class="input-group-append">
+                                <button
+                                    tabindex="-1"
+                                    @click="$refs['select-email-cc'].load()"
+                                    type="button"
+                                    title="Lookup email addresses"
+                                    class="btn btn-primary"
+                                ><i class="fa fa-cog"></i></button>
+                            </div>
+                        </div>
+                        <div v-if="ccError" v-html="ccError" class="invalid-feedback"></div>
+
+                    </div>
+
+                    <div class="col-md-4">
+
+                        <label for="bcc-email-input">Bcc</label>
+                        <pop-over content="
+                                <h4>BCC</h4>
+                                <p>Enter the email address(es) of recipient(s) who are being <em>blind</em> copied.</p>
+                                <p>Multiple email addresses must be separated by commas.</p>"
+                        />
+
+                        <div class="input-group">
+
+                            <b-form-input id="bcc-email-input" :state="bccState" title="Separate multiple emails with commas" v-model="bccAddress" type="text" /> 
+
+                            <div class="input-group-append">
+                                <button
+                                    tabindex="-1"
+                                    @click="$refs['select-email-bcc'].load()"
+                                    type="button"
+                                    title="Lookup email addresses"
+                                    class="btn btn-primary"
+                                ><i class="fa fa-cog"></i></button>
+                            </div>
+                        </div>
+                        <div v-if="bccError" v-html="bccError" class="invalid-feedback"></div>
+
+                    </div>
+
+                </div>                                        
+
+                <div class="form-group row mt-3">
+
+                    <text-input 
+                        _class="col-md-8" 
+                        v-model="subject" 
+                        name="subject" 
+                        :required="true" 
+                        label="Subject" 
+                        :error="subjectError"
+                        popOver="<h4>Subject</h4><p>Enter a description of what the email is about.</p>"
+                    />
+
+                </div>                                        
+
+                <div :id="id + '-top-of-form-marker'"/>
+
+                <div class="form-group row"> 
+                    <div class="col-md-12"> 
+
+                        <div class="leftRightFlexContainer" >
+                            <div>
+                                <label style="margin-bottom: 2px !important">Message</label>
+                            </div>
+                            <div>
+                                <button  
+                                    class="btn btn-primary btn-sm ml-2 mb-2" 
+                                    type="button" 
+                                    @click="changeTemplate" 
+                                    title="Change the template used to generate the message">
+                                    <i class="fa fa-cog fa-lg mr-2"></i>Change Template
+                                </button>
+                            </div>
+                        </div>
+
+                        <div v-html="messageContents" :id="id + '-message-contents'" class="p-2 overflow-auto bordered" contenteditable="true"/>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="modal-footer justify-content-between">
+                <div>
+                    <button class="btn btn-danger form-button shadowed mr-2" type="button" @click="viewAttachments" title="View (or add) email attachments">
+
+                        <i v-if="!defaultAttachmentFlag" class="fa fa-file-pdf-o fa-lg mr-2"></i>
+                        <i v-else-if="defaultAttachmentUploaded" class="fa fa-file-pdf-o fa-lg mr-2"></i>
+
+                        <i v-else id="uploading-icon" class="fa fa-spinner fa-lg mr-2"></i>
+
+                        <span v-if="!defaultAttachmentFlag">Attachments
+                            <span v-show="noOfAttachments" class="badge badge-info ml-2">{{noOfAttachments}}</span>
+                        </span>
+                        <span v-else-if="defaultAttachmentUploaded">Attachments
+                            <span class="badge badge-info ml-2">{{noOfAttachments}}</span>
+                        </span>
+                        <span v-else>Uploading...</span>
+                    </button>
+                </div>
+                <div>
+                    <button class="btn btn-success form-button shadowed mr-2" type="button" @click="okClicked" title="Send via Email">
+                        <i class="fa fa-envelope-o fa-lg mr-2"></i>
+                        Send
+                    </button>
+                    <button class="btn btn-danger form-button shadowed" type="button" data-dismiss="modal" title="Abort sending email"><i class="fa fa-times-circle fa-lg mr-2"></i>Cancel</button>
+                </div>
+            </div>
+
+
+            </div>
+        </div>
+    </div>
+    <select-email id="select-email-to" ref='select-email-to' selectRecordsCallback="toEmailsSelected"/>
+    <select-email id="select-email-cc" ref='select-email-cc' selectRecordsCallback="ccEmailsSelected"/>
+    <select-email id="select-email-bcc" ref='select-email-bcc' selectRecordsCallback="bccEmailsSelected"/>
+
+    <email-attachments ref="email-attachments" id="email-attachments"/>
+
+</section>
+</template>
+
+<script>
+
+import modalTemplate from "../modals/modal-template";
+import templateMethods from "@pages/system-templates/common-template-methods";
+
+export default {
+
+    mixins: [modalTemplate, templateMethods],
+
+    props: {
+        id: String,
+    },
+    data() {
+        return {
+            errors: {},
+            multipleRecipients: [],
+            selectedRecipient: null,
+            title: 'Email',
+            headerColor: 'red-bg',
+            borderColor: 'red-border',
+            subjectError: [],
+            noOfAttachments: null,
+            toEmailAddresses: [],
+            ccEmailAddresses: [],
+            bccEmailAddresses: [],
+            toAddress: '',
+            ccAddress: '',
+            bccAddress: '',
+            toError: '',
+            ccError: '',
+            bccError: '',
+            toState: null,
+            ccState: null,
+            bccState: null,
+            subject: '',
+            defaultAttachmentUploaded: false,
+            defaultAttachmentFlag: true,
+            mailMergeEmails: [],
+            mailMergeFlag: false,
+            mailMergePlural: '',
+            mailMergeSelectedDescription: '',
+            mailMergeManyFlag: false,
+            callingComponent: null,
+            canSendEmailFlag: true,
+            messageContents: '',
+            templateContents: '',
+            templateRecord: null,
+        }
+    },
+
+
+    watch: {
+
+        toAddress: function() { this.toState = null; this.toError = '';  },
+        ccAddress: function() { this.ccState = null; this.ccError = '';  },
+        bccAddress: function() { this.bccState = null; this.bccError = '';  },
+
+    },
+
+    methods: {
+
+
+        initialize() {
+
+            this.previewingContent = false;
+            this.showContentPreviewFlag = false;
+
+            this.savedFlag = false;
+
+            this.selectedParty = this.selectedMatter = null;
+
+            this.initializeAttachmentsTable();
+
+            this.messageContents = '';
+            this.templateContents = '';
+            this.templateRecord = null;
+
+            this.multipleRecipients = [];
+            this.selectedRecipient = null;
+            this.subjectError = [];
+            this.toEmailAddresses = [];
+            this.ccEmailAddresses = [];
+            this.bccEmailAddresses = [];
+            this.title = '';
+
+            this.toAddress = '';
+            // Testing
+            //this.toAddress = 'rick@legalsuite.co.za';
+
+            this.ccAddress = '';
+            this.bccAddress = '';
+            this.toError = '';
+            this.ccError = '';
+            this.bccError = '';
+            this.toState = null;
+            this.ccState = null;
+            this.bccState = null;
+            this.subject = '';
+            this.noOfAttachments = null;
+            this.templateContents = null;
+            this.defaultAttachmentUploaded = false;
+            this.defaultAttachmentFlag = true;
+            this.mailMergeFlag = false;
+            this.mailMergePlural = '';
+            this.mailMergeSelectedDescription = '';
+            this.mailMergeManyFlag = false;
+            this.callingComponent = null;
+
+        },
+
+        multipleRecipientsChanged(option) {
+
+            this.messageContents = '<h3 class="mt-5 text-center">Generating email body .... please wait.</h3>';
+
+            root.createRecordTemplateData(this.callingComponent.generateDocumentsSource,this.templateRecord, option.value)
+
+            .then( (templateData) => {
+
+                this.templateData = templateData;
+
+                this.generateEmailSubject();
+
+                root.vueRender( this.templateContents, this.templateData )
+
+                .then( (renderedHtml) => {
+
+                    this.messageContents = renderedHtml;
+
+                }).catch(error => { 
+
+                    showError('Error', error)
+
+                });  
+
+
+            }).catch( (error) => {
+
+                showError('Error',error);
+
+            });
+
+        },
+
+
+        initializeAttachmentsTable() {
+
+            // Using this to reset icons and ensure the email is not sent before
+            // the attachment has been uploaded
+            this.emailAttachments.table.defaultAttachmentUploaded = false;
+
+            //Load the attachments table (hidden) so we can add attachments to the table
+            this.emailAttachments.table.loadTable();
+
+        },
+
+        generateEmailSubject() {
+
+            if ( this?.templateRecord?.subject ) {
+
+                this.subject = '';
+
+                root.vueRender( this.templateRecord.subject, this.templateData )
+
+                .then( (renderedHtml) => {
+
+                    this.subject = renderedHtml;
+
+                }).catch(error => { 
+
+                    showError('Error generating subject', error)
+
+                });  
+            }
+        },
+
+        generateEmailBody() {
+
+            this.generateEmailSubject();
+
+            this.messageContentsContainer = $('#' + this.id + '-message-contents');
+
+            if ( !this.availableSpace ) {
+
+                root.getAvailableSpace('#' + this.id + '-top-of-form-marker', '#' + this.id + ' .modal-footer', 75)
+
+                .then( (availableSpace) => {
+
+                    this.availableSpace = availableSpace;
+
+                    this.messageContentsContainer.height( this.availableSpace);
+
+
+                }).catch( (error) => {
+                    showError('Error',error)
+                });
+
+            } else {
+
+                this.messageContentsContainer.height( this.availableSpace);
+
+            }
+
+            //console.log("this.templateContents, this.templateData",this.templateContents, this.templateData);
+
+            root.vueRender( this.templateContents, this.templateData )
+
+            .then( (renderedHtml) => {
+
+                this.messageContents = renderedHtml;
+
+            }).catch(error => { 
+
+                showError('Error', error)
+
+            });  
+
+        },
+
+        changeTemplate() {
+            console.log("changeTemplate - To Do");
+        },
+
+        setEditorContents( contents ) {
+
+            this.contentEditor.summernote('code',contents);
+
+        },
+
+        emailParty(id) {
+
+            root.$snotify.simple('Please wait...', 'Preparing email', { timeout: 0, icon: 'img/cogs.gif' });
+
+            axios.post('/party/get/' + id)
+
+            .then(response => {
+
+                if (response.data.errors) { 
+
+                    showError( 'Error', response.data.errors);
+
+                } else {
+
+                    if ( response.data.data.length ) {
+
+                        let party = response.data.data[0];
+
+                        this.initialize();
+                        this.defaultAttachmentFlag = false;
+
+                        this.toAddress = party.emailaddress;
+
+                        this.title = 'Email ' + party.name;
+
+                        axios.post('/lolsystemtemplate/get/' + root.lolSettings.partiesemailtemplateid)
+
+                        .then(templateResponse => {
+
+                            if ( templateResponse.data.errors ) {
+
+                                showError('Error',templateResponse.data.errors);
+
+                            } else {
+
+                                this.templateRecord = templateResponse.data.data[0];
+
+                                this.templateContents = this.templateRecord.contents;
+
+                                root.createRecordTemplateData('party',this.templateRecord, party.recordid)
+
+                                .then( (templateData) => {
+
+                                    root.$snotify.clear();
+
+                                    this.templateData = templateData;
+
+                                    this.show();
+
+                                    this.generateEmailBody();
+
+                                    setTimeout(() => $('#' + this.id + ' input[name="subject"]').focus() );
+
+                                }).catch( (error) => {
+
+                                    showError('Error',error);
+
+                                });
+
+                            }
+
+                        }).catch( (error) => {
+
+                            showError('Error',error);
+
+                        });
+
+                    } else {
+
+                        showError( 'Error', 'Party Not found');
+
+                    }                        
+
+                }                        
+
+            });
+        },
+
+
+        toEmailsSelected(emails) {
+            
+            if ( this.toAddress ) {
+
+                this.toAddress = this.toAddress.trim();
+            
+                if ( !this.toAddress.endsWith(',') ) this.toAddress += ', ';
+            }
+
+            let counter = 0;
+
+            emails.forEach(email => {
+
+                counter++;
+
+                this.toAddress += email.emailAddress;
+
+                this.toAddress += counter === emails.length ? '' : ', ';
+
+            });
+
+        },
+
+        ccEmailsSelected(emails) {
+            
+            if ( this.ccAddress ) {
+
+                this.ccAddress = this.ccAddress.trim();
+            
+                if ( !this.ccAddress.endsWith(',') ) this.ccAddress += ', ';
+            }
+
+            let counter = 0;
+
+            emails.forEach(email => {
+
+                counter++;
+
+                this.ccAddress += email.emailAddress;
+
+                this.ccAddress += counter === emails.length ? '' : ', ';
+
+            });
+
+        },
+
+        bccEmailsSelected(emails) {
+            
+            if ( this.bccAddress ) {
+
+                this.bccAddress = this.bccAddress.trim();
+            
+                if ( !this.bccAddress.endsWith(',') ) this.bccAddress += ', ';
+            }
+
+            let counter = 0;
+
+            emails.forEach(email => {
+
+                counter++;
+
+                this.bccAddress += email.emailAddress;
+
+                this.bccAddress += counter === emails.length ? '' : ', ';
+
+            });
+
+        },
+
+        addToEmail() {
+
+            if ( this.toAddress ) {
+
+                this.toAddress = this.toAddress.trim();
+            
+                if ( !this.toAddress.endsWith(',') ) this.toAddress += ', ';
+            }
+
+            this.toAddress += email.emailAddress ;
+
+        },
+
+        addCcEmail() {
+
+            if ( this.ccAddress ) {
+
+                this.ccAddress = this.ccAddress.trim();
+            
+                if ( !this.ccAddress.endsWith(',') ) this.ccAddress += ', ';
+            }
+
+            this.ccAddress += email.emailAddress ;
+        },
+
+        addBccEmail() {
+
+            if ( this.bccAddress ) {
+
+                this.bccAddress = this.bccAddress.trim();
+            
+                if ( !this.bccAddress.endsWith(',') ) this.bccAddress += ', ';
+            }
+
+            this.bccAddress += email.emailAddress ;
+
+        },
+
+        checkSmtpDetails( existingSmtpDetails = {}) {
+
+            return new Promise(async (resolve, reject) => {
+                
+                // *********************************************
+                // For testing
+                root.lolSettings.smtpserver = 'smtp.bittex.co.za';
+                root.lolSettings.smtpport = '587';
+                root.lolSettings.smtpencryption = 'tls';
+                root.lolSettings.incomingserver = 'mail.bittex.co.za';
+                root.lolSettings.incomingport = '993';
+                root.lolSettings.incomingencryption = 'ssl';
+                root.lolSettings.smtpauthentication == 'Yes';
+                root.loggedInEmployeeSmtpUserName = 'ettorney@bittex.co.za';
+                root.loggedInEmployeeSmtpPassword = 'Bacon1024!!';
+
+                // *********************************************
+
+                let smtpDetails = {
+                    smtpServer: root.lolSettings.smtpserver,
+                    smtpPort: root.lolSettings.smtpport,
+                    smtpEncryption: root.lolSettings.smtpencryption,
+                    incomingServer: root.lolSettings.incomingserver,
+                    incomingPort: root.lolSettings.incomingport,
+                    incomingEncryption: root.lolSettings.incomingencryption,
+                    smtpAuthentication: root.lolSettings.smtpauthentication,
+                }
+
+
+                if ($.isEmptyObject(existingSmtpDetails)) {
+
+                    if ( !smtpDetails.smtpServer || !smtpDetails.smtpPort) {
+                        
+                        showError('Email Settings Incomplete','<p>The Email settings for your Company have not been setup.</p><p>Please go to <em>Settings</em> and insert the details in the <em>Email</em> tab.</p>');
+                        reject();
+
+                    } else {
+
+                        if ( smtpDetails.smtpAuthentication == 'Yes' ) {
+
+                            smtpDetails.smtpUserName = root.loggedInEmployeeSmtpUserName;
+                            smtpDetails.smtpPassword = root.loggedInEmployeeSmtpPassword;
+
+
+                            // let employeeEmailCredentials = await axios.post('/mail/getSmtpDetails');
+
+                            // smtpDetails = {...smtpDetails, ...employeeEmailCredentials.data.data[0]};
+
+                            if ( !smtpDetails.smtpPassword || !smtpDetails.smtpUserName ) {
+
+                                showError('Email Login Details Not Specified','<p>You have not specified your SMTP login details.</p><p>Please go to <em>Employees</em> and insert your Email Server Login Details in your profile.</p>');
+                                reject();
+
+                            } 
+
+                        }
+
+                        resolve(smtpDetails);
+
+                    }
+
+                } else {
+                    
+                    resolve(existingSmtpDetails);
+                }
+
+
+            });
+        },
+
+        canSendEmail() {
+
+            this.canSendEmailFlag = true;
+            this.toState = null; this.toError = '';
+            this.ccState = null; this.ccError = '';
+            this.bccState = null; this.bccError = '';
+            this.subjectError = [];
+
+            return new Promise( (resolve, reject) => {
+
+                if ( this.defaultAttachmentFlag && !this.defaultAttachmentUploaded ) {
+                    
+                    this.canSendEmailFlag = false;
+
+                    showError('Uploading attachment','<p>An email attachment is currently being uploaded.</p><p>Please wait...<p>', 'modal-md');
+
+                    reject();
+
+                }
+
+                if ( !this.subject ) {
+                    
+                    this.canSendEmailFlag = false;
+
+                    this.subjectError = ['Please provide a subject for the email'];
+
+                    reject();
+
+                }
+
+                if ( this.canSendEmailFlag ) {
+
+                    if ( !this.mailMergeFlag ) {
+
+                        this.toEmailAddresses = this.toAddress ? this.toAddress.split(",") : [];
+
+                        if ( !this.toEmailAddresses.length ) {
+
+                            this.canSendEmailFlag = false;
+
+                            this.toState = false;
+                            this.toError = 'Please specify a recipient';
+
+                            reject();
+
+                        } 
+
+                        let toInvalid = [];
+
+                        this.toEmailAddresses.forEach(address => {
+                            
+                            if ( !isValidEmailAddress( address.trim() ) ) {
+                                
+                                toInvalid.push( address.trim() );
+
+                            }
+
+                        });
+
+                        if ( toInvalid.length ) {
+
+                            this.toState = false;
+                            this.canSendEmailFlag = false;
+
+                            let toInvalidCounter = 0;
+
+                            toInvalid.forEach(address => {
+
+                                toInvalidCounter++;
+
+                                this.toError += address;
+
+                                if ( toInvalid.length > 1 ) {
+
+                                    if ( toInvalidCounter === toInvalid.length ) {
+                                        this.toError += '';
+                                    } else if ( toInvalidCounter === toInvalid.length-1 ) {
+                                        this.toError += ' and ';
+                                    } else {
+                                        this.toError += ', ';
+                                    }
+
+                                }
+
+                            });
+
+                            this.toError += (toInvalid.length > 1 ? ' are' : ' is an ') + ' invalid email address' + (toInvalid.length > 1 ? 'es' : '');
+
+                        }
+
+                    }
+
+                    let ccInvalid = [];
+                    this.ccEmailAddresses = this.ccAddress ? this.ccAddress.split(",") : [];
+
+                    this.ccEmailAddresses.forEach(address => {
+                        
+                        if ( !isValidEmailAddress( address.trim() ) ) {
+                            
+                            ccInvalid.push( address.trim() );
+
+                        }
+
+                    });
+
+                    if ( ccInvalid.length ) {
+
+                        this.ccState = false;
+                        this.canSendEmailFlag = false;
+
+                        let ccInvalidCounter = 0;
+
+                        ccInvalid.forEach(address => {
+
+                            ccInvalidCounter++;
+
+                            this.ccError += address;
+
+                            if ( ccInvalid.length > 1 ) {
+
+                                if ( ccInvalidCounter === ccInvalid.length ) {
+                                    this.ccError += '';
+                                } else if ( ccInvalidCounter === ccInvalid.length-1 ) {
+                                    this.ccError += ' and ';
+                                } else {
+                                    this.ccError += ', ';
+                                }
+
+                            }
+
+                        });
+
+                        this.ccError += (ccInvalid.length > 1 ? ' are' : ' is an ') + ' invalid email address' + (ccInvalid.length > 1 ? 'es' : '');
+
+                    }
+
+                    let bccInvalid = [];
+                    this.bccEmailAddresses = this.bccAddress ? this.bccAddress.split(",") : [];
+
+                    this.bccEmailAddresses.forEach(address => {
+                        
+                        if ( !isValidEmailAddress( address.trim() ) ) {
+                            
+                            bccInvalid.push( address.trim() );
+
+                        }
+
+                    });
+
+                    if ( bccInvalid.length ) {
+
+                        this.bccState = false;
+                        this.canSendEmailFlag = false;
+
+                        let bccInvalidCounter = 0;
+
+                        bccInvalid.forEach(address => {
+
+                            bccInvalidCounter++;
+
+                            this.bccError += address;
+
+                            if ( bccInvalid.length > 1 ) {
+
+                                if ( bccInvalidCounter === bccInvalid.length ) {
+                                    this.bccError += '';
+                                } else if ( bccInvalidCounter === bccInvalid.length-1 ) {
+                                    this.bccError += ' and ';
+                                } else {
+                                    this.bccError += ', ';
+                                }
+
+                            }
+
+                        });
+
+                        this.bccError += (bccInvalid.length > 1 ? ' are' : ' is an ') + ' invalid email address' + (bccInvalid.length > 1 ? 'es' : '');
+
+                    }
+
+                }
+
+                if ( this.canSendEmailFlag ) {
+                    resolve();
+                } else {
+                    reject();
+                }
+
+
+            });
+
+        },
+
+        async okClicked() {
+
+            await this.checkSmtpDetails()
+
+            .then( ( smtpDetails) => {
+
+                this.canSendEmail()
+
+                .then( () => {
+
+                    let attachments = [];
+
+                    this.emailAttachments.table.table.rows().every( function () {
+
+                        var data = this.data();
+
+                        attachments.push(data.path + '/' + data.fileName);
+
+                    });
+
+                    this.hide();
+
+                    let params = {
+                        smtpServer: smtpDetails.smtpServer,
+                        smtpPort: smtpDetails.smtpPort,
+                        smtpEncryption: smtpDetails.smtpEncryption,
+                        smtpUserName: smtpDetails.smtpUserName,
+                        smtpPassword: smtpDetails.smtpPassword,
+                        email: root.loggedInEmployeeEmail,
+                        name: root.loggedInEmployeeName,
+
+                        to: this.toEmailAddresses,
+                        cc: this.ccEmailAddresses,
+                        bcc: this.bccEmailAddresses,
+                        attachments: attachments,
+                        subject: this.subject,
+                        body: this.mailMergeFlag ? this.templateContents : $('#' + this.id + '-message-contents').html(),
+                    };
+
+                    if ( this.mailMergeFlag ) {
+
+                        this.callingComponent.generateEmails(params);
+
+                    } else {
+
+                        root.$snotify.simple(params.subject, 'Sending email', { timeout: 2000, icon: 'img/cogs.gif' });
+
+                        this.sendEmail(params);
+
+                    }
+
+                })
+                .catch( () => {
+                    console.log('canSendEmail rejected');
+                });
+
+            })
+            .catch( () => {
+                console.log('checkSmtpDetails rejected');
+            });
+
+        },
+
+        sendEmail( params ) {
+
+            axios.post('/mail/sendEmail',params)
+
+            .then(response => {
+
+                if (response.data.error) {
+
+                    if ( this.mailMergeFlag ) {
+
+                        root.$snotify.error(response.data.error,'Error Sending Email',{
+                            timeout: 3000,
+                            position: 'centerCenter',
+                            showProgressBar: true,
+                        });
+
+                    } else {
+
+                        showError('Error Sending Email',response.data.error);
+
+                    }
+
+
+                } else {
+
+                    //console.log('Email sent successfully');
+
+
+                }
+
+            });
+
+
+        },
+
+        viewAttachments() {
+
+            this.emailAttachments.title = this.title;
+            this.emailAttachments.open();
+
+        },
+
+        addDefaultAttachment( url, path, fileName ) {
+
+            this.emailAttachments.table.defaultAttachment = {
+                name: fileName,
+                url:  url,
+                path:  path,
+            }
+
+            this.emailAttachments.table.addDefaultAttachment();
+
+        },
+
+        showMailMergeEmails() {
+
+            console.log("showMailMergeEmails");
+
+        },
+
+
+    }
+
+}  
+</script>

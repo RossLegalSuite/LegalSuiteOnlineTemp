@@ -1,0 +1,152 @@
+<template>
+
+<span id="settings-right">
+
+    <setup-company v-show="activePage === 'Company'" ref="setup-company"/>
+
+    <setup-party-roles v-show="activePage === 'PartyRoles'" ref="setup-party-roles"/>
+
+    <setup-employee-roles v-show="activePage === 'EmployeeRoles'" ref="setup-employee-roles"/>
+
+    <setup-employee-groups v-show="activePage === 'EmployeeGroups'" ref="setup-employee-groups"/>
+
+    <setup-party-entities v-show="activePage === 'PartyEntities'" ref="setup-party-entities"/>
+
+    <setup-party-types v-show="activePage === 'PartyTypes'" ref="setup-party-types"/>
+
+    <setup-matter-types v-show="activePage === 'MatterTypes'" ref="setup-matter-types"/>
+
+    <setup-marriage-types v-show="activePage === 'MarriageTypes'" ref="setup-marriage-types"/>
+
+    <setup-fee-units v-show="activePage === 'FeeUnits'" ref="setup-fee-units"/>
+
+    <setup-branches v-show="activePage === 'Branches'" ref="setup-branches"/>
+
+    <setup-document-sets v-show="activePage === 'DocumentSets'" ref="setup-document-sets"/>
+
+
+</span>
+</template>
+
+<script>
+
+export default {
+    components: {
+        SetupCompany: () => import("./SetupCompany"),
+        SetupPartyRoles: () => import("./SetupPartyRoles"),
+        SetupEmployeeRoles: () => import("./SetupEmployeeRoles"),
+        SetupEmployeeGroups: () => import("./SetupEmployeeGroups"),
+        SetupPartyEntities: () => import("./SetupPartyEntities"),
+        SetupPartyTypes: () => import("./SetupPartyTypes"),
+        SetupMatterTypes: () => import("./SetupMatterTypes"),
+        SetupMarriageTypes: () => import("./SetupMarriageTypes"),
+        SetupFeeUnits: () => import("./SetupFeeUnits"),
+        SetupBranches: () => import("./SetupBranches"),
+        SetupDocumentSets: () => import("./SetupDocumentSets"),
+    },
+
+    data() {
+        return {
+            activePage: null,
+            table: null,
+        }
+    },
+
+    watch: {
+        
+        activePage(newValue) {
+
+            $('#settings-right .popover-icon').popover();
+
+            if ( newValue === "Company") {
+
+                let setupCompany = this.$refs['setup-company'];
+
+                setupCompany.record = root.control;
+
+                setTimeout(() => {
+
+                    let companyNumbersTable = setupCompany.$refs['company-numbers'];
+
+                    companyNumbersTable.tableOptions = {
+                        scrollY: '20vh',
+                        hideProcessing: true,
+                    };
+
+                    companyNumbersTable.initialOrder = [[3, "desc"]];
+
+                    companyNumbersTable.loadDataTable(); 
+
+                    setupCompany.salesTaxTable = setupCompany.$refs['tax-rates-table'];
+
+                    //Set the table Height manually
+                    let $thisForm = $('#' + this.id);
+                    let $formBody = $thisForm.find('.form-tab-body');
+
+                    setupCompany.salesTaxTable.tableOptions = {
+                        scrollY: (Math.round( $formBody.outerHeight() ) - 20)  + 'px',
+                    };
+
+
+                    setupCompany.salesTaxTable.loadDataTable(); 
+
+                }, 100);
+
+            } else if ( newValue === "Accounts") {
+
+                setTimeout(this.$refs['accounts-page'].$refs['accounts-table'].loadDataTable);
+
+            } else if ( newValue === "TaxRates") {
+
+                setTimeout(this.$refs['setup-tax-rates'].$refs['tax-rates-table'].loadDataTable);
+
+            } else if ( newValue === "PartyRoles") {
+
+                setTimeout(this.$refs['setup-party-roles'].$refs['settings-party-role-table'].loadDataTable);
+
+            } else if ( newValue === "PartyEntities") {
+
+                setTimeout(this.$refs['setup-party-entities'].$refs['settings-party-entity-table'].loadDataTable);
+
+            } else if ( newValue === "PartyTypes") {
+
+                setTimeout(this.$refs['setup-party-types'].$refs['settings-party-type-table'].loadDataTable);
+
+            } else if ( newValue === "MatterTypes") {
+
+                setTimeout(this.$refs['setup-matter-types'].$refs['settings-matter-type-table'].loadDataTable);
+
+            } else if ( newValue === "MarriageTypes") {
+
+                setTimeout(this.$refs['setup-marriage-types'].$refs['settings-marriage-type-table'].loadDataTable);
+
+            } else if ( newValue === "FeeUnits") {
+
+                setTimeout(this.$refs['setup-fee-units'].$refs['settings-fee-unit-table'].loadDataTable);
+
+            } else if ( newValue === "EmployeeGroups") {
+
+                setTimeout(this.$refs['setup-employee-groups'].$refs['settings-employee-group-table'].loadDataTable);
+
+            } else if ( newValue === "EmployeeRoles") {
+
+                setTimeout(this.$refs['setup-employee-roles'].$refs['settings-employee-role-table'].loadDataTable);
+
+            } else if ( newValue === "Branches") {
+                
+                setTimeout(this.$refs['setup-branches'].$refs['settings-branch-table'].loadDataTable);
+                
+            } else if ( newValue === "DocumentSets") {
+                
+                setTimeout(this.$refs['setup-document-sets'].$refs['settings-document-set-table'].loadDataTable);
+                
+            }
+            
+
+        }
+    },
+
+
+
+}  
+</script>

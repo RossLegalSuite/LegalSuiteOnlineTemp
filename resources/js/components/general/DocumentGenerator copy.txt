@@ -1,0 +1,381 @@
+<template>
+    <div class="d-none"/>
+</template>
+
+<script>
+
+export default {
+
+    data() {
+        return {
+            title: null,
+            subTitle: null,
+            fileName: '',
+            documentUrl: null,
+            method: null,
+            options: null,
+            generateComponent: null,
+            notification: {},
+        }
+    },
+
+    methods: {
+
+        async generateDocument( method, options  ) {
+
+            try {
+
+                if ( typeof options.templateId === 'undefined' ) {
+
+                    showError('System Error','Template Id not specified trying to generate a Document in DocumentGenerator');
+                    return;
+                } 
+
+                if ( typeof options.createNewDocument === 'undefined' ) options.createNewDocument = true;
+                if ( typeof options.noPassword === 'undefined' ) options.noPassword = false;
+
+                options.templateSource = options.templateSource || 'lolsystemtemplate';
+                options.orientation = options.orientation || 'Portrait';
+
+                this.options = options;
+                this.method = method;
+
+                this.notification = {};
+
+                this.title = options.title;
+                this.subTitle = options.subTitle;
+                this.documentFileName = options.fileName;
+                this.documentFolder = options.folder;
+                this.documentUrl = null;
+                this.documentPath = null;
+
+                this.templateData = {};
+
+                if ( typeof options.createTemplateData === 'function' ) {
+                    this.templateData = await options.createTemplateData();
+                }
+
+                if ( options.createNewDocument ) {
+                    
+                    if ( method == 'previewHtml' ) {
+                        await this.createHtml();
+                    } else {
+                        await this.uploadDocument( options, method);
+                    }
+
+                } else {
+
+                    await this.checkPdf(this.documentFolder, this.documentFileName)
+
+                    .then( async ( pdf ) => {
+                        
+                        if ( pdf.exists ) {
+                            
+                            //console.log('DocumentGenerator.vue NOT CREATING New Document AND IT EXISTS');
+
+                            this.executeMethod( method );
+
+                        } else {
+                            
+                            //console.log('DocumentGenerator.vue NOT CREATING New Document AND IT DOES NOT EXIST');
+
+                            await this.uploadDocument( options, method);
+
+                        }    
+
+                    });
+
+                }
+
+            } catch (error) {
+
+                root.$snotify.clear();
+
+                showError('Error Generating Document', error);
+
+            }            
+        },
+
+        async createHtml() {
+            },
+
+        async uploadDocument( options, method ) {
+
+            try {
+
+                this.displayNotification();
+
+                let response = await axios.post('/' + options.templateSource + '/get/' + options.templateId);
+
+                let template = response.data.data[0];
+
+                let templateContents = options.templateContents ? options.templateContents : template.contents;
+
+                let header = '', body = '', footer = '';
+                    
+                //*****************************************************************************************
+                // registerUserComponents() in app.js being called everytime below in vueRender() in app.js!!
+                // So added registerUserComponentsFlag to vueRender so it knows that registerUserComponents() has been called
+                //*****************************************************************************************
+                await root.registerUserComponents( this.templateData )
+
+                .then( async () => {
+
+                    if (template.header) {
+                        await root.vueRender( template.header, this.templateData, false )
+                        .then( (html) => { 
+                            header = html; 
+                        }).catch( (error) => {
+                            showError('Error', 'Error generating Header: ' + error);
+                        });
+                    }
+
+                    if (templateContents) {
+                        await root.vueRender( templateContents, this.templateData, false )
+                        .then( (html) => { 
+                            body = html; 
+                        }).catch( (error) => {
+                            showError('Error', 'Error generating Body: ' + error);
+                        });
+                    }
+
+                    if (template.footer) {
+                        await root.vueRender( template.footer, this.templateData, false )
+                        .then( (html) => { 
+                            footer = html; 
+                        }).catch( (error) => {
+                            showError('Error', 'Error generating Footer: ' + error);
+                        });
+                    }
+
+                    await this.createPdf( options, header, body, footer, template )
+
+                    .then( async ( pdfFile ) => {
+
+                        this.documentUrl = pdfFile.url;
+                        this.documentPath = pdfFile.path;
+
+                        if ( options.notifyMessage )  root.$snotify.clear();
+
+                        this.executeMethod( method );
+
+                    });
+
+                });
+
+                
+            } catch (error) {
+
+                root.$snotify.clear();
+
+                showError('Error Uploading Document', error);
+
+            }
+
+        },
+
+        displayNotification() {
+
+            if ( options.notifyMessage ) {
+                this.notification = root.$snotify.simple(options.notifyMessage , {
+                    timeout: 0,
+                    position: "centerCenter",
+                    icon: 'img/cogs.gif'
+                });
+            }
+
+        },
+
+        executeMethod( action, description = 'Documents', fileName = this.documentFileName, url = this.documentUrl, path = this.documentPath ) {
+
+            let pdfDocument = {
+                description: description,
+                fileName: fileName,
+                url: url,
+                path: path,
+            };
+
+            this.$root.previewDocument.title = this.title;
+            this.$root.previewDocument.subTitle = this.subTitle;
+
+            this.$root.previewDocument.document = pdfDocument;
+
+            if ( action === 'print') {
+
+                this.$root.previewDocument.printDocument();
+
+            } else if ( action === 'email') {
+
+                this.addEmailAttachment( this.documentUrl, this.documentPath, this.documentFileName );
+
+            } else if ( action === 'download') {
+                
+                this.$root.previewDocument.downloadDocument();
+
+                // 8 Nov 2020 - Changed this because the Statements and Invoices were display the screen
+
+            } else if ( action === 'preview') {
+
+                this.$root.previewDocument.documentPath = url; //Being watched: To load the iFrame
+
+                this.$root.previewDocument.show();
+
+            }
+
+        },
+
+        checkPdf( folder, fileName ) {
+
+            return new Promise((resolve, reject) => {            
+
+                this.documentFileName = fileName;
+                this.documentFolder = folder;
+                this.documentUrl = null;
+                this.documentPath = null;
+
+                axios.post('/file/exists', {
+                    folder: this.documentFolder,
+                    fileName: this.documentFileName,
+                })
+
+                .then(response => {    
+                    
+                    //console.log('/file/exists response',response);
+
+                    this.documentUrl = response.data.url;
+                    this.documentPath = response.data.path;
+
+                    let result = {
+                        exists: response.data.result,
+                        documentUrl: this.documentUrl,
+                        documentPath: this.documentPath,
+                        documentFileName: this.documentFileName,
+                        documentFolder: this.documentFolder,
+                        error: response.data.error,
+                    };
+
+
+                    if (result.error) {
+
+                        showError('Error','<p>An error was encountered checking if ' + this.documentFileName + ' exists.</p></p>Error: ' + result.error + '</p>');
+
+                        reject(result);
+
+                    } else {
+
+                        resolve(result);
+
+                    }   
+
+                });
+
+            });
+
+        },
+
+        addPassword( password, fileName, allow ) {
+
+            return new Promise((resolve, reject) => {
+
+                if ( password ) {
+
+                    axios.post('/pdf/setPassword', {
+                        password: password,
+                        fileName: fileName,
+                        allow: allow,
+                    })
+
+                    .then(() => {
+
+                        resolve();
+
+
+                    }).catch(error => { 
+
+                        reject('Error setting PDF password: ' + error);
+
+                    });                                            
+
+                } else {
+
+                    resolve();
+                }
+
+            });
+
+        },
+
+        getPdfPermissions(template) {
+
+            // Return a spaced string of permissions
+            let permissions = [];
+
+            if ( template.allowprint ) permissions.push('Printing');
+            if ( template.allowedit ) permissions.push('ModifyContents');
+            if ( template.allowcopy ) permissions.push('CopyContents');
+
+            return permissions.join(' ');
+            
+
+        },
+
+        createPdf( options, headerHtml = '', bodyHtml = '', footerHtml = '', template = {} ) {
+
+            return new Promise((resolve, reject) => {
+
+                const params = $.extend( {}, template, { 
+                    headerHtml: headerHtml,
+                    bodyHtml: bodyHtml,
+                    footerHtml: footerHtml,
+                    folder: options.folder,
+                    fileName: options.fileName,
+                    password: options.noPassword ? null : template.password,
+                    allow: options.noPassword ? null : this.getPdfPermissions(template),
+                });
+
+                axios.post('/pdf/htmlToPdf', params)
+
+                .then(response => {
+
+                    resolve({
+                        url: response.data.url, 
+                        path: response.data.path,
+                    });
+
+                }).catch(error => { 
+
+                    reject('Error creating PDF: ' + error);
+
+                });                                            
+
+            });
+
+        },
+
+        addEmailAttachment( url, path, fileName ) {
+
+            this.$root.emailModal.emailAttachments.table.defaultAttachment = {
+                name: fileName,
+                url:  url,
+                path:  path,
+            }
+
+            this.$root.emailModal.emailAttachments.table.addDefaultAttachment();
+
+        },
+
+        // Needed for mutiple documents!!
+        getDocumentDetails() {
+
+            return {
+                documentFileName: this.documentFileName,
+                documentFolder: this.documentFolder,
+                documentUrl: this.documentUrl,
+                documentPath: this.documentPath,
+            };
+
+        },
+
+    }   
+}  
+</script>

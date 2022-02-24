@@ -1,0 +1,38 @@
+https://localhost
+http://localhost:3000/home
+
+To create a tunnel to localhost.
+
+1) in Apache httpd.conf
+
+Listen 3000
+
+ServerName Ettorney
+
+DocumentRoot "C:\laragon\www\Ettorney\public"
+SSLEngine on
+SSLCertificateFile      C:/laragon/etc/ssl/laragon.crt
+SSLCertificateKeyFile   C:/laragon/etc/ssl/laragon.key
+
+2) Run ngrok
+
+C:\Users\Rick\Downloads\ngrok-stable-windows-amd64\ngrok http https://localhost:3000
+
+If it tunnels from https://711065a5.ngrok.io , for example, then...
+
+3) Set the App key to:
+
+https://711065a5.ngrok.io/quickbooks/callback
+
+
+4) Set the .env to:
+
+QB_CLIENT_ID=AB2QTHLdl0szEEUrAN5CKBViM1YeB2AXHEP5ONDTXhvydNSR7i
+QB_CLIENT_SECRET=zyibqWOqq5RUljHa9EimHXtqR5YROStkc9NWvEk0
+QB_REDIRECT_URI=https://711065a5.ngrok.io/quickbooks/callback
+QB_SCOPE=com.intuit.quickbooks.accounting
+QB_BASE_URL=Production
+
+5) Refresh the cached config
+
+C:\laragon\www\Ettorney> php artisan config:cache

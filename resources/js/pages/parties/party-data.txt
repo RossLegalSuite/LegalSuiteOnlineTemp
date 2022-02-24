@@ -1,0 +1,66 @@
+export default Vue.extend({
+
+    methods: {
+
+        async createPartiesData(response) {
+
+            let partyData = { parties: [], total: {} };
+
+            let index = 0;
+
+            partyData.total.current = 0;
+            partyData.total.days30 = 0;
+            partyData.total.days60 = 0;
+            partyData.total.days90 = 0;
+            partyData.total.days120 = 0;
+            partyData.total.balance = 0;
+            partyData.total.pastDueAmount = 0;
+            partyData.total.delinquentAmount = 0;
+
+            await root.asyncForEach(response.data, async (party) => {
+
+                index++;
+
+                let extraScreens = await axios.post('/extra_screens/getPartyMergeFields', {
+                    parentId: party.id,
+                    dataFormat: 'array'
+                });
+
+                extraScreens.data.forEach(extraScreen => {
+                    if ( typeof partyData[extraScreen.prefix] === 'undefined') {
+                        party[extraScreen.prefix] = {};
+                    }
+                    party[extraScreen.prefix][toCamelCase(extraScreen.label)] = extraScreen.value;
+                });
+
+                partyData.total.current += parseMoney(party.current);
+                partyData.total.days30 += parseMoney(party.days30);
+                partyData.total.days60 += parseMoney(party.days60);
+                partyData.total.days90 += parseMoney(party.days90);
+                partyData.total.days120 += parseMoney(party.days120);
+                partyData.total.balance += parseMoney(party.balance);
+                partyData.total.pastDueAmount += parseMoney(party.pastDueAmount);
+                partyData.total.delinquentAmount += parseMoney(party.delinquentAmount);
+
+                party.index = index;
+                partyData.parties.push(party);
+
+            });
+
+            partyData.total.records = index;
+
+            partyData.total.current = decimalWithCommas(formatDecimal(partyData.total.current));
+            partyData.total.days30 = decimalWithCommas(formatDecimal(partyData.total.days30));
+            partyData.total.days60 = decimalWithCommas(formatDecimal(partyData.total.days60));
+            partyData.total.days90 = decimalWithCommas(formatDecimal(partyData.total.days90));
+            partyData.total.days120 = decimalWithCommas(formatDecimal(partyData.total.days120));
+            partyData.total.balance = decimalWithCommas(formatDecimal(partyData.total.balance));
+            partyData.total.pastDueAmount = decimalWithCommas(formatDecimal(partyData.total.pastDueAmount));
+            partyData.total.delinquentAmount = decimalWithCommas(formatDecimal(partyData.total.delinquentAmount));
+
+            return partyData;
+        },
+
+    }
+
+})

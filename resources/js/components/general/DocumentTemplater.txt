@@ -1,0 +1,394 @@
+<template>
+<div>
+        <select-documents id="document-assembly-select-documents" ref="document-assembly-select-documents" formRef="document-assembly-select-documents"/>
+        <view-assembled id="document-assembly-view-assembled" ref="document-assembly-view-assembled" formRef="document-assembly-view-assembled"/>
+</div>
+
+</template>
+
+<script>
+
+// https://docxtemplater.readthedocs.io/en/latest/faq.html#docxtemplater-in-a-vuejs-project
+import Docxtemplater from "docxtemplater";
+import PizZip from "pizzip";
+import PizZipUtils from "pizzip/utils/index.js";
+import { saveAs } from "file-saver";
+
+export default {
+
+    components: {
+        SelectDocuments: () => import("@pages/document-templates/SelectDocuments"),
+        ViewAssembled: () => import("@pages/assemble/ViewAssembled"),
+    },
+
+
+    // These are set by initializeDocumentAssembly() in calling component
+    data() {
+        return {
+            batchId: null,
+            singular: null,
+            plural: null,
+            tablePage: null,
+            whereClause: null,
+            abortMerge: false,
+            selectedRows: [],
+            userData: {},
+            companyData: {},
+        }
+    },
+
+    watch: {
+
+        abortMerge: function(newValue) {
+
+            if ( newValue === true ) root.$snotify.clear();
+
+        },        
+
+    },
+
+    methods: {
+
+        loadFile(url, callback) {
+            PizZipUtils.getBinaryContent(url, callback);
+        },
+
+        
+        renderDoc() {
+
+            this.loadFile("https://docxtemplater.com/tag-example.docx", function( error, content ) {
+
+                if (error)  throw error;
+
+                var zip = new PizZip(content);
+                var doc = new Docxtemplater().loadZip(zip);
+
+                doc.setData({
+                    first_name: "John",
+                    last_name: "Doe",
+                    phone: "0652455478",
+                    description: "New Website"
+                });
+
+                try {
+
+                    // render the document (replace all occurences of {first_name} by John, {last_name} by Doe, ...)
+                    doc.render();
+
+                } catch (error) {
+
+                    // The error thrown here contains additional information when logged with JSON.stringify (it contains a properties object containing all suberrors).
+                    function replaceErrors(key, value) {
+
+                        if (value instanceof Error) {
+                            return Object.getOwnPropertyNames(value).reduce(function( error, key ) {
+                                error[key] = value[key];
+                                return error;
+                            },{});
+                        }
+                        return value;
+                    }
+                    console.log(JSON.stringify({ error: error }, replaceErrors));
+
+                    if (error.properties && error.properties.errors instanceof Array) {
+                    const errorMessages = error.properties.errors
+                        .map(function(error) {
+                            return error.properties.explanation;
+                        })
+                        .join("\n");
+                        console.log("errorMessages", errorMessages);
+                        // errorMessages is a humanly readable message looking like this :
+                        // 'The tag beginning with "foobar" is unopened'
+                    }
+                    throw error;
+                }
+
+                //Output the document using Data-URI
+                var out = doc.getZip().generate({
+                    type: "blob",
+                    mimeType:
+                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                }); 
+
+                saveAs(out, "output.docx");
+            });
+
+        },
+
+        async mergeDocument( options ) {
+
+            //https://scotch.io/tutorials/asynchronous-javascript-using-async-await
+            const response = await Promise.all([
+                axios.post('/employees/get',{id: loggedInEmployeeId}).then( 
+                    (data) => { this.userData = { user: data}; 
+                }),
+                axios.get('/company/get').then( 
+                    (data) => { this.companyData = { company: data}; 
+                }),
+            ]);
+            //console.log('this.$root.templateData',this.$root.templateData);
+
+            //this.$root.initTemplateData();
+
+
+            // await this.getLoggedInEmployee()
+            // .then( (data) => { 
+            //     userData = { user: data};
+            // })
+            // .catch( (error) => { 
+            //     showError('An error was encountered getting the logged in Employee', error); 
+            // });
+
+            // console.log('2 userData',userData);
+
+        },
+
+        getLoggedInEmployee() {
+
+            return new Promise(async (resolve, reject) => {
+
+                try {
+
+                    let response = await axios.post('/employees/get',{id: loggedInEmployeeId})
+
+                    resolve(response.data[0]);
+
+                } catch(error) { 
+
+                    reject(error);
+
+                };
+                
+            });
+
+        },
+
+
+        assembleDocuments() {
+
+            if ( !this.selectedRows.length) {
+
+                showError('No ' + this.singular + ' selected', 'Please tag a ' + this.singular + ' (or multiple ' + this.plural + ') first' );
+
+            } else {
+
+                this.selectDocuments.selectDocuments(this.whereClause);
+            }
+            
+        },
+
+        async documentsSelected(selectedRows) {
+
+            let params = ( selectedRows.length ) ? 
+            { dataFormat: 'idArray', whereIn: { column: 'document_templates.id', value: selectedRows } } : 
+            { dataFormat: 'idArray', whereIn: this.whereClause };
+
+            let response = await axios.post('/document_templates/get', params);
+
+            root.$snotify.simple(response.data[0].title, 'Assembling', { timeout: 0, icon: 'img/cogs.gif' });
+
+            await root.asyncForEach( response.data, async (document) => {
+
+                if ( this.singular === 'Party' ) {
+
+                    const params = ( this.selectedRows.length ) ? 
+                    { dataFormat: 'idArray', whereIn: { column: 'parties.id', value: this.selectedRows } } : 
+                    { dataFormat: 'idArray' };
+
+                    const response = await axios.post('/parties/get', params);
+
+                    await root.asyncForEach( response.data, async (record) => {            
+
+                        if ( !this.abortMerge ) {
+                            $('.snotify-simple .snotifyToast__body').text(document.title + ' with ' + record.name)
+                            await this.assembleDocument( document, record );
+                        }
+
+                    });
+
+                } else if ( this.singular === 'Matter' ) {
+
+                    const params = ( this.selectedRows.length ) ? 
+                    { dataFormat: 'idArray', whereIn: { column: 'matters.id', value: this.selectedRows } } : 
+                    { dataFormat: 'idArray' };
+
+                    const response = await axios.post('/matters/get', params);
+
+                    await root.asyncForEach( response.data, async (record) => {            
+
+                        if ( !this.abortMerge ) {
+                            $('.snotify-simple .snotifyToast__body').text(document.title + ' with ' + record.fileRef)
+                            await this.assembleDocument( document, record );
+                        }
+
+                    });
+
+                } else if ( this.singular === 'Employee' ) {
+
+                    const params = ( this.selectedRows.length ) ? 
+                    { dataFormat: 'idArray', whereIn: { column: 'employees.id', value: this.selectedRows } } : 
+                    { dataFormat: 'idArray' };
+
+                    const response = await axios.post('/employees/get', params);
+
+                    await root.asyncForEach( response.data, async (record) => {            
+
+                        if ( !this.abortMerge ) {
+                            $('.snotify-simple .snotifyToast__body').text(document.title + ' with ' + record.name)
+                            await this.assembleDocument( document, record );
+                        }
+
+                    });
+
+                }
+
+            });
+            
+            // Refresh the Documents table 
+            if ( this.tablePage && this.tablePage.table && this.tablePage.table.table ) {
+
+                this.tablePage.table.refresh();
+            }
+
+            this.viewAssembled.load( this.batchId );
+            
+            root.$snotify.clear();
+
+        },
+
+        async assembleDocument( document, record ) {
+
+
+            let documentIdentifier = 'General';
+
+            if ( this.singular === 'Matter' ) {
+
+                documentIdentifier = record.fileRef;
+
+            } else if ( this.singular === 'Party' || this.singular === 'Employee' ) {
+
+                documentIdentifier = record.code;
+
+            } else if ( this.singular === 'Matter Party' ) {
+
+                documentIdentifier = record.code + '-' + record.roleCode;
+            }
+
+            this.mergeOptions = {
+                source: document.docxFile,
+                destinationFileName: document.fileName.split('.')[0] + '-' + makeValidPathString(documentIdentifier) + '-' + Date.now() + '.docx',
+                destinationFolder: 'merged',
+                dataSource: document.source,
+                id: record.id,
+            };
+
+            this.mergeDocument(this.mergeOptions); // DocxTemplater
+/*
+            const mergeResponse = await this.mergeDocument(this.mergeOptions);
+
+            if ( mergeResponse.error ) {
+
+                this.abortMerge = true;
+
+                showError('Document Assembly Error', mergeResponse.error);
+
+            } else {
+
+                const convertOptions = {
+                    source: mergeResponse.savedFile,
+                    fileName: this.mergeOptions.destinationFileName,
+                };
+
+                let convertResponse = await this.convertToPdf(convertOptions);
+
+                if ( convertResponse.error ) {
+
+                    this.abortMerge = true;
+
+                    showError('PDF Conversion Error',convertResponse.error);
+
+                } else {
+
+                    let partyId;
+                    let parentType = this.singular;
+
+                    if ( this.singular === 'Matter Party' ) {
+                        partyId = record.partyId;
+                        parentType = 'Party';
+                    }
+
+                    if ( this.singular === 'Party' ) {
+                        partyId = record.id;
+                        parentType = 'Party';
+                    }
+
+                    let response = await axios.post('/correspondence/store', {
+                        partyId: this.singular === 'Party' || this.singular === 'Matter Party' ? partyId : null,
+                        matterId: this.singular === 'Matter' ? record.id : null,
+                        employeeId: this.singular === 'Employee' ? record.id : null,
+                        batchId: this.batchId,
+                        dateTime: moment().format('YYYY-MM-DD HH:mm:ss'),
+                        description: document.description,
+                        parentType: parentType,
+                        type: 'Document',
+                        fileType: 'application/pdf',
+                        path: convertResponse.path,
+                        url: convertResponse.url,
+                        fileName: convertResponse.fileName,
+                    });
+
+
+                    if (response.data.errors) {
+                        
+                        this.abortMerge = true;
+
+                        showError( 'Error', 'An error was encountered storing the Assembled Document.<br><br>' + JSON.stringify(response.data.errors));
+
+                    }
+
+                }
+
+            }            
+*/
+        },
+/*
+        async mergeDocument( options ) {
+
+            try {
+
+                let response = await axios.post('/word/merge',options);
+
+                return response.data;
+
+            } catch(error) {
+
+                const errorMessage = error.response.data.message.replace(" (this will throw an Error in a future version of PHP)", ""); 
+
+                return {error: errorMessage};
+
+            };
+
+        },
+
+        async convertToPdf( options ) {
+
+            try {
+
+                let response = await axios.post('/word/convertToPdf',options);
+
+                return response.data;
+
+            } catch(error) {
+
+                const errorMessage = error.response.data.message.replace(" (this will throw an Error in a future version of PHP)", ""); 
+
+                return {error: errorMessage};
+
+            };
+
+        },
+*/
+
+    }   
+}  
+</script>

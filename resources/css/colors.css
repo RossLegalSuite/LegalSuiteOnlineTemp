@@ -1,0 +1,127 @@
+/* https://htmlcolorcodes.com/colors/ */
+
+
+
+.home-bg, .gray-bg, .grey-bg      { background-color: lightSlateGray !important; color: white; }
+.matters-bg, .blue-bg             { background-color: steelBlue !important; color: white; }
+.parties-bg, .red-bg              { background-color: indianred !important; color: white; }
+.matter-parties-bg                { background-color: #339999 !important; color: white; }
+.filenotes-bg, .green-bg          { background-color: forestGreen !important; color: white; }
+.accounting-bg                    { background-color: #754C78 !important; color: white; }
+.email-bg                         { background-color: firebrick !important; color: white; }
+.invoices-bg      	              { background-color: teal !important; color: white; }
+.reports-bg                       { background-color: #1F618D !important; color: white; }
+.documents-bg  	                  { background-color: royalblue !important; color: white; }
+.bills-bg   	                  { background-color: peru !important; color: white; }
+.payments-bg   	                  { background-color: mediumseagreen !important; color: white; }
+.doclog-bg                        { background-color: lightseagreen !important; color: white; }
+.statements-bg                    { background-color: #6095DB !important; color: white; }
+.employees-bg	                  { background-color: #754C78 !important; color: white; }
+.settings-bg	   	              { background-color: rgb(97, 116, 134) !important; color: white; }
+.help-bg	   	                  { background-color: limegreen !important; color: white; }
+.assemble-bg	   	              { background-color: dodgerblue !important; color: white; }
+.spare-bg	    	              { background-color: slateBlue !important; color: white; }
+.document-sets-bg	              { background-color: darkSlateBlue !important; color: white; }
+.fee-codes-bg, .fee-sheets-bg	  { background-color: rgb(56, 97, 173) !important; color: white; }
+.reminders-bg                     { background-color: chocolate !important; color: white; }
+.journals-bg                      { background-color: mediumpurple !important; color: white; }
+.batches-bg                       { background-color: #900C3F !important; color: white; }
+.feenotes-bg                      { background-color: #2E78DA !important; color: white; }
+.disbursements-bg                 { background-color: cadetblue!important; color: white; }
+/*.disbursements-bg                 { background-color:#6095DB !important; color: #333333; }
+.tab-item.disbursements-bg:hover           {color: #555555 !important} */
+.templates-bg                     { background-color: cadetblue !important; color: white; }
+.components-bg              	  { background-color: #1D8348 !important; color: white; }
+.creditors-bg               	  { background-color: slateblue !important; color: white; }
+
+
+.home-border, .gray-border, .grey-border    { border-color: lightSlateGray !important;}
+.parties-border, .red-border	            { border-color: indianRed !important;}
+.matter-parties-border	                    { border-color: #339999 !important;}
+.matters-border, .blue-border	            { border-color: steelBlue !important;}
+.filenotes-border, .green-border            { border-color: forestGreen !important;}
+.accounting-border                          { border-color: #754C78 !important;}
+.email-border                               { border-color: firebrick !important;}
+.invoices-border  	                        { border-color: teal !important;}
+.reports-border	                            { border-color: #1F618D !important;}
+.documents-border  	                        { border-color: royalblue !important;}
+.bills-border  	                            { border-color: peru !important;}
+.payments-border  	                        { border-color: mediumseagreen !important;}
+.doclog-border                              { border-color: lightseagreen !important;}
+.statements-border                          { border-color: #6095DB !important;}
+.employees-border	                        { border-color: #754C78 !important;}
+.settings-border	                        { border-color: rgb(97, 116, 134) !important;}
+.assemble-border	                        { border-color: dodgerblue !important;}
+.help-border	                            { border-color: limegreen !important;}
+.spare-border	                            { border-color: slateBlue !important;}
+.document-sets-border                       { border-color: darkSlateBlue !important;}
+.fee-codes-border, .fee-sheets-border       { border-color: rgb(56, 97, 173)  !important;}
+.reminders-border	                        { border-color: chocolate !important;}
+.journals-border                            { border-color: mediumpurple !important;}
+.batches-border                             { border-color: #900C3F !important;}
+.feenotes-border                            { border-color: #2E78DA !important;}
+.disbursements-border                       { border-color:cadetblue !important;}
+.templates-border                           { border-color: cadetblue !important;}
+.components-border                          { border-color: #1D8348 !important;}
+.creditors-border                           { border-color: slateblue !important;} 
+
+
+
+.tab0	            { background-color: rgb(97, 116, 134) !important; color: white; }
+.tab1	            { background-color: steelBlue !important; color: white; }
+.tab2	            { background-color: forestGreen !important; color: white; }
+.tab3	            { background-color: indianRed !important; color: white; }
+.tab4               { background-color: chocolate !important; color: white; } 
+/*.tab4               { background-color: A3E4D7 !important; color: #555555; }
+.tab4:hover         {color: #777777 !important}
+*/
+.tab5	            { background-color: darkcyan !important; color: white; }
+.tab6	            { background-color: royalBlue !important; color: white; }
+.tab7	   	        { background-color: orchid !important; color: white; }
+.tab8	            { background-color: peru !important; color: white; }
+.tab9	            { background-color: darkmagenta !important; color: white; }
+.tab10	            { background-color: teal !important; color: white; }
+.tab11	            { background-color: indianRed !important; color: white; }
+.tab12	            { background-color: slateBlue !important; color: white; }
+
+.indianred		    { background-color: indianRed !important; color: white; }
+.steelblue		    { background-color: steelblue !important; color: white; }
+.forestgreen        { background-color: forestgreen !important; color: white; }
+
+.deepskyblue	{ background-color: deepskyblue !important; color: white; }
+.specialorange	{ background-color: #FF9819 !important; color: white; }
+.mediumpurple	{ background-color: mediumpurple !important; color: white; }
+.specialteal	{ background-color: #339999 !important; color: white; }
+.specialgreen	{ background-color: #4EA24E !important; color: white; }
+.burlywood		{ background-color: burlywood !important; color: white; }
+.coral			{ background-color: coral !important; color: white; }
+
+.darkcyan		{ background-color: darkCyan !important; color: white; }
+.darkkhaki		{ background-color: darkkhaki !important; color: white; }
+.darkorange		{ background-color: darkorange !important; color: white; }
+.darkseagreen	{ background-color: darkSeaGreen !important }
+.darkturquoise	{ background-color: darkturquoise !important; color: white; }
+
+.gold        	{ background-color: gold !important; color:midnightblue }
+.lavender		{ background-color: lavender !important;}
+.lightcoral		{ background-color: lightCoral !important; color: white; }
+.lightpink		{ background-color: lightPink !important;}
+.lightsalmon	{ background-color: lightSalmon !important; color: white; }
+.lightseagreen	{ background-color: lightSeaGreen !important; color: white; }
+.lightsteelblue	{ background-color: lightsteelblue !important;}
+.lightskyblue	{ background-color: lightSkyBlue !important;}
+.lightslategrey	{ background-color: lightSlateGrey !important; color: white; }
+
+.mediumaquamarine { background-color: mediumaquamarine !important; color: white; }
+.mediumseagreen { background-color: mediumseagreen !important; color: white; }
+.tomato			{ background-color: tomato !important; color: white; }
+.palevioletred	{ background-color: palevioletRed !important; color: white; }
+.peachpuff		{ background-color: peachpuff !important;}
+.peru			{ background-color: peru !important; color: white; }
+.plum			{ background-color: plum !important; color: white; }
+.powderblue		{ background-color: powderblue !important;}
+.royalblue		{ background-color: royalBlue !important; color: white; }
+.sandybrown		{ background-color: sandyBrown !important; color: white; }
+.seagreen		{ background-color: seagreen !important; color: white; }
+.specialorange	{ background-color: #FF9819 !important; color: white; }
+

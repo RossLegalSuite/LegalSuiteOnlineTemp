@@ -1,0 +1,143 @@
+@extends('layouts.guest')
+@section('title', 'Login')
+@section('content')
+
+<guest-navbar page="login"></guest-navbar>
+<div class="row justify-content-center pt-5">
+    <div class="col-lg-6">
+        <form class="card" id="login-form" method="POST" onsubmit="setLoginCookies()" action="{{ route('login') }}">
+            @csrf
+            <div class="card-header">
+                <h1>Login</h2>
+            </div>
+
+            <div class="card-body">
+                <div class="row justify-content-center">
+
+                    <div class="col-lg-10">
+
+                        <div class="form-group row">
+                            <label for="company_code" class="col-lg-4 col-form-label text-lg-right">Company Code</label>
+
+                            <div class="col-lg-6">
+                                <input id="company_code" type="text" class="form-control{{ $errors->has('company_code') ? ' is-invalid' : '' }}" value="{{ old('company_code')}}" name="company_code" required>
+                                
+                                @if ($errors->has('company_code'))
+                                <span class="invalid-feedback" role="alert"><strong>{{ $errors->first('company_code') }}</strong></span>
+                                @else
+                                <span class="small">The Company to access</span>
+                                @endif
+                            </div>
+                        </div>
+
+
+                        <div class="form-group row">
+                            <label for="login" class="col-lg-4 col-form-label text-lg-right">Email Address</label>
+
+                            <div class="col-lg-6">
+                                <input id="login" type="text" class="form-control{{ $errors->has('login') ? ' is-invalid' : '' }}" name="login" value="{{ old('login') }}" required>
+                                @if ($errors->has('login'))
+                                <span class="invalid-feedback" role="alert"><strong>{{ $errors->first('login') }}</strong></span>
+                                @else
+                                <span class="small">Your email address</span>
+                                @endif
+                            </div>
+                        </div>
+
+                        <div class="form-group row">
+                            <label for="password" class="col-lg-4 col-form-label text-lg-right">Password</label>
+
+                            <div class="col-lg-7">
+                                <input id="password" type="password" class="form-control{{ $errors->has('password') ? ' is-invalid' : '' }}" name="password" value="{{ old('password') }}" required>
+                                @if ($errors->has('password'))
+                                <span class="invalid-feedback" role="alert"><strong>{{ $errors->first('password') }}</strong></span>
+                                @else
+                                <span class="small">Your password</span> 
+                                @endif
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+
+
+
+            </div>
+            <div class="card-footer">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        {{-- <a class="mt-4" title="Register a new Company" style="font-size: large" href="{{ route('register') }}">Register a Company</a> --}}
+                    </div>
+                    <div>
+                        <button id="login-button" title="Login" type="submit" class="btn btn-primary btn-lg" style="min-width:125px">Login </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+
+
+
+    </div>
+</div>
+@endsection
+
+@section('scripts')
+
+<script>
+
+    var urlParams = new URLSearchParams(window.location.search);
+
+    let urlCompany = urlParams.get('company');
+    let urlLogin = urlParams.get('login');
+
+    let thisCompany = urlCompany ? urlCompany : getCookie('company');
+    let thisLogin = urlLogin ? urlLogin : getCookie('login');
+
+    // FOR TESTING
+    thisCompany = 'ACME';
+    thisLogin = 'acme@legalsuite.co.za';
+    $("#password").val('secret');
+
+    if (thisCompany) $("#company_code").val(thisCompany);
+    if (thisCompany) $("#login").val(thisLogin);
+
+
+
+
+    if (thisCompany && !thisLogin) {
+
+        $("#login").focus();
+
+    } else if (!thisCompany && thisLogin) {
+
+        $("#company_code").focus();
+
+    } else if (thisCompany && thisLogin) {
+
+        $("#password").focus();
+
+    } else {
+
+        $("#company_code").focus();
+
+    }
+
+
+    /**************************************************************
+      TO DO: Take out in production - just here to speed up testing
+    ***************************************************************/
+    // if (cookieCompany === "LegalSuite" || cookieCompany === "LegalSuite Office") {
+    //     $("#password").val("secret");
+    //     $("#login-button").focus();
+    // }
+
+
+
+    function setLoginCookies() {
+        document.cookie = "company=" + $("#company_code").val();
+        document.cookie = "login=" + $("#login").val();
+    };
+
+</script>
+@endsection

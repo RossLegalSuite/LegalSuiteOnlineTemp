@@ -1,0 +1,757 @@
+<template>
+
+<div :id="id" :class="modal ? 'modal': ''">
+    
+    <div :class="modal ? 'modal-dialog modal-dialog-centered modal-lg' : ''">
+
+        <div :class="modal ? 'modal-content matter-parties-border':'card h-100 border-0'">
+
+            <div :class="modal ? '':'card-header'">
+
+                <div :class="modal ? 'modal-header matter-parties-bg' : 'd-flex justify-content-between'">
+
+                    <div class="page-title">
+                        <h3 class="modal-title">
+                            <span v-if="!editing">Party will be Added</span>
+                            <span v-else v-html="pageTitle()"></span>
+                        </h3>
+                        <h6 class="mb-0" v-html="pageSubTitle()"></h6>
+                        <i v-if="modal" title="Close this window" class="cp top-right fa fa-times-circle fa-2x text-white" data-dismiss="modal"></i>
+                    </div>
+
+                    <page-close-button v-if="!modal" @closeClicked="closeForm"/>
+
+                </div>
+
+            </div>
+
+            <div class="card-body form-tab-body overflow-auto p-3" :style="modal ? 'min-height:55vh' : ''">
+
+                <form-tabs :tabs="tabs"/>
+
+                <div v-show="activeTab === 'General'" class="form-tab-content">
+
+                    <div v-show="!modal" class="form-group row">
+                        <select-matter 
+                            :popOver="matterPopOverText()" 
+                            :popOverContainer="'#' + id"
+                            :readOnly="editing && role.recordid && $root.company.clientroleid === role.recordid ? true : false"
+                            :id="id + '-select-matter'" 
+                            :ref="id + '-select-matter'" 
+                            :formRef="id + '-select-matter'"
+                            _class="col-md-8"
+                            :error="errors.matter" 
+                        />
+                    </div>
+
+                    <div class="form-group row">
+                        <select-party 
+                            :popOver="partyPopOverText()" 
+                            :popOverContainer="'#' + id"
+                            :readOnly="editing && role.recordid && $root.company.clientroleid === role.recordid ? true : false"
+                            :id="id + '-select-party'" 
+                            :ref="id + '-select-party'" 
+                            :formRef="id + '-select-party'"
+                            _class="col-md-8"
+                            :error="errors.party" 
+                        />
+                    </div>
+
+
+                    <div class="row">
+
+                        <div class="col-md-12">
+
+                            <div v-if="errors.matterid" v-html="errors.matterid[0]" class="invalid-feedback"></div>
+                            <div v-if="errors.sorter" v-html="errors.sorter[0]" class="invalid-feedback"></div>
+                            <div v-if="errors.partyid" v-html="errors.partyid[0]" class="invalid-feedback"></div>
+
+                        </div>
+
+                    </div>
+
+                    <div class="form-group row">
+                        <select-party-role 
+                            :popOver="partyRolePopOverText()" 
+                            :popOverContainer="'#' + id"
+                            :readOnly="editing && role.recordid && $root.company.clientroleid === role.recordid ? true : false"
+                            :id="id + '-select-party-role'" 
+                            :ref="id + '-select-party-role'" 
+                            :formRef="id + '-select-party-role'"
+                            _class="col-md-6"
+                            :error="errors.party" 
+                        />
+                    </div>
+
+                    <div class="form-group row">
+
+                        <text-input 
+                            _class="col-md-4"
+                            popOver="<h4>Their Reference</h4><p>A Party may have their own reference for a Matter. If so, you can add it here and then use it as <em>their reference</em> in correspondence with them regarding this Matter.</p>"
+                            :popOverContainer="'#' + this.id"
+                            v-model="record.reference"
+                            name="reference"
+                            label="Their Reference"
+
+                        />
+                        
+                    </div>
+
+
+                    <div v-bind:key="partyRoleExtraScreen.id" v-for="partyRoleExtraScreen in partyRoleExtraScreens" class="row" :id="record.id + '-extra-screen-row-' + partyRoleExtraScreen.id">
+                        <div v-if="partyRoleExtraScreen.position === 'Form'" class="col-md-12">
+
+                            <fieldset class="mt-3 pb-2">
+
+                                <legend>{{partyRoleExtraScreen.title}}</legend>
+
+                                <div :id="'extra-screen-form-container-' + partyRoleExtraScreen.id">
+                                    <form action="#" :id="'extra-screen-form-' + partyRoleExtraScreen.id">
+                                    </form>
+                                </div>
+
+                            </fieldset>
+
+                        </div>
+                    </div>
+
+
+                </div>
+
+                <div v-show="activeTab === 'Party Form'" class="form-tab-content">
+
+                    <party-form 
+                        ref="party-form"
+                        id="matter-party-form-party-form"
+                        leftPageTableRef="matter-parties-table"
+                        :modal="false"
+                        :displayFormOnly="true"
+                        uniqueId="matter-party-form-party"
+                    />
+
+                </div>
+
+                <div v-show="activeTab === 'Matter Form'" class="form-tab-content">
+
+                    <matter-form 
+                        ref="matter-form"
+                        id="matter-party-form-matter-form"
+                        leftPageTableRef="matter-parties-table"
+                        :modal="false"
+                        :displayFormOnly="true"
+                        uniqueId="matter-party-form-matter"
+                    />
+
+
+                </div>
+
+                <div v-show="activeTab === 'Extra'" class="form-tab-content">
+
+                    <fieldset 
+                        v-bind:key="extraScreen.recordid" v-for="(extraScreen, index) in extraScreens" 
+                        :class="index > 0 ? 'mt-3 extra-screen-container' : 'extra-screen-container'"
+                    >
+                        <legend v-html="extraScreen.screentitle + ' (' + extraScreen.recordid + ')'"></legend>
+                        <div :id="'extra-screen-form-container-' + extraScreen.recordid">
+                            <form action="#" :id="'extra-screen-form-' + extraScreen.recordid"/>
+                        </div>
+                    </fieldset>
+
+                </div>
+
+
+            </div>
+
+            <div class="modal-footer justify-content-between">
+                    <div>
+                        <button v-if="showDeleteButton()" class="btn btn-large btn-primary" type="button" @click="deleteClicked">
+                            <span title="Delete"><i class="fa fa-trash fa-lg mr-2"></i>Delete</span>
+                        </button>
+                    </div>
+                    <div>
+                        <button class="btn btn-success form-button mr-3" @click="okClicked" type="button" title="Save"><i class="fa fa-check-circle fa-lg mr-2"></i>OK</button>
+                        <button class="btn btn-danger form-button" type="button" data-dismiss="modal" title="Exit without saving"><i class="fa fa-times-circle fa-lg mr-2"></i>Cancel</button>
+                    </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+</template>
+
+<script>
+
+import { mapMutations } from 'vuex';
+import { mapGetters } from 'vuex';
+import modalTemplate from "@components/modals/modal-template";
+import formTemplate from "@pages/form-template";
+import extraScreenTemplate from "@pages/extra-screen-template";
+
+export default {
+
+    mixins: [formTemplate, extraScreenTemplate, modalTemplate],
+
+    components: {
+        SelectMatter: () => import("@pages/matters/SelectMatter"),
+        SelectParty: () => import("@pages/parties/SelectParty"),
+        SelectPartyRole: () => import("@pages/parties/SelectPartyRole"),
+    },
+
+    props: {
+        resource: {type: String, default: 'MatParty' },
+    },
+
+    data() {
+        return {
+            matterForm: null,
+            partyForm: null,
+            parentMatter: {},
+            role: {
+                id: null,
+                description: null,
+            },
+            party: {
+                id: null,
+                party: null,
+            },
+            matter: {
+                id: null,
+                matter: null,
+            },
+            formTitle: '',
+            activeTab: 'General',
+            tabs: [
+                {
+                    pageName: "General",
+                    title: "Details",
+                    iconClass: '',
+                    visible: true,
+                    active: true,
+                },
+                {
+                    pageName: "Matter Form",
+                    title: "Matter",
+                    iconClass: '',
+                    visible: false,
+                    active: false,
+                },
+                {
+                    pageName: "Party Form",
+                    title: "Party",
+                    iconClass: '',
+                    visible: false,
+                    active: false,
+                },
+            ],
+        };
+    },    
+
+    computed: {
+
+        ...mapGetters(['currentMatter','currentParty']),
+
+        partyRole() {
+            return this.record.roleid;
+        },
+
+    },
+
+    watch: {
+
+        activeTab(newValue) {
+
+            if ( newValue === "Matter Form" ) {
+
+                if (!this.matterForm) {
+
+                    this.matterForm = this.$refs['matter-form'];
+
+                    this.matterForm.editRecord(this.record.matterid, false);
+                }
+
+
+            } else if ( newValue === "Party Form" ) {
+                
+                if (!this.partyForm) {
+
+                    this.partyForm = this.$refs['party-form'];
+
+                    this.partyForm.editRecord(this.record.partyid, false);
+                }
+
+            } else if ( newValue === "Extra" ) {
+
+                this.showExtraScreens();
+
+            }
+
+        },
+
+
+        partyRole(newValue) {
+
+            if ( newValue ) {
+
+                console.log('To Do: loadExtraScreens for the new Role')
+
+                // this.removeExtraScreens('Party Role').then( () => {
+
+                //     this.loadExtraScreens('Party Role').then( () => {
+
+                //         if ( this.editing ) this.populateExtraScreens('Party Role');
+
+                //     });
+
+                // });
+
+
+            }
+
+        },
+    },
+
+    methods: {
+
+        ...mapMutations(['setCurrentParty','setCurrentMatter']),
+
+        editRecord(id) {
+
+            this.partyForm = null;
+            this.matterForm = null;
+
+            this.setGeneralTab();
+
+            this.record.roleid = null; // To Trigger watch()
+
+            axios.get("/generic/get",  { 
+                params: {
+                    tableName: 'matparty',
+                    whereRaw: ["MatParty.RecordId = " + id]
+                }
+            }).then(response => {
+
+                if ( response.data.errors ) {
+
+                    showError('Error', response.data.errors);
+
+                } else {
+
+                    this.record = response.data.data[0];
+
+                    this.setCurrentParty({
+                        id: this.record.partyid, 
+                        code: this.record.partymatterprefix,
+                        name: this.record.partyname
+                    });
+
+                    this.setCurrentMatter({
+                        id: this.record.matterid, 
+                        fileRef: this.record.matterfileRef,
+                        description: this.record.matterdescription
+                    });
+
+                    this.matter = {
+                        id: this.record.matterid,
+                        matter: htmlDecode(this.record.matter),
+                    };
+
+                    this.party = {
+                        id: this.record.partyid,
+                        party: htmlDecode(this.record.partyname),
+                    };
+
+                    this.role = {
+                        recordid: this.record.roleid,
+                        description: htmlDecode(this.record.roledescription),
+                    };
+
+                    this.displayForm(); 
+
+                    this.initFormData();
+
+                    setTimeout(() => $('#' + this.id + ' input[name="reference"]').focus() );
+                }
+
+            }).catch( (error) => {
+                showError('Error getting Matter Party', error); 
+            });
+
+        },
+
+        initNewRecord() {
+
+            this.setGeneralTab();
+
+            this.record = {
+                matterid: this.parentMatter.id,
+                partyid: null,
+                roleid: null,
+                sorter: 0,
+                reference: '',
+            };
+
+            this.role = {
+                id: null,
+                description: null,
+            };
+
+            this.matter = 
+                this.currentMatter.fileRef ? {
+                    id: this.currentMatter.id,
+                    matter: this.currentMatter.fileRef + ' - ' + this.currentMatter.description
+                } : {
+                    id: null,
+                    matter: null,
+                };
+
+            this.party = 
+                this.currentParty.matterprefix ? {
+                    id: this.currentParty.id,
+                    party: this.currentParty.matterprefix + ' - ' + this.currentParty.name
+                } : {
+                    id: null,
+                    party: null,
+                };
+            
+
+            this.displayForm(); 
+
+            this.initFormData();
+
+        },
+
+        initFormData() {
+
+            this.initExtraScreens();            
+
+            if (!this.modal) {
+                if ( !this.$root.matters.length) this.$root.getMatters();
+                this.selectMatter.matter = this.matter;
+            }
+
+            if ( !this.$root.partyRoles.length) this.$root.getPartyRoles();
+            if ( !this.$root.parties.length) this.$root.getParties();
+
+            this.selectParty.party = this.party;
+            this.selectPartyRole.record = this.role;
+
+        },
+
+
+        setGeneralTab() {
+
+            this.activeTab = 'General';
+            this.tabs[0].active = true;
+
+            for (let index = 1; index < this.tabs.length; index++) {
+
+                this.tabs[index].active = false;
+                this.tabs[index].visible = this.editing ? true : false;
+
+            }
+
+        },
+
+
+        showDeleteButton() {
+
+            let returnValue = true;
+
+            if ( !this.editing ) {
+
+                returnValue = false;
+
+            } else if ( parseInt(this.record.roleid) === root.company.clientroleid && parseInt(this.record.sorter) === 1 ) {
+
+                returnValue = false;
+            }
+
+            return returnValue;
+
+        },
+
+        matterSelected(id, fileRef, description) {
+
+            this.matterForm = null;
+
+            this.record.matterid = id;
+
+            this.matter = {
+                id: id,
+                matter: htmlDecode(fileRef + ' - ' + description),
+            };
+
+        },
+
+        partySelected(id, matterprefix, name) {
+
+            this.partyForm = null;
+
+            this.record.partyid = id;
+
+            this.party = {
+                id: id,
+                party: htmlDecode(matterprefix + ' - ' + name),
+            };
+
+        },
+
+        partyRoleSelected(id, description) {
+            
+            this.record.roleid = id;
+
+            this.role = {
+                recordid: id,
+                description: htmlDecode(description),
+            };
+            
+        },
+
+        okClicked() {
+
+            if ( !this.modal ) {
+                this.record.matterid = this.selectMatter.matter.id;
+            }
+            
+            this.record.partyid = this.selectParty.party.id;
+            this.record.roleid = this.selectPartyRole.record.id;
+
+            if (!this.record.partyid) {
+                
+                showError('No Party selected','Please select a Party');
+                return;
+
+            } else if (!this.record.roleid) {
+                
+                showError('No Role selected','Please select a Role');
+                return;
+            }
+
+            if ( !this.editing ) this.record.sorter = this.countRoles() + 1;
+
+            this.partyRoleExtraScreens.forEach(extraScreen => {
+                extraScreen.fields = $('#extra-screen-form-' + extraScreen.id).serializeArray();
+            });
+
+            let extraScreens = {extraScreens: JSON.stringify(this.partyRoleExtraScreens)};
+
+            axios.post("/matter_parties/store", {...this.record, ...extraScreens})
+            
+            .then(response => {
+
+                if (response.data.data.errors) {
+
+                    if (response.data.data.errors.general) {
+
+                        showError( 'Error', response.data.data.errors.general[0]);
+
+                    } else if (response.data.data.errors.duplicate) {
+
+                        showError( 'Duplicate Role', response.data.data.errors.duplicate[0]);
+
+                    } else {
+
+                        this.errors = response.data.data.errors;
+
+                    }
+
+                } else {
+
+                    this.$root.setTableToRefresh('matter_parties', 'matter-parties-table');
+
+                    this.errors = {};
+
+                    if ( this.editing ) {
+
+                        this.table.table.ajax.reload( () => {
+
+                            this.table.clientRoleExists = this.checkIfClientRoleExists();
+
+                            this.highlightTableRow(response.data.data.id, response.data.data.matterid, response.data.data.roleid, response.data.data.sorter);
+
+                        });
+
+                    } else {
+
+                        this.highlightTableRow(response.data.data.id, response.data.data.matterid, response.data.data.roleid, response.data.data.sorter);
+
+                    }
+
+                }
+
+            }).catch(error => { showError('Error saving ' + this.table.singular, error); });
+
+
+        },
+
+        highlightTableRow( id, matterid, roleid, sorter ) {
+
+            axios.post('/matter_parties/getTablePosition', {
+                matterid: matterid,
+                roleid: roleid,
+                sorter: sorter,
+            })
+
+            .then(response => {
+
+                this.table.jumpToRow(id, response.data.data);
+                
+                this.hide();
+
+            });
+
+        },     
+
+        countRoles() {
+
+            let countRoles = 0;
+            let _this = this;
+
+            this.table.table.rows().every( function ( index ) {
+
+                let thisRow = this.data();
+
+                if ( parseInt(thisRow.roleid) === parseInt(_this.record.roleid) ) countRoles++;
+
+            });
+
+            return countRoles;
+
+        },
+
+        moveMatterPartyUp(id) {
+
+            axios.post("/matter_parties/move-up",{ id: id })
+            
+            .then(response => {
+
+                if (response.data.data.error) {
+
+                    showError( 'Error Moving Matter Party', response.data.data.error);
+
+                } else {
+
+                    if ( !this.table ) this.setTableComponent();
+
+                    this.table.table.ajax.reload( () => {
+
+                        $('#' + this.table.tableId + ' tbody tr.highlighted').removeClass('highlighted');
+                        $('#' + this.table.tableId + ' tbody tr#' + id).addClass('highlighted');
+
+                    });
+
+                }
+
+            });
+            
+        },
+
+        checkIfClientRoleExists() {
+
+            if ( !this.table ) this.setTableComponent();
+            
+            let clientRoleExists = false;
+            let _this = this;
+
+            this.table.table.rows().every( function ( index ) {
+                
+                let thisRow = this.data();
+
+                if ( parseInt(thisRow.roleid) === parseInt(root.company.clientroleid) ) clientRoleExists = true;
+
+            });
+
+            return clientRoleExists;
+
+        },
+
+        pageTitle() {
+
+            if ( this.editing ) {
+
+                if ( this.selectParty && this.selectParty.party) {
+
+                    return this.selectParty.party.party;
+
+                } else {
+
+                    return  '';
+                }
+
+            } else {
+
+                return  'Party will be Added';
+            }
+
+        },
+
+        pageSubTitle() {
+
+            if ( !this.modal && this.editing ) {
+
+                if ( this.selectPartyRole && this.selectPartyRole.record && this.selectMatter && this.selectMatter.matter) {
+
+                    return '<strong>' + this.selectPartyRole.record.description + ':</strong> ' + this.selectMatter.matter.matter;
+
+                } else {
+
+                    return  '';
+                }
+
+            } else {
+                return '';
+            }
+        },
+
+        matterPopOverText() {
+
+            let returnValue = '<h4>Matter</h4><p>The Matter this Party is linked to.</p>';
+
+            if (this.editing && this.role.recordid && root.company.clientroleid === this.role.recordid) {
+
+                returnValue += '<p><strong>Note:</strong> You cannot change the Client of a Matter.</p>' 
+            }
+
+            return returnValue;
+
+        },
+
+        partyPopOverText() {
+
+            let returnValue = `<h4>Party</h4><p>A Matter can have a number of Parties linked to it who play different Roles on the Matter.</p>
+                                        <p>For example, besides a Client, another Party may be the Defendant on the Matter and another Party may be a Witness.</p>
+                                        <p><strong>Hint:</strong> If the Client is a jusristic Entity (such as a company), it can be useful to add someone within the organization with the Role of <em>Contact Person</em> so you can generate Correspondence addressed to this person (who is acting on behalf of the Company).</p>`;
+                                        
+            if (this.editing && this.role && root.company.clientroleid === this.role.recordid) {
+
+                returnValue += '<p><strong>Note:</strong> You cannot change the Client of a Matter.</p>' 
+            }
+
+            return returnValue;
+
+        },
+
+        partyRolePopOverText() {
+
+            let returnValue = `<h4>Party's Role</h4>
+            <p>Specify the Role the Party plays on this Matter.</p>
+            <p>A Party can play <em>more than one Role</em> on a Matter.</p>
+            <p>For example, the Client can also be the Plaintiff in a Matter as well as a Witness. In this case, the same Party will play 3 <em>Roles</em> on the Matter - Client, Plaintiff and Witness.</p>`;
+                                        
+            if (this.editing && this.role && root.company.clientroleid === this.role.recordid) {
+
+                returnValue += '<p><strong>Note:</strong> You cannot change the Client of a Matter.</p>' 
+            }
+
+            return returnValue;
+
+        },
+
+
+    },
+
+
+}
+
+</script>

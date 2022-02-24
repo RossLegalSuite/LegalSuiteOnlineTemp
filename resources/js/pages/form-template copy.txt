@@ -1,0 +1,545 @@
+export default Vue.extend({
+    
+    props: {
+        // parentType: {
+        //     type: String,
+        //     default: 'General'
+        // },
+        parentTableRef: {
+            type: String,
+            default: '',
+        },        
+        leftPageTableRef: {
+            type: String,
+            default: '',
+        },        
+        readOnly: {
+            type: Boolean,
+            default: false,
+        },        
+    },
+
+    data() {
+        return {
+            table: null,
+            editing: false,
+            viewing: false,
+            processing: false, // To prevent double clicking on OK button
+            record: {},
+            errors: {},
+        }
+    },
+
+    methods: {
+
+        insertClicked( anyDataObject ) {
+
+            if ( this.resource ) {
+                if ( !this.permission(this.resource,'insert') ) return;
+            }
+
+            this.setTableComponent();
+
+            this.editing = false;
+
+            if (this.table) this.table.unHighlightAllRows();
+
+            this.errors = {};
+
+            setTimeout(() => { $('#' + this.id + " .popover-icon").popover(); }, 100);
+
+            this.initNewRecord( anyDataObject );
+
+        },
+
+        editClicked( id, viewing = false ) {
+
+            if ( this.resource ) {
+                if ( !this.permission(this.resource,'change') ) return;
+            }
+            
+            this.errors = {};
+
+            this.editing = true;
+
+            this.viewing = viewing;
+
+            if ( !this.viewing ) this.setTableComponent();
+
+            if (this.table) this.table.highlightRow(id);
+
+            setTimeout(() => { $('#' + this.id + " .popover-icon").popover(); }, 100);
+
+            this.editRecord(id);
+
+        },
+
+        deleteClicked() {
+
+            if ( this.resource ) {
+                if ( !this.permission(this.resource,'delete') ) return;
+            }
+
+            if ( typeof this.canDelete === 'function') {
+            
+                this.canDelete().then(() => {
+
+                    this.showDeleteModal();
+
+                });
+
+            } else {
+
+                this.showDeleteModal();
+
+            }
+
+        },
+
+        showDeleteModal() { 
+
+            this.$root.deleteModal.callingComponent = this;
+            this.$root.deleteModal.description = 'this ' + this.table.singular;
+            this.$root.deleteModal.show();
+
+        },
+
+        setAllTablesToRefresh() {
+            this.$root.setTableToRefresh('bills', 'bills-table', 'bill-transactions-table');
+            this.$root.setTableToRefresh('payments', 'payments-table', 'payment-bills-posted-table');
+            this.$root.setTableToRefresh('invoices', 'invoices-table', 'invoice-transactions-table');
+            this.$root.setTableToRefresh('disbursements', 'disbursements-table');
+            this.$root.setTableToRefresh('feenotes', 'fee-notes-table');
+            this.$root.setTableToRefresh('statements', 'statement-table');
+            this.$root.setTableToRefresh('statements', 'statement-transactions-table');
+            this.$root.setTableToRefresh('matters', 'matters-table', 'matter-right-matter-form');
+            this.$root.setTableToRefresh('parties', 'parties-table', 'party-right-party-form');
+            this.$root.setTableToRefresh('creditors', 'creditors-table');
+            this.$root.setTableToRefresh('accounts', 'accounts-table');
+            this.$root.setTableToRefresh('batches', 'batches-table');
+            this.refreshAccountingReports();
+        },
+        
+        refreshAccountingReports() {
+            this.$root.setTableToRefresh('reports', 'report-trial-balance');
+            this.$root.setTableToRefresh('reports', 'report-balance-sheet');
+            this.$root.setTableToRefresh('reports', 'report-income-statement');
+        },
+
+        // Moved to app.js - Can be deleted
+        // setTableToRefresh( route, tableRef, formRef) {
+
+        //     let refreshTables = this.$root.$refs['pages'].refreshTables;
+
+        //     let index = refreshTables.findIndex( refreshTable => refreshTable.route === route && refreshTable.tableRef === tableRef);
+
+        //     if ( index === -1 ) {
+
+        //         console.log('Added to refeshTables',route, tableRef, formRef);
+
+        //         refreshTables.push({route:route, tableRef: tableRef, formRef});
+        //     }
+
+        // },
+
+        permission(resource, action) {
+
+            let permissionFlag = this.$root.checkPermission(resource, action + 'Flag');
+
+            if ( !permissionFlag ) {
+                root.$snotify.simple('You do not have rights to ' + action + ' ' + resource, 'Access Denied', { timeout: 3000, icon: 'icons/lock.gif'});
+            }
+
+            return permissionFlag;
+
+
+        },
+
+        setTableComponent() {
+
+            if ( this.leftPageTableRef ) {
+                this.table = this.$root.$refs['pages'].$refs['left-page'].$refs[this.leftPageTableRef];
+            } else if ( this.parentTableRef ) {
+                this.table = this.$parent.$refs[this.parentTableRef];
+            }
+
+            //console.log('this.table - ' + this.id, this.table);
+
+            // Note - This is usually caused by TWO OR MORE forms having the same id!!
+            // if (!this.table) {
+            //     console.error('No Table set for ' + this.id);
+            //     console.log('this.$parent.$refs',this.$parent.$refs);
+            //     console.log('this.parentTableRef',this.parentTableRef);
+            //     console.log('this.leftPageTableRef',this.leftPageTableRef);
+            // }
+
+        },
+
+
+        refresh() {
+
+            //console.log('refreshing ' + this.table.route + ' Form');
+            
+            axios.post('/' + this.table.route + '/get',{id: this.record.id}).then(response => {this.record = response.data[0]});
+
+            if ( typeof this.refreshFormTables === 'function') this.refreshFormTables();
+
+            
+        },
+
+        toggleDatePicker() {
+
+            if ( this.$refs.datePickerComponent ) this.$refs.datePickerComponent.elem.data('DateTimePicker').toggle();
+            
+        },
+
+        hideDatePicker() {
+
+            if ( this.$refs.datePickerComponent ) this.$refs.datePickerComponent.elem.data('DateTimePicker').hide();
+            
+        },
+        
+        //*****************************************************************
+        // Begin: Common Amount, Tax Amount and TotalAmount input functions
+        //*****************************************************************
+        initSelectTaxRate() {
+            
+            
+            this.amount = 0;
+            this.taxAmount = 0;
+            this.totalAmount = 0;
+            this.amountString = '';
+            this.taxAmountString = '';
+            this.totalAmountString = '';
+            
+            
+            if ( this.editing ) {
+
+                // Doing it like this, in case we store the blank record first in initNewRecord() 
+                // and then call editRecord() - like in PaymentForm.vue
+
+                if ( parseFloat(this.record.amount) > 0 ) {
+                    this.amount = parseMoney(this.record.amount);
+                    this.amountString = root.formatDecimal(this.amount).toString();
+
+                }
+                
+            }
+
+
+            axios.post('/taxrates/get', {id: this.record.taxRateId })
+            
+            .then(response => {
+
+                this.taxRatePercentage = response.data[0].rate;
+                this.salesTaxDescription = response.data[0].description;
+
+                this.calculateAmounts();
+            })
+
+        },
+
+        calculateAmounts() {
+
+            if (this.amountString) {
+
+                this.calculateTotalAmount();
+
+            } else if (this.totalAmountString) {
+
+                this.calculateNetAmount();
+
+            }
+        },
+
+        calculateTotalAmount() {
+
+            this.amount = this.amountString ? parseFloat(this.amountString) : 0;
+            this.taxAmount = parseFloat(this.amount) * parseFloat(this.taxRatePercentage) / 100;
+            this.totalAmount = this.amount + this.taxAmount;
+
+            this.taxAmountString = root.formatDecimal(this.taxAmount).toString();
+            this.totalAmountString = root.formatDecimal(this.totalAmount).toString();
+
+        },
+
+        calculateNetAmount() {
+
+            this.totalAmount = this.totalAmountString ? parseFloat(this.totalAmountString) : 0;
+            this.amount = parseFloat(this.totalAmount) / (1 + (parseFloat(this.taxRatePercentage)/100));
+            this.taxAmount = this.totalAmount - this.amount;
+
+            this.amountString = root.formatDecimal(this.amount).toString();
+            this.taxAmountString = root.formatDecimal(this.taxAmount).toString();
+
+        },
+
+
+        toggleTaxRate() {
+
+
+            let newTaxRateId = null;            
+
+            if ( this.record.taxRateId == this.$root.company.salesTaxRateId ) {
+
+                newTaxRateId = this.$root.company.noTaxRateId;
+                
+            } else if ( this.record.taxRateId == this.$root.company.noTaxRateId ) {
+                
+                newTaxRateId = this.$root.company.salesTaxRateId;
+                
+            } else {
+                
+                newTaxRateId = this.$root.company.noTaxRateId;
+            }
+
+            axios.post('/taxrates/get', {id: newTaxRateId })
+            
+            .then(response => {
+
+                this.record.taxRateId = response.data[0].id;
+                this.taxRatePercentage = response.data[0].rate;
+                this.salesTaxDescription = response.data[0].description;
+
+                this.calculateAmounts();
+                
+            });
+
+        },
+
+        taxRateSelected(taxRate) {
+
+            this.record.taxRateId = taxRate.id;
+            this.taxRatePercentage = taxRate.rate;
+            this.salesTaxDescription = taxRate.description;
+
+            this.calculateAmounts();
+
+        },
+        //*****************************************************************
+        // End: Common Amount, Tax Amount and TotalAmount input functions
+        //*****************************************************************
+
+
+        hide() { 
+
+            if (!this.modal) {
+
+                this.$root.$refs['right-hand-tab-container'].$refs['right-hand-tabs'].clearPages();
+
+            } else {
+
+                this.closeModal();
+
+            }
+
+        },       
+
+        matterSelected(id, fileRef, description) {
+
+            this.record.matterId = id;
+
+            this.selectMatter.matter = {
+                id: id,
+                matter: fileRef + ' - ' + description,
+            };
+
+        },        
+
+        partySelected(id, code, name) {
+            
+            this.record.partyId = id;
+
+            this.selectParty.party = {
+                id: id,
+                party: code + ' - ' + name,
+            };
+
+        },        
+
+        employeeSelected(id, name) {
+            
+            this.record.employeeId = id;
+
+            this.selectEmployee.employee = {
+                id: id,
+                name: name,
+            };
+
+        },        
+
+        removeExtraScreens( location ) {
+
+            return new Promise( (resolve) => {
+
+                let counter = 0, arrayLength = this.extraScreens.length;
+
+                if ( !arrayLength ) resolve();
+
+                //https://stackoverflow.com/questions/7486085/copy-array-by-value
+
+                let currentExtraScreens = JSON.parse(JSON.stringify(this.extraScreens));
+
+                currentExtraScreens.forEach(extraScreen => {
+
+                    if ( extraScreen.location === location ) {
+
+                        // Remove it from the extraScreens array
+                        this.extraScreens.splice(counter, 1);
+                        
+                        // Remove it from the DOM
+                        $('#' + this.record.id + '-extra-screen-row-' + extraScreen.id).remove();
+                        
+                    }
+
+                    counter++;
+
+                    if (counter === arrayLength) resolve();
+
+                });
+
+            });
+
+        },
+
+
+        loadExtraScreens( location ) {
+
+            return new Promise( (resolve) => {
+
+                let counter = 0, arrayLength = 0;
+
+                let matterTypeId = location === 'Matter Type' ? this.record.matterTypeId : null;
+                let documentSetId = location === 'Document Set' ? this.record.documentSetId : null;
+                let partyTypeId = location === 'Party Type' ? this.record.typeId : null;
+                let partyEntityId = location === 'Party Entity' ? this.record.entityId : null;
+                let partyRoleId = location === 'Party Role' ? this.record.roleId : null;
+
+                axios.post('/extra-screens/get',{
+                    location: location,
+                    matterTypeId: matterTypeId,
+                    documentSetId: documentSetId,
+                    partyTypeId: partyTypeId,
+                    partyEntityId: partyEntityId,
+                    partyRoleId: partyRoleId,
+                })
+
+                .then(response => {
+
+                    // If there are Extra Screens
+                    if ( response.data.length ) {
+
+                        this.extraScreens = [...this.extraScreens,...response.data];
+
+                        arrayLength = response.data.length;
+
+                        response.data.forEach(extraScreen => {
+
+                            axios.post('/extra-screen-fields/get', {parentId: extraScreen.id})
+
+                            .then(response => {
+
+                                setTimeout(() => {
+
+                                    let formViewer = $( '#extra-screen-container-' + extraScreen.id);
+
+                                    response.data.forEach(row => {
+                                        row.values = JSON.parse(row.values);
+                                        row.required = row.required ? true : false;
+                                    });
+
+                                    //console.log('response.data.values',response.data.values);
+
+                                    $( '#extra-screen-form-' + extraScreen.id, formViewer).formRender({
+                                        formData: response.data
+                                    });
+
+                                    counter++;
+
+                                    if (counter === arrayLength) resolve();
+
+                                });
+
+                            });
+
+                        });
+                    }
+                });
+
+            });
+
+
+        },
+
+
+        populateExtraScreens( location) {
+
+            let url;
+
+            if ( location === 'Matter' || location === 'Matter Type' || location === 'Document Set' ) {
+                url = 'matter-extra-screens';
+            } else if ( location === 'Party' || location === 'Party Type' || location === 'Party Entity') {
+                url = 'party-extra-screens';
+            } else if ( location === 'Party Role' ) {
+                url = 'matter-party-extra-screens';
+            }
+
+            this.extraScreens.forEach(extraScreen => {
+
+                if ( extraScreen.location === location ) {
+
+                    axios.post('/' + url + '/get', {
+                        extraScreenId: extraScreen.id,
+                        parentId: this.record.id,
+                    })
+
+                    .then(response => {
+
+                        response.data.forEach(field => {
+
+                            if ( field.type === 'select') {
+
+                                $('#' + this.id + ' select[name="' + field.name + '"]').val(field.value);
+
+                            } else if ( field.type === 'textarea') {
+
+                                $('#' + this.id + ' textarea[name="' + field.name + '"]').val(field.value);
+
+                            } else {
+
+                                $('#' + this.id + ' input[name="' + field.name + '"]').val(field.value);
+
+                            }
+
+                        });
+
+                    });
+                }
+
+            });
+
+        },
+
+        displayForm() { 
+            if (!this.modal) {
+                root.$refs['pages'].$refs["left-page"].loadPages('Form');
+            } else {
+                this.show();
+            }      
+        },
+
+        closeForm() { 
+
+            if (!this.modal) {
+                this.$root.$refs['right-hand-tab-container'].$refs['right-hand-tabs'].clearPages();
+            } else {
+                this.close();
+            }
+
+        },   
+
+
+
+    },
+
+})

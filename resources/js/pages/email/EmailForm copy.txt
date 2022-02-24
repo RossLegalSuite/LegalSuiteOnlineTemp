@@ -1,0 +1,355 @@
+<template>
+
+<div :id="id" :class="modal ? 'modal': ''">
+    
+    <div :class="modal ? 'modal-dialog modal-dialog-centered modal-lg' : ''">
+
+        <div :class="modal ? 'modal-content email-border':'card h-100 border-0'">
+
+            <div :class="modal ? '':'card-header'">
+
+                <div :class="modal ? 'modal-header email-bg' : 'd-flex justify-content-between'">
+
+                    <div class="page-title">
+                        <h3>
+                            {{record.subject}}
+                        </h3>
+                        <i v-if="modal" title="Close this window" class="cp top-right fa fa-times-circle fa-2x text-white" data-dismiss="modal"></i>
+                    </div>
+
+                    <page-close-button v-if="!modal" @closeClicked="closeForm"/>
+
+                </div>
+
+            </div>
+
+            <!-- Fill remaining vertical space with CSS using display:flex
+            Note: See "<div style="flex: 1 1 auto;"> on the iframe row below
+            https://stackoverflow.com/questions/25098042/fill-remaining-vertical-space-with-css-using-displayflex -->
+
+            <div  class="card-body form-tab-body overflow-auto p-3">
+
+                <form-tabs :tabs="tabs"/>
+
+                <div v-show="activeTab === 'General'" 
+                    :id="id + '-form-tab-content'" 
+                    class="form-tab-content"
+                    style="display: flex; align-items: stretch; flex-flow: column;"
+                >
+
+                    <div class="form-group row">
+                        <text-input class="col-md-6" :readOnly="true" v-model="record.date" label="Date"/>
+                        <text-input class="col-md-6" :readOnly="true" v-model="record.from" label="From"/>
+                    </div>
+
+                    <div class="form-group row">
+                        <text-input class="col-md-6" :readOnly="true" v-model="record.to" label="To"/>
+                    </div>
+
+                    <div v-if="record.cc || record.bcc" class="form-group row">
+                        <text-input class="col-md-6" :readOnly="true" v-model="record.cc" label="CC"/>
+                        <text-input v-if="record.bcc" class="col-md-6" :readOnly="true" v-model="record.bcc" label="BCC"/>
+                    </div>
+
+
+                    <div 
+                    style="flex: 1 1 auto; background: white; margin-right: 0px; margin-left: 0px;"
+                    class="row boxed"
+                    >
+                        <div style="padding-left: 0;padding-right: 0" class="col-md-12">
+                            <iframe class="iframe-container" id="email-form-message-iframe"></iframe>
+                        </div>
+                    </div>
+
+
+                </div>  
+
+                <div v-show="activeTab === 'Attachments'" class="form-tab-content">
+
+                    <table :id="id + '-attachments-table'" class="table bordered" style="table-layout: auto; width:100%"></table>
+
+                </div>
+
+
+            </div>
+
+            <div class="modal-footer justify-content-between">
+                <div>
+
+
+                </div>
+                <div>
+                    <button class="btn btn-danger form-button" @click="closeForm" type="button" title="Close this screen"><i class="fa fa-times-circle fa-lg mr-2"></i>Close</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+</template>    
+
+<script>
+
+import FormTemplate from "@pages/form-template";
+import modalTemplate from "@components/modals/modal-template";
+
+export default {
+    
+    mixins: [FormTemplate, modalTemplate],
+
+    props: {
+        resource: {type: String, default: 'Email' },
+    },
+
+    data() {
+        return {
+            record: {},
+            attachments: [],
+            iframeHeight: '',
+            activeTab: 'General',
+            tabs: [
+                {
+                    pageName: "General",
+                    title: "Details",
+                    iconClass: '',
+                    visible: true,
+                    active: true,
+                },
+                {
+                    pageName: "Attachments",
+                    title: "Attachments",
+                    iconClass: '',
+                    visible: false,
+                    active: false,
+                },
+            ],
+
+        };
+    },    
+
+    watch: {
+
+        activeTab(newValue) {
+
+            if ( newValue === "Attachments" ) {
+
+                // if (!this.gotContents) {
+
+                //     this.gotContents = true;
+                //     this.displayContents();
+                // }
+
+            }
+        },
+
+    },
+
+    methods: {
+
+        showEmailMessage( record, params ) {
+
+            this.params = params;
+
+            $('#email-form-message-iframe')[0].srcdoc = `
+                <html style="height: 100%;"><head></head><body style="height: 100%;">            
+                <div style="margin: 0px;justify-content: center; align-items: center; display: flex; height: 100%;">
+                    <div style="text-align: center">
+                        <h3 style="color:forestgreen">Loading contents...Please wait</h3>
+                    </div>
+                </div>
+                </body>
+                </html>
+            `;
+
+            this.displayContents();
+
+            this.attachments = [];
+
+            this.record = record;
+
+            this.setGeneralTab();
+
+            this.displayForm();
+
+            this.getAttachments();
+
+        },
+
+        displayContents() {
+
+            axios.post('/mail/getMessageBody', this.params)
+
+            .then(response => {
+
+                if (response.data.error) {
+
+                    showError('Email Server Error',response.data.error);
+
+                } else {
+
+                    setTimeout(() => {
+                        
+                        $('#email-form-message-iframe')[0].srcdoc = response.data.body;
+                        
+                    });
+
+                }
+
+            });
+
+        },
+
+        getAttachments() {
+
+            axios.post('/mail/getMessageAttachments', this.params)
+
+            .then(response => {
+
+                if (response.data.error) {
+
+                    showError('Email Server Error',response.data.error);
+
+                } else {
+
+                    this.attachments = response.data.attachments;
+
+                    if ( this.attachments.length ) {
+                        console.log('this.attachments',this.attachments);
+                        this.setAttachmentsTab();
+                    }
+
+
+                }
+
+            });
+
+        },
+
+        setGeneralTab() {
+            this.activeTab = 'General';
+            this.tabs[0].active = true;
+            this.tabs[1].active = false;
+            this.tabs[1].visible = false;
+        },
+
+        setAttachmentsTab() {
+            this.tabs[1].visible = true;
+        },
+
+        loadDataTable( emails, loadingFlag = false) {
+
+            let _this = this;
+
+            //Set the table Height manually
+            let $thisBody = $('#email-left-body');
+            let scrollY = (Math.round( $thisBody.outerHeight() ) - 135)  + 'px';
+
+            this.table = $('#' + this.tableId).DataTable({
+                destroy: true,
+                dom: "t",
+                data: emails,
+                serverSide: false,
+                paging: false,
+                select: false,
+                scrollX: true,
+                responsive: false,
+                scrollY: scrollY,
+                scroller: false,
+                scrollCollapse: false,
+                rowId: "uid",
+                ordering: true,
+                order: [[1, "desc"]],
+                language: {
+                    emptyTable: loadingFlag ? 
+                    _this.currentPage ? "Fetching emails...Please wait" : "Loading " + _this.selectedFolder + " folder...Please wait" 
+                    : "No emails found",
+                },
+                columnDefs: [
+                    {
+                        title: "Action",
+                        data: null,
+                        class: "text-center",
+                        width: "20%",
+                        orderable: false,
+                        targets: 0,
+                        render: function (data) {
+                                return '<span class="badge badge-success action-button-badge" onclick="componentFunctionById(' + _this._uid + ',\'viewEmail\',' + data.uid + ')"  title ="View this email message">View</span>';
+                        }
+                    },
+                    {
+                        title: "Date",
+                        data: null,
+                        width: "20%",
+                        targets: 1,
+                        render: function (data) {
+                            return data.date ?
+                            moment(data.date).format('YYYY-MM-DD HH:mm:ss')
+                            : '';
+                        }
+                    },
+                    {
+                        title: "From",
+                        data: null,
+                        width: "20%",
+                        targets: 2,
+                        render: function (data) {
+                            return data.from ? data.from : '';
+                        }
+                    },
+                    {
+                        title: "To",
+                        data: null,
+                        width: "20%",
+                        targets: 3,
+                        render: function (data) {
+                            return data.to ? data.to : '';
+                        }
+                    },
+                    {
+                        title: "Subject",
+                        data: null,
+                        width: "20%",
+                        targets: 4,
+                        render: function (data) {
+                            return data.subject ? data.subject : '';
+                        }
+                    },
+                    {
+                        title: "CC",
+                        data: null,
+                        visible: false,
+                        targets: 5,
+                        render: function (data) {
+                            return data.cc ? data.cc : '';
+                        }
+                    },
+                    {
+                        title: "BCC",
+                        data: null,
+                        visible: false,
+                        targets: 6,
+                        render: function (data) {
+                            return data.bcc ? data.bcc : '';
+                        }
+                    },
+                    {
+                        title: "Msg No",
+                        data: null,
+                        visible: false,
+                        targets: 7,
+                        render: function (data) {
+                            return data.msgno ? data.msgno : '';
+                        }
+                    },
+                ]
+            });
+
+        },
+
+
+        
+    },
+}
+
+</script>

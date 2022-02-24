@@ -1,0 +1,219 @@
+<template>
+
+    <div :class="_class + (setVisible ? '' : ' d-none')">
+
+        <div v-if="label">
+
+            <label v-if="vatInputFlag"
+                v-html="setLabel"
+                @click="toggleVatRate"           
+                class="cp"
+            />
+            <label v-else v-html="setLabel"/>
+
+            <span v-if="popOver">   
+                <pop-over :content="setPopOver" :container="popOverContainer" :placement="popOverPlacement"/>
+            </span>
+
+            <span v-else-if="vatInputFlag && !$parent.record.readOnly && !$parent.viewing">   
+                <pop-over :content="'You can click on the label <strong>' + label + '</strong> to toggle the Vat Rate'" :container="$parent.modal ? '#' + $parent.id : 'body'"/>
+            </span>
+            
+        </div>
+
+
+        <div :class="inputGroup || vatInputFlag || numberSpinnerFlag ? 'input-group' : ''">
+
+            <input 
+            :name="name" 
+            :type="type" 
+            :value="value" 
+            @input="$emit('input', $event.target.value)" 
+            @change="$emit('change', $event.target.value)"
+            :class="'form-control ' + inputClass + ' ' + (error[0] ? 'is-invalid' : '')"
+            :required="required" 
+            :readonly="setReadOnly" 
+            :min="min" 
+            :tabIndex="readOnly ? '-1' : ''" 
+            :title="setTitle" 
+            :placeholder="placeHolder">
+
+            <div v-if="inputGroup" class="input-group-append">
+                <span class="input-group-text" v-html="inputGroup"></span>
+            </div>
+
+            <div v-if="vatInputFlag" class="input-group-append">
+            <button
+                tabindex="-1"
+                @click="selectVatRate"
+                type="button"
+                :title="'Change the ' + $root.company.salesTaxType + ' Rate'"
+                :class="error[0] ? 'btn btn-danger multiselect-invalid-feedback' : 'btn btn-primary'"
+            ><i class="fa fa-cog"></i></button>
+            </div>            
+
+            <div v-if="numberSpinnerFlag" class="input-group-append">
+                <spinner-button
+                    :upCallback="numberSpinnerUpCallback"
+                    :downCallback="numberSpinnerDownCallback"
+                />
+            </div>            
+
+
+        </div>
+
+        <div v-html="error[0]" class="invalid-feedback"></div>
+
+    </div>
+
+</template>
+
+<script>
+
+//See: https://bangjelkoski.com/blog/building-a-controlled-vue-input-component
+
+export default {
+
+    props: {
+        error: {
+            type: Array,
+            default: function () {
+                return [null]
+            },
+        },
+        name: String,
+        type: {
+            type: String,
+            default: 'text',
+        },
+        value: {
+            type: String,
+            default: '',
+        },
+        min: {
+            type: String,
+            default: '0',
+        },
+        title: {
+            type: String,
+            default: '',
+        },
+        placeHolder: {
+            type: String,
+            default: '',
+        },
+        inputGroup: {
+            type: String,
+            default: '',
+        },
+        vatInputFlag: {
+            type: Boolean,
+            default: false,
+        },
+        vatInputCallback: {
+            type: Object,
+            default: null,
+        },
+        numberSpinnerFlag: {
+            type: Boolean,
+            default: false,
+        },
+        numberSpinnerUpCallback: {
+            type: Function,
+            default: null,
+        },
+        numberSpinnerDownCallback: {
+            type: Function,
+            default: null,
+        },
+        popOver: {
+            type: String,
+            default: '',
+        },
+        popOverContainer: {
+            type: String,
+            default: 'body',
+        },
+        popOverPlacement: {
+            type: String,
+            default: 'right'
+        },
+        label: {
+            type: String,
+            default: '',
+        },
+        _class: {
+            type: String,
+            default: 'col-md-6',
+        },
+        inputClass: {
+            type: String,
+            default: '',
+        },
+        readOnly: {
+            type: Boolean,
+            default: false,
+        },
+        required: {
+            type: Boolean,
+            default: false,
+        },
+        visible: {
+            type: Boolean,
+            default: true,
+        },
+    },
+
+    data() {
+        return {
+            setLabel: null,
+            setTitle: null,
+            setReadOnly: null,
+            setPopOver: null,
+            setVisible: null,
+        }
+    },
+
+    mounted () {
+
+        this.setLabel = this.label;
+        this.setTitle = this.title;
+        this.setReadOnly = this.readOnly;
+        this.setPopOver = this.popOver;
+        this.setVisible = this.visible;
+
+    },    
+
+    methods: {
+
+        toggleVatRate() {
+
+            this.vatInputCallback.toggleTaxRate();
+
+        },
+
+        selectVatRate() {
+
+            const table = this.$root.selectTaxRate.$refs['tax-rates-table'];
+
+            // Check if already loaded
+            if ( !table.table ) {
+
+                table.selectTableFlag = true;
+
+                table.tableOptions = { tableBottom: 40 };
+
+                setTimeout( table.loadDataTable );
+
+            }
+            
+            this.$root.selectTaxRate.callback = this.vatInputCallback;
+
+            this.$root.selectTaxRate.show();
+
+
+        },
+    }
+
+}  
+</script>

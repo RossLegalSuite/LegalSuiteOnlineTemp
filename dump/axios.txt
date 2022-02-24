@@ -1,0 +1,17 @@
+// Use ES6 arrow functions in axios calls to avoid having to put "let _this = this;"
+// Arrow functions are anonymous and change the way "this" binds in functions.
+
+axios.post('/document_templates/get', {id: id})
+
+.then(response => {
+    this.record = response.data;
+})
+
+.catch(error => {
+    this.record = {};
+    showError('System Error',error);
+})
+
+.finally(() => {
+    this.loaded = true;
+});              

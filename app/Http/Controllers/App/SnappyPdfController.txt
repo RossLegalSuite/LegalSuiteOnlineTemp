@@ -1,0 +1,57 @@
+<?php
+
+namespace App\Http\Controllers\App;
+use SnappyPdf;
+use Illuminate\Http\Request;
+
+class SnappyPdfController extends Controller {
+
+    private function generateHtml($html)
+    {
+
+        return <<<EOT
+        <!DOCTYPE html>
+        <html lang="en" class="no-js">
+        <head>
+            <meta charset="utf-8">
+            <link href="https://d22oktazhmwkct.cloudfront.net/program.css" rel="stylesheet">
+            <link href="https://d22oktazhmwkct.cloudfront.net/froala_style.min.css" rel="stylesheet" type="text/css" />
+        </head>
+        <body style="background-color: white">
+        $html
+        </body>
+        </html>        
+EOT;
+
+    }
+
+    public function create(Request $request)
+    {
+
+        $returnData = new \stdClass();
+
+        $returnData->path = 'uploads/' . strtolower( session('companyCode') . '/' . $request->folder);
+
+        $destination = $returnData->path . '/' . $request->fileName;
+
+        $returnData->url = asset( $destination );
+
+        $pdf = SnappyPdf::loadHTML( $this->generateHtml($request->bodyHtml) );
+
+        $pdf->setPaper($request->paperSize, $request->orientation);
+
+        if ( isset($request->headerHtml) ) $pdf->setOption('header-html', $this->generateHtml($request->headerHtml) );
+        if ( isset($request->footerHtml) ) $pdf->setOption('footer-html', $this->generateHtml($request->footerHtml) );
+
+        if ( isset($request->topMargin) ) $pdf->setOption('margin-top', $request->topMargin);
+        if ( isset($request->bottomMargin) ) $pdf->setOption('margin-bottom', $request->bottomMargin);
+        if ( isset($request->leftMargin) ) $pdf->setOption('margin-left', $request->leftMargin);
+        if ( isset($request->rightMargin) ) $pdf->setOption('margin-right', $request->rightMargin);
+        
+        $pdf->save($destination, true);
+        
+        return json_encode($returnData);
+
+    }
+
+}

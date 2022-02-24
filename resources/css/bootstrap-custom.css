@@ -1,0 +1,193 @@
+/***********************************************************
+    Extending some Bootstrap 4 classes (and adding new ones)
+    To avoid having to put inline styles in templates
+************************************************************/
+
+
+.w-5 { width:5%; }
+.w-10 { width:10%; }
+.w-15 { width:15%; }
+.w-20 { width:20%; }
+.w-25 { width:25%; }
+.w-30 { width:30%; }
+.w-35 { width:35%; }
+.w-40 { width:40%; }
+.w-45 { width:45%; }
+.w-50 { width:50%; }
+.w-55 { width:55%; }
+.w-60 { width:60%; }
+.w-65 { width:65%; }
+.w-70 { width:70%; }
+.w-75 { width:75%; }
+.w-80 { width:80%; }
+.w-85 { width:85%; }
+.w-90 { width:90%; }
+.w-95 { width:95%; }
+.w-100 { width:100%; }
+
+
+
+
+/*****************************************************
+    Template Container
+*****************************************************/
+
+.template-container {
+    position: relative;
+    /* padding-bottom: 2.5rem; */
+}
+
+
+.template-container .border {
+    border: 1px solid rgba(0, 0, 0, 0.5) !important;
+}
+
+.template-container .card {
+    border: 2px solid rgba(0, 0, 0, 0.5);
+    border-top-left-radius: 7px !important;
+    border-bottom-left-radius: 7px !important;
+}
+
+.template-container .card-header {
+    font-weight: bold;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.5);
+
+    /* border-top-left-radius: 7px !important; */
+}
+
+.template-container .card-header, .template-container .card-footer {
+    background-color: rgba(0, 0, 0, 0.2) !important;
+}
+
+
+.template-container table thead th {
+    white-space: nowrap !important;
+}
+
+
+/**********************************************
+        Wide Bootstrap Column
+**********************************************/
+
+.col-xxl-12, .col-xxl-11, .col-xxl-10, .col-xxl-9, .col-xxl-8, .col-xxl-7, .col-xxl-6, .col-xxl-5, .col-xxl-4, .col-xxl-3, .col-xxl-2, .col-xxl-1 {
+    position: relative;
+    width: 100%;
+    padding-right: 15px;
+    padding-left: 15px;
+}
+
+@media (min-width: 1575px) {
+.col-xxl-1 {
+    -ms-flex: 0 0 8.333333%;
+    flex: 0 0 8.333333%;
+    max-width: 8.333333%;
+}
+.col-xxl-2 {
+    -ms-flex: 0 0 16.666667%;
+    flex: 0 0 16.666667%;
+    max-width: 16.666667%;
+}
+.col-xxl-3 {
+    -ms-flex: 0 0 25%;
+    flex: 0 0 25%;
+    max-width: 25%;
+}
+.col-xxl-4 {
+    -ms-flex: 0 0 33.333333%;
+    flex: 0 0 33.333333%;
+    max-width: 33.333333%;
+}
+.col-xxl-5 {
+    -ms-flex: 0 0 41.666667%;
+    flex: 0 0 41.666667%;
+    max-width: 41.666667%;
+}
+.col-xxl-6 {
+    -ms-flex: 0 0 50%;
+    flex: 0 0 50%;
+    max-width: 50%;
+}
+.col-xxl-7 {
+    -ms-flex: 0 0 58.333333%;
+    flex: 0 0 58.333333%;
+    max-width: 58.333333%;
+}
+.col-xxl-8 {
+    -ms-flex: 0 0 66.666667%;
+    flex: 0 0 66.666667%;
+    max-width: 66.666667%;
+}
+.col-xxl-9 {
+    -ms-flex: 0 0 75%;
+    flex: 0 0 75%;
+    max-width: 75%;
+}
+.col-xxl-10 {
+    -ms-flex: 0 0 83.333333%;
+    flex: 0 0 83.333333%;
+    max-width: 83.333333%;
+}
+.col-xxl-11 {
+    -ms-flex: 0 0 91.666667%;
+    flex: 0 0 91.666667%;
+    max-width: 91.666667%;
+}
+.col-xxl-12 {
+    -ms-flex: 0 0 100%;
+    flex: 0 0 100%;
+    max-width: 100%;
+}
+.offset-xxl-0 {
+    margin-left: 0;
+}
+.offset-xxl-1 {
+    margin-left: 8.333333%;
+}
+.offset-xxl-2 {
+    margin-left: 16.666667%;
+}
+.offset-xxl-3 {
+    margin-left: 25%;
+}
+.offset-xxl-4 {
+    margin-left: 33.333333%;
+}
+.offset-xxl-5 {
+    margin-left: 41.666667%;
+}
+.offset-xxl-6 {
+    margin-left: 50%;
+}
+.offset-xxl-7 {
+    margin-left: 58.333333%;
+}
+.offset-xxl-8 {
+    margin-left: 66.666667%;
+}
+.offset-xxl-9 {
+    margin-left: 75%;
+}
+.offset-xxl-10 {
+    margin-left: 83.333333%;
+}
+.offset-xxl-11 {
+    margin-left: 91.666667%;
+}
+.mt-xxl-0 {
+    margin-top: 0 !important;
+}
+.mt-xxl-1 {
+    margin-top: 0.25rem !important;
+}
+.mt-xxl-2 {
+    margin-top: 0.5rem !important;
+}
+.mt-xxl-3 {
+    margin-top: 1rem !important;
+}
+
+}
+/**********************************************
+        Wide Bootstrap Column - End
+**********************************************/
+

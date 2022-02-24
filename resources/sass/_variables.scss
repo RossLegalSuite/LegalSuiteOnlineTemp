@@ -1,0 +1,55 @@
+
+// Body
+$body-bg: #f8fafc;
+
+// Typography
+$font-family-sans-serif: "Nunito", sans-serif;
+
+// $font-size-base: 0.9rem;
+// $line-height-base: 1.6;
+
+$font-size-base: 0.8vw;
+$line-height-base: 1.6;
+$nav-link-padding-y: 0.4vw !default;
+$custom-control-indicator-size: 0.8vw !default;
+$custom-control-gutter: 0.4vw !default;
+
+$alert-padding-y: 0.5vw !default;
+$alert-padding-x: 0.85vw !default;
+$alert-margin-bottom: 0.8vw !default;
+
+
+
+
+// Colors
+
+// Base Colors
+$transparent: transparent !default;
+$white: #fff !default;
+$gray-100: #f6f9fc !default;
+$gray-200: #eaf2f9 !default;
+$gray-400: #e9ecef !default;
+$gray-500: #c1d0da !default;
+$gray-600: #5a6a7e !default; // mainly used for text-muted
+$gray-800: #1b1e24 !default; // dark color
+$black: #000 !default;
+
+$primary: #4682b4 !default;
+$secondary: slategrey !default;
+$success: forestgreen !default;
+$info: #2972fa !default;
+$warning: #fab633 !default;
+$danger: indianred !default;
+$light: $gray-400 !default;
+$dark: $gray-800 !default;
+
+$blue: #3490dc;
+$indigo: #6574cd;
+$purple: #9561e2;
+$pink: #f66D9b;
+$red: #e3342f;
+$orange: #f6993f;
+$yellow: #ffed4a;
+$green: #38c172;
+$teal: #4dc0b5;
+$cyan: #6cb2eb;

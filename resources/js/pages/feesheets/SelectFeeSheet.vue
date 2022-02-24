@@ -1,0 +1,235 @@
+<template>
+<div :class="formControls ? _class : ''">
+
+    <div v-show="formControls">
+        
+        <label v-if="label">{{label}}</label>
+        <span v-if="popOver">   
+            <pop-over :content="popOver" :container="popOverContainer ? popOverContainer : $parent.modal ? '#' + $parent.id : 'body'"/>
+        </span>
+        <div class="input-group flex-nowrap">
+            <select-fee-sheet-dropdown
+                :id="id + '-select-fee-sheet-dropdown'"
+                :class="error[0] ? 'multiselect-invalid-feedback' : ''"
+                openDirection="below"
+                :placeholder="placeholder"
+                :title="title"
+                :options="$root.feeSheets" 
+                v-model="record"
+                track-by="recordid"
+                :tabindex="-1"
+                label="description"
+                :disabled="readOnly || disabled"
+                :allow-empty="false"
+                :show-labels="false"
+                @input="feeSheetSelected"
+            >
+            <template slot="noResult">No Fee Sheets found</template>
+            <template slot="noOptions">No Fee Sheets found...</template>
+            <template slot="option" slot-scope="props">
+                <div>
+                    <span>{{ props.option.description }}</span>
+                </div>
+            </template>                            
+            </select-fee-sheet-dropdown>
+
+            <div v-if="!readOnly" class="input-group-append">
+                <button
+                    v-show="displayClearIcon"
+                    tabindex="-1"
+                    @click="clearIconClicked"
+                    type="button"
+                    :title="'Clear the Filter - Display Fee Codes for all Fee Sheets'"
+                    :class="error[0] ? 'btn btn-danger multiselect-invalid-feedback' : 'btn btn-danger'"
+                >
+                <i class="fa fa-times-circle"></i>
+                </button>
+                <button
+                    tabindex="-1"
+                    v-on:click="selectFeeSheet"
+                    type="button"
+                    :title="'Select a ' + singular"
+                    :class="error[0] ? 'btn btn-danger multiselect-invalid-feedback' : 'btn btn-primary'"
+                >
+                <i class="fa fa-cog"></i>
+                </button>
+            </div>
+
+            
+        </div>
+
+        <div v-html="error[0]" class="invalid-feedback"></div>
+
+
+    </div>
+
+    <div class="modal" :id="id">
+
+        <div class="modal-dialog modal-dialog-left">
+
+            <div class="modal-content" style="border-color:indianred">
+
+                <div class="modal-header indianred">
+                    <h2 class="modal-title page-title"><i class="fa fa-server mr-2"></i>Select a {{singular}}</h2>
+                    <i title="Close this window" class="cp top-right fa fa-times-circle fa-2x text-white" data-dismiss="modal"></i>
+                </div>
+
+                <div class="modal-body p-3" style="height: 60vh; overflow-y: auto;">
+                    
+                    <fee-sheet-table
+                    :options-button="false"
+                    :new-record-button="true"
+                    :table-id="id + '-table'"
+                    :lazyLoadFlag="true"
+                    ref="select-fee-sheet-table"
+                    :formRef="formRef"
+                    />
+
+
+                </div>
+
+                <div class="modal-footer ">
+                    <button class="btn btn-danger form-button" type="button"  v-on:click="hide" title="Cancel selection"><i class="fa fa-times-circle fa-lg mr-2"></i>Cancel</button>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+</div>
+</template>
+
+<script>
+
+import modalTemplate from "@components/modals/modal-template";
+import Multiselect from 'vue-multiselect';
+
+export default {
+
+    mixins: [modalTemplate],       
+
+    components: {
+        FeeSheetTable: () => import("./FeeSheetTable"),
+        SelectFeeSheetDropdown: Multiselect
+    },
+
+    props: {
+        clearIconCallback: { type: String, default: 'clearSelectFeeSheet' },
+        clearIcon: { type: Boolean, default: false },
+        callback: {
+            type: String,
+            default: 'feeSheetSelected',
+        },  
+        parentName: {
+            type: String,
+            default: 'selectFeeSheet',
+        }, 
+        title: {
+            type: String,
+            default: 'Click on the button to select a Fee Sheet',
+        }, 
+        _class: {
+            type: String, 
+            default: 'col-md-12',
+        },
+        label: {
+            type: String,
+            default: 'Fee Sheet',
+        },
+        singular: {
+            type: String,
+            default: 'Fee Sheet',
+        },
+        plural: {
+            type: String,
+            default: 'Fee Sheets',
+        },
+        placeholder: {
+            type: String,
+            default: '',
+        },
+        formRef: String,
+        formControls: {
+            type: Boolean,
+            default: true,
+        },
+        readOnly: {
+            type: Boolean,
+            default: false,
+        },
+        popOver: { type: String, default:'' },
+        popOverContainer: { type: String, default:'' },
+        error: {
+            type: Array,
+            default: function () {
+                return [null]
+            },
+        },
+    },
+
+    data() {
+        return {
+            displayClearIcon: false,
+            table: null,
+            record: null,
+            disabled: null,
+        };
+    },
+
+    mounted () {
+        this.$parent[this.parentName] = this;
+    },    
+
+    methods: {
+
+        clearIconClicked() {
+            if ( typeof this.$parent[this.clearIconCallback] === 'function') this.$parent[this.clearIconCallback]();
+        },
+
+        newRecordButtonClicked() {
+
+            this.$refs['select-fee-sheet-form'].table = this.$refs['select-fee-sheet-table'];
+            this.$refs['select-fee-sheet-form'].insertClicked();
+
+        },
+
+        selectFeeSheet() {
+
+            if ( !this.$root.feeSheets.length && this.formControls) this.$root.getFeeSheets();
+
+            this.show();
+
+            this.table.selectTableFlag = true;
+            this.table.actionColumnWidth = 12;
+
+            if ( !this.table.table ) setTimeout( this.table.loadDataTable );
+
+        },
+
+        feeSheetSelected(selectedRecord) {
+
+            this.record = {
+                recordid: selectedRecord.recordid,
+                description: selectedRecord.description
+            };
+
+            if ( typeof this.$parent.feeSheetSelected === 'function') this.$parent.feeSheetSelected(selectedRecord.recordid, selectedRecord.description);
+
+            this.hide();
+
+        },        
+
+        selectRecord(id) {
+
+            this.feeSheetSelected( this.table.table.row('#' + id).data() );
+
+        },
+
+    },
+
+}  
+</script>
+

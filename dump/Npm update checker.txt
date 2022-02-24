@@ -1,0 +1,49 @@
+npm-check-updates upgrades your package.json dependencies 
+to the LATEST versions, ignoring specified versions.
+
+See: https://github.com/tjunnone/npm-check-updates
+
+1) Check for updates
+
+$ ncu
+Checking package.json
+[====================] 5/5 100%
+
+ express           4.12.x  →   4.13.x
+ multer            ^0.1.8  →   ^1.0.1
+ react-bootstrap  ^0.22.6  →  ^0.24.0
+ react-a11y        ^0.1.1  →   ^0.2.6
+ webpack          ~1.9.10  →  ~1.10.5
+
+
+2) Run ncu -u to upgrade package.json
+
+$ ncu -u
+Upgrading package.json
+[====================] 1/1 100%
+
+ express           4.12.x  →   4.13.x
+
+
+
+3) Run npm install to install new versions.
+
+$ npm install
+
+
+===============================================================================
+
+Tips
+
+This will show you any outdated packages
+--------------------------------------------
+C:\>npm outdated
+
+Upgrading NPM itself
+--------------------
+
+C:\>npm -v (check the version)
+
+C:\>npm install npm@latest -g
+
+C:\>npm -v (check the version - should be latest)

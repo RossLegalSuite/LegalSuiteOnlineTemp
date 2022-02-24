@@ -1,0 +1,726 @@
+<template>
+    <div class="modal" :id="id" style="z-index: 2002">
+        <div class="modal-dialog modal-dialog-right">
+            <div class="modal-content blue-border">
+
+                <div class="modal-header blue-bg">
+                    <h2><span v-html="pageTitle()"></span></h2>
+                    <i title="Close this window" class="cp top-right fa fa-times-circle fa-2x text-white" data-dismiss="modal"></i>
+                </div>
+
+                <div class="modal-body p-3" style="min-height: 45vh; max-height: 75vh; overflow-y: auto;">
+
+                    <div class="form-group row">
+
+                        <div class="col-md-6">
+
+                            <label>Column</label>
+
+                            <v-select
+                                :options="tableColumns" 
+                                label="title"
+                                :clearable="false" 
+                                :searchable="false" 
+                                v-model="tableColumn"
+                            />
+
+                        </div>
+
+                        <radio-buttons 
+                        _class="col-md-4"
+                        popOver="<h4>And/Or</h4>
+                            <p>If you have more than one filter, you can specify how they relate to each other from a logical point of view.</p>
+                            <p><strong><em>And</em></strong> means that both conditions must be true for a record to be displayed in the table.</p>
+                            <p><strong><em>Or</em></strong> means that either of the conditions can be true for a record to be displayed.</p>"
+                        :popOverContainer="'#' + id"
+                        :record="record"
+                        column="join"
+                        :buttons="[{value:'or', text: 'Or', title: 'Either of the filters can be true'},{value:'and', text: 'And', title: 'Both filters must be true'}]"
+                        name="join"
+                        label="And/Or"
+                        />
+
+
+                    </div>
+
+                    
+                    <div v-show="tableColumn && tableColumn.filterType === 'Date'" class="form-group row">
+                        <select-date-period _class="col-md-5" :id="id + '-select-date-period'" ref="select-date-period"/>
+                    </div>
+
+                    <div v-show="tableColumn && tableColumn.filterControl === 'Input' && tableColumn.filterType === 'String'"  class="form-group row">
+
+                        <radio-buttons 
+                            _class="col-md-12"
+                            :record="record"
+                            :formControl="false"
+                            column="method"
+                            :buttons="[{value:'Contains', text: 'Contains', title: 'Is found anywhere in the text'},{value:'Starts with', text: 'Starts with', title: 'Occurs at the beginning of the text'},{value:'Equals', text: 'Equals', title: 'Matches the text exactly'}]"
+                            name="method"
+                        />
+
+                    </div>
+
+                    <div v-if="tableColumn && tableColumn.filterControl === 'RadioButton'" class="form-group row">
+
+                        <radio-buttons 
+                            _class="col-md-12"
+                            :label="tableColumn.title"
+                            :record="record"
+                            :formControl="true"
+                            column="value"
+                            :buttons="tableColumn.filterOptions"
+                            name="boolean"
+                        />
+
+                    </div>
+
+                    <div v-show="tableColumn && tableColumn.filterType === 'Custom SQL Filter'" class="form-group row">
+
+                        <div class="col-md-12">
+                            
+                            <textarea 
+                                rows="4" 
+                                cols="50"
+                                v-model="record.calculatedColumn"
+                                class="form-control"
+                                readonly
+                                style="border-color: rgb(70, 130, 180);"
+                            />
+
+                        </div>
+                    </div>
+
+                    <div v-show="tableColumn && tableColumn.filterControl === 'Input' && tableColumn.filterType === 'String'" class="form-group row">
+
+                        <div class="col-md-12">
+                            
+                            <input
+                                type="text"
+                                v-model="record.value"
+                                name="value"
+                                class="form-control"
+                                style="border-color: rgb(70, 130, 180);"
+                                :class="errorValue.length ? 'is-invalid' : ''"
+                            />
+
+                        </div>
+                    </div>
+
+                    <div v-show="tableColumn && tableColumn.filterControl === 'Lookup'" class="form-group row">
+
+                        <select-matter v-show="tableColumn && tableColumn.filterTable === 'Matter'" :error="errorValue" :id="id + '-select-matter'" :ref="id + '-select-matter'" :formRef="id + '-select-matter'"/>
+
+                        <select-party v-show="tableColumn && tableColumn.filterTable === 'Party'" :error="errorValue" :id="id + '-select-party'" :ref="id + '-select-party'" :formRef="id + '-select-party'"/>
+
+                        <select-creditor v-show="tableColumn && tableColumn.filterTable === 'Creditor'" :error="errorValue" :id="id + '-select-creditor'" :ref="id + '-select-creditor'" :formRef="id + '-select-creditor'"/>
+
+                        <select-account v-show="tableColumn && tableColumn.filterTable === 'Account'" :error="errorValue" :id="id + '-select-account'" :ref="id + '-select-account'" :formRef="id + '-select-account'"/>
+
+                        <select-party-type v-show="tableColumn && tableColumn.filterTable === 'PartyType'" :error="errorValue" :id="id + '-select-party-type'" :ref="id + '-select-party-type'" :formRef="id + '-select-party-type'"/>
+
+                        <select-party-role v-show="tableColumn && tableColumn.filterTable === 'PartyRole'" :error="errorValue" :id="id + '-select-party-role'" :ref="id + '-select-party-role'" :formRef="id + '-select-party-role'"/>
+
+                        <select-matter-type v-show="tableColumn && tableColumn.filterTable === 'MatterType'" :error="errorValue" :id="id + '-select-matter-type'" :ref="id + '-select-matter-type'" :formRef="id + '-select-matter-type'"/>
+
+                        <select-cost-centre v-show="tableColumn && tableColumn.filterTable === 'CostCentre'" :error="errorValue" :id="id + '-select-cost-centre'" :ref="id + '-select-cost-centre'" :formRef="id + '-select-cost-centre'"/>
+
+                        <select-fee-sheet v-show="tableColumn && tableColumn.filterTable === 'FeeSheet'" :error="errorValue" :id="id + '-select-fee-sheet'" :ref="id + '-select-fee-sheet'" :formRef="id + '-select-fee-sheet'"/>
+
+                        <select-document-set v-show="tableColumn && tableColumn.filterTable === 'DocumentSet'" :error="errorValue" :id="id + '-select-document-set'" :ref="id + '-select-document-set'" :formRef="id + '-select-document-set'"/>
+
+                        <select-branch v-show="tableColumn && tableColumn.filterTable === 'Branch'" :error="errorValue" :id="id + '-select-branch'" :ref="id + '-select-branch'" :formRef="id + '-select-branch'"/>
+
+                        <select-party-entity v-show="tableColumn && tableColumn.filterTable === 'PartyEntity'" :error="errorValue" :id="id + '-select-party-entity'" :ref="id + '-select-party-entity'" :formRef="id + '-select-party-entity'"/>
+
+                        <select-employee v-show="tableColumn && tableColumn.filterTable === 'Employee'" :error="errorValue" :id="id + '-select-employee'" :ref="id + '-select-employee'" :formRef="id + '-select-employee'"/>
+
+                    </div>
+
+                    <div v-show="tableColumn && tableColumn.filterType === 'Date' && record.period === 'Custom'" class="form-group row mt-3">
+                        <div class="col-md-4">
+                            <label>From</label>
+                            <date-picker v-model="record.fromDate" :config="$root.datePickerIsoOptions"/>
+                            <div v-if="errorFromDate.length" v-html="errorFromDate[0]" class="invalid-feedback"></div>
+                        </div>
+                        <div class="col-md-4">
+                            <label>To</label>
+                            <date-picker v-model="record.toDate" :config="$root.datePickerIsoOptions"/>
+                            <div v-if="errorToDate.length" v-html="errorToDate[0]" class="invalid-feedback"></div>
+                        </div>
+                    </div>
+
+                    <div v-show="tableColumn && tableColumn.filterType === 'Number'" class="form-group row">
+                        <select-amount-method :_class="record.method === 'Between' ? 'col-md-4' : 'col-md-6'" :id="id + '-select-amount-method'" ref="select-amount-method"/>
+
+                        <text-input _class="col-md-4" type="number" input-class="form-input-number" 
+                        v-model="record.fromAmount" name="fromAmount" :label="record.method === 'Between' ? 'From' : '&nbsp;'" :error="errorFromAmount" />
+
+                        <text-input v-show="record.method === 'Between'" _class="col-md-4" type="number" input-class="form-input-number" 
+                        v-model="record.toAmount" name="toAmount" label="To" :error="errorToAmount" />
+
+                    </div>
+
+                    <div v-show="tableColumn && tableColumn.filterControl === 'Dropdown'" class="form-group row">
+
+                        <select-data-type-options 
+                            _class="col-md-6" 
+                            :id="id + '-select-data-type-options'" 
+                            ref="select-data-type-options"
+                        />
+                    </div>
+
+                </div>
+
+                <form-buttons :editing="editing" :readOnly="false" record="Filter" @ok-clicked="okClicked" @delete-clicked="deleteClicked" @cancel-clicked="hide"/>
+
+            </div>
+        </div>
+
+    </div>
+</template>
+
+<script>
+
+import modalTemplate from "../modals/modal-template";
+import { mapGetters } from 'vuex';
+
+export default {
+
+    mixins: [modalTemplate],
+
+    //Fetch while idle
+    //https://medium.com/webpack/link-rel-prefetch-preload-in-webpack-51a52358f84c
+
+    components: {
+        SelectParty: () => import("@pages/parties/SelectParty"),
+        SelectMatter: () => import("@pages/matters/SelectMatter"),
+        SelectBranch: () => import("@pages/matters/SelectBranch"),
+        SelectFeeSheet: () => import("@pages/feesheets/SelectFeeSheet"),
+        SelectCostCentre: () => import("@pages/matters/SelectCostCentre"),
+        SelectMatterType: () => import("@pages/matters/SelectMatterType"),
+        SelectDocumentSet: () => import("@pages/document-sets/SelectDocumentSet"),
+        SelectCreditor: () => import("@pages/creditors/SelectCreditor"),
+        SelectAccount: () => import("@pages/accounts/SelectAccount"),
+        SelectPartyType: () => import("@pages/parties/SelectPartyType"),
+        SelectPartyEntity: () => import("@pages/parties/SelectPartyEntity"),
+        SelectPartyRole: () => import("@pages/parties/SelectPartyRole"),
+        SelectEmployee: () => import("@pages/employees/SelectEmployee"),
+    },
+
+    props: {
+        id: String,
+    },
+
+    data() {
+        return {
+            tableId: null,
+            editing: false,
+            record: {},
+            columnDefs: [],
+            tableFilters: [],
+            tableColumn: null,
+            tableColumns: [],
+            errorValue: [],
+            errorFromDate: [],
+            errorToDate: [],
+            errorFromAmount: [],
+            errorToAmount: [],
+            columnDef: {},
+        }
+    },
+
+    computed: {
+
+        ...mapGetters(['currentMatter','currentParty','currentCreditor','currentAccount']),
+
+        period() {
+            return this.record.period
+        }
+    },
+
+    watch: {
+
+        tableColumn() {
+
+            this.clearErrors();
+
+            if (this.tableColumn.filterType === 'String' ) {
+
+                if ( this.addingNewRecord ) this.record.method = 'Contains';
+
+            } else if ( this.tableColumn.filterType === 'Number' ) {
+
+                this.selectAmountMethodDropDown = this.$refs['select-amount-method'];
+
+                if ( this.addingNewRecord ) this.record.method = 'Greater than';
+
+                this.selectAmountMethodDropDown.selectedMethod = this.record.method; 
+                
+                this.selectAmountMethodDropDown.loadComponent();
+
+            } else if ( this.tableColumn.filterType === 'Date' ) {
+
+                this.selectDatePeriodDropDown = this.$refs['select-date-period'];
+
+                if ( this.addingNewRecord ) this.record.period = 'This Week';
+
+                this.selectDatePeriodDropDown.selectedPeriod = this.record.period; 
+
+                if ( this.addingNewRecord ) {
+
+                    let dateRange = this.$root.getDateRange(this.selectDatePeriodDropDown.selectedPeriod);
+
+                    this.record.fromDate = dateRange.fromDate;
+                    this.record.toDate = dateRange.toDate;
+                }
+                
+                this.selectDatePeriodDropDown.loadComponent();
+
+            } else if ( this.tableColumn.filterControl === 'RadioButton' ) {
+
+                if ( this.addingNewRecord ) this.record.value = this.tableColumn.filterOptions[0].value;
+
+            } else  if (this.tableColumn.filterTable === 'Matter') {
+
+                if ( this.addingNewRecord ) this.record.value = this.currentMatter.fileRef;
+
+                if ( this.record.value ) this.selectMatter.setByFileRef(this.record.value);
+
+                this.selectMatter.callingComponent = this;
+
+            } else if (this.tableColumn.filterTable === 'Party') {
+
+                if ( this.addingNewRecord ) this.record.value = this.currentParty.name;
+
+                if ( this.record.value ) this.selectParty.setByMatterPrefix(this.record.value);
+
+                this.selectParty.callingComponent = this;
+
+            } else if (this.tableColumn.filterTable === 'Creditor') {
+
+                if ( this.addingNewRecord ) this.record.value = this.currentCreditor.name;
+
+                this.selectCreditor.callback = this;
+
+                if ( this.record.value ) this.selectCreditor.setByCode(this.record.value);
+
+            } else if (this.tableColumn.filterTable === 'Account') {
+
+                if ( this.addingNewRecord ) this.record.value = this.currentAccount.code;
+
+                this.selectAccount.callback = this;
+
+                if ( this.record.value ) this.selectAccount.setByCode(this.record.value);
+
+            } else if (this.tableColumn.filterTable === 'PartyType') {
+
+                if ( this.addingNewRecord ) this.record.value = null;
+
+                if ( this.record.value ) this.selectPartyType.record = root.partyTypes.filter(record => record.description === this.record.value)[0];
+
+            } else if (this.tableColumn.filterTable === 'MatterType') {
+
+                if ( this.addingNewRecord ) this.record.value = null;
+
+                if ( this.record.value ) this.selectMatterType.record = root.matterTypes.filter(record => record.description === this.record.value)[0];
+
+            } else if (this.tableColumn.filterTable === 'DocumentSet') {
+
+                if ( this.addingNewRecord ) this.record.value = null;
+
+                if ( this.record.value ) this.selectDocumentSet.record = root.documentSets.filter(record => record.description === this.record.value)[0];
+
+            } else if (this.tableColumn.filterTable === 'Branch') {
+
+                if ( this.addingNewRecord ) this.record.value = null;
+
+                if ( this.record.value ) this.selectBranch.record = root.branches.filter(record => record.description === this.record.value)[0];
+
+            } else if (this.tableColumn.filterTable === 'CostCentre') {
+
+                if ( this.addingNewRecord ) this.record.value = null;
+
+                if ( this.record.value ) this.selectCostCentre.record = root.costCentres.filter(record => record.description === this.record.value)[0];
+
+            } else if (this.tableColumn.filterTable === 'FeeSheet') {
+
+                if ( this.addingNewRecord ) this.record.value = null;
+
+                if ( this.record.value ) this.selectFeeSheet.record = root.feeSheets.filter(record => record.description === this.record.value)[0];
+
+            } else if (this.tableColumn.filterTable === 'PartyEntity') {
+
+                if ( this.addingNewRecord ) this.record.value = null;
+
+                if ( this.record.value ) this.selectPartyEntity.record = root.partyEntities.filter(record => record.description === this.record.value)[0];
+
+            } else if (this.tableColumn.filterTable === 'PartyRole') {
+
+                if ( this.addingNewRecord ) this.record.value = null;
+
+                if ( this.record.value ) {
+                    this.selectPartyRole.record = root.partyRoles.filter(record => record.recordid == this.record.value)[0];
+                    this.record.description = 'Parties who are ' + this.selectPartyRole.record.description + 's';
+                }
+
+            } else if (this.tableColumn.filterTable === 'Employee') {
+                
+                if ( this.addingNewRecord ) this.record.value = loggedInEmployeeName;
+
+                if ( this.record.value ) this.selectEmployee.record = root.employees.filter(record => record.name === this.record.value)[0];
+
+            } else if ( this.tableColumn.filterControl === 'Dropdown') {
+                    
+                this.selectDataTypeOptions = this.$refs['select-data-type-options'];
+
+                this.selectDataTypeOptions.options = this.tableColumn.filterOptions;
+
+                if ( this.addingNewRecord ) {
+
+                    this.selectDataTypeOptions.selectedOption = this.selectDataTypeOptions.options[0]; 
+
+                } else {
+
+                    this.selectDataTypeOptions.selectedOption = this.record.value; 
+
+                }
+                
+                this.selectDataTypeOptions.loadComponent();
+
+            }
+
+            if ( this.editing ) this.addingNewRecord = true; // Reset this after the first cycle so it primes the form if the user changes the tableColumn
+
+        },
+
+        period(newValue) {
+            
+            if ( newValue !== 'Custom' ) {
+
+                let dateRange = this.$root.getDateRange(newValue);
+
+                this.record.fromDate = dateRange.fromDate;
+                this.record.toDate = dateRange.toDate;
+
+            } else {
+
+                //this.record.fromDate = dateRange.fromDate;
+                //this.record.toDate = dateRange.toDate;
+            }
+
+        }
+    },
+
+    methods: {
+
+        openModal(editing, tableId, tableComponent,  tableRow ) {
+
+            this.clearErrors();
+            this.editing = editing;
+            this.tableId = tableId;
+            this.columnDefs = tableComponent.columnDefs;
+
+            this.tableColumns = [];
+
+            if ( tableRow && tableRow.description == 'Custom Filter') {
+
+                this.tableColumns.push({
+                    title: tableRow.description,
+                    key: tableRow.key,
+                    targets: tableRow.targets,
+                    name: tableRow.description,
+                    calculatedColumn: tableRow.calculatedColumn,
+                    filterType: 'Custom SQL Filter',
+                    filterTitle: 'Custom SQL Filter',
+                    filterControl: 'Custom SQL Filter',
+                });
+
+            } else {
+
+                this.columnDefs.forEach(columnDef => {
+
+                    if ( !columnDef.filterExclude && columnDef.name !== 'tag-row' && columnDef.name !== 'action-button' && columnDef.name !== 'toggle-child' ) {
+
+                        this.tableColumns.push({
+                            title: columnDef.title,
+                            key: toCamelCase(tableComponent.singular + columnDef.title) + 'Filter',
+                            targets: columnDef.targets,
+                            name: columnDef.filterColumnName ? columnDef.filterColumnName : columnDef.name,
+                            calculatedColumn: columnDef.calculatedColumn ? columnDef.calculatedColumn : false,
+                            filterType: columnDef.filterType ? columnDef.filterType : 'String',
+                            filterTitle: columnDef.filterTitle ? columnDef.filterTitle : columnDef.title,
+                            filterControl: columnDef.filterControl ? columnDef.filterControl : 'Input',
+                            filterOptions: columnDef.filterOptions ? columnDef.filterOptions : [],
+                            filterTable: columnDef.filterTable,
+                        });
+
+                    }                
+                });
+
+            }
+
+            if ( !editing ) {
+
+                this.addingNewRecord = true;
+
+                this.record = {
+                    fromDate: null,
+                    toDate: null,
+                    period: null,
+                    fromAmount: null,
+                    toAmount: null,
+                    value: null,
+                    description: '',
+                    method: 'Equals',
+                    join: 'or',
+                    calculatedColumn: '',
+                };
+
+                this.tableColumn = this.tableColumns[0];
+
+            } else {
+
+                this.addingNewRecord = false;
+
+                this.record = {
+                    index: tableRow.index,
+                    fromDate: tableRow.fromDate,
+                    toDate: tableRow.toDate,
+                    period: tableRow.period,
+                    fromAmount: tableRow.fromAmount,
+                    toAmount: tableRow.toAmount,
+                    value: tableRow.value,
+                    description: tableRow.description,
+                    method: tableRow.method,
+                    join: tableRow.join,
+                    calculatedColumn: tableRow.calculatedColumn,
+                };
+
+                this.tableColumn = this.tableColumns.filter(tableColumn => tableColumn.targets === tableRow.targets)[0];
+
+            }
+
+            setTimeout(() => {
+
+                if ( this.tableColumn.filterType === 'Number' ) {
+
+                    $('input[name="fromAmount"]').focus();
+
+                } else {
+
+                    $('input[name="value"]').focus();
+
+                }
+
+            });            
+
+            this.show();
+
+        },
+
+        saveFilter( refreshModal = true ) {
+
+            this.tableFilters = getTableFilter(this.tableId);
+
+            this.record.key = this.tableColumn.key;
+            this.record.targets = this.tableColumn.targets;
+            this.record.title = this.tableColumn.title;
+            this.record.name = this.tableColumn.filterColumnName ? this.tableColumn.filterColumnName : this.tableColumn.name;
+            this.record.calculatedColumn = this.tableColumn.calculatedColumn ? this.tableColumn.calculatedColumn : false;
+            this.record.filterType = this.tableColumn.filterType ? this.tableColumn.filterType : 'String';
+            this.record.filterTitle = this.tableColumn.filterTitle ? this.tableColumn.filterTitle : this.tableColumn.title;
+
+            //console.log("saveFilter this.record",this.record);
+
+
+            if (this.tableColumn.filterTable === 'PartyRole') {
+
+                this.record.value = this.selectPartyRole.record.recordid;
+                this.record.description = 'Parties who are ' + this.selectPartyRole.record.description + 's';
+            }
+
+
+
+            if ( !this.editing ) {
+
+                let idx = 0;
+                this.tableFilters.forEach(tableFilter => {
+                    tableFilter.index = idx;
+                    idx++;
+                });
+
+                this.record.index = idx;
+
+                this.tableFilters.push(this.record);
+
+            } else {
+
+                let tableFilterIndex = this.tableFilters.findIndex( filter => filter.index === this.record.index);
+
+                if ( tableFilterIndex === -1 ) {
+
+                    console.error(this.tableId,'saveFilter(): Existing filter with index (' + this.record.index + ') not found');
+                    return;
+                }
+
+                this.tableFilters[tableFilterIndex] = this.record;
+
+            }
+
+            setTableFilter(this.tableId,this.tableFilters);
+
+            if ( refreshModal ) {
+
+                this.$root.tableFilterSettings.loadTableFilters();
+
+                this.$root.tableFilterSettings.tableComponent.loadDataTable();
+            }
+        },
+
+        deleteClicked() {
+
+            this.$root.tableFilterSettings.deleteTableFilter(this.record.index);
+
+            this.close();
+        },
+
+
+
+        okClicked() {
+
+            let saveRecord = true;
+
+            if ( ( this.tableColumn.filterType === 'String' ) && !this.record.value ) {
+
+                saveRecord = false;
+                this.errorValue.push('Please enter a value');
+
+            } else if ( this.tableColumn.filterControl === 'Lookup' && !this.record.value ) {
+
+                saveRecord = false;
+
+                if ( this.tableColumn.filterTable === 'Employee') {
+
+                    this.errorValue.push('Please select an  ' + this.tableColumn.filterTable);
+
+                } else {
+
+                    this.errorValue.push('Please enter a ' + this.tableColumn.filterTable);
+                }
+
+            } else if ( this.tableColumn.filterType === 'Date' && !this.record.fromDate ) {
+
+                saveRecord = false;
+                this.errorFromDate.push('Please enter a Date');
+
+            } else if ( this.tableColumn.filterType === 'Date' && !this.record.toDate ) {
+
+                saveRecord = false;
+                this.errorToDate.push('Please enter a Date');
+
+            } else if ( this.tableColumn.filterType === 'Number' && !this.record.fromAmount ) {
+
+                this.record.fromAmount = '0';
+
+            } else if ( this.tableColumn.filterType === 'Number' && !this.record.toAmount ) {
+
+                this.record.toAmount = '0';
+
+            }
+
+
+            if ( this.tableColumn.filterType === 'Number' && this.record.method === 'Between' && parseInt(this.record.toAmount) < parseInt(this.record.fromAmount) ) {
+
+                saveRecord = false;
+                this.errorFromAmount.push('The From Amount cannot be greater than the To Amount');
+
+            }
+
+            if ( saveRecord ) {
+
+                this.saveFilter();
+
+                this.close();
+
+            }
+
+        },
+
+        clearErrors() {
+
+            this.errors = {};
+            this.errorValue = [];
+            this.errorFromDate = [];
+            this.errorToDate = [];
+            this.errorFromAmount = [];
+            this.errorToAmount = [];
+
+        },
+
+
+        matterSelected( id, fileRef ) {
+            this.record.value = fileRef;
+        },
+
+        partySelected( id, matterprefix ) {
+            this.record.value = matterprefix;
+        },
+
+        creditorSelected( id, description ) {
+            this.record.value = description;
+        },
+
+        accountSelected( id, description  ) {
+            this.record.value = description;
+        },
+
+        partyTypeSelected( id, description ) {
+            this.record.value = description;
+        },
+
+        partyRoleSelected( id, description ) {
+            this.record.value = description;
+        },
+
+        matterTypeSelected( selectedRecord ) {
+            this.record.value = selectedRecord.description;
+        },
+
+        documentSetSelected( selectedRecord ) {
+            this.record.value = selectedRecord.description;
+        },
+
+        branchSelected( id, description ) {
+            this.record.value = description;
+        },
+
+        feeSheetSelected( id, description ) {
+            this.record.value = description;
+        },
+
+        costCentreSelected( id, description ) {
+            this.record.value = description;
+        },
+
+        partyEntitySelected( id, code ) {
+            this.record.value = code;
+        },
+
+        partyRoleSelected( id, code ) {
+            this.record.value = code;
+        },
+
+        employeeSelected( id, name ) {
+            this.record.value = name;
+        },
+
+        pageTitle() {
+
+            return this.editing ? 'Filter will be Changed' : 'Filter will be Added';
+
+        },
+
+    }   
+}  
+</script>

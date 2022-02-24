@@ -1,0 +1,185 @@
+https://attorneystechnology.com/wp-content/uploads/2013/03/Sample-Small-Law-Firm-Chart-of-Accounts.pdf
+
+Operating Bank
+Trust Account Bank
+Accounts Receivable Accounts Receivable
+Advanced Client Costs Other Current Asset
+Advanced Client Costs:Court Costs Other Current Asset
+Advanced Client Costs:Filing Fees Other Current Asset
+Undeposited Funds Other Current Asset
+Accumulated Depreciation Fixed Asset
+Furniture and Equipment Fixed Asset
+Client Trust Liability Other Current Liability
+Client Trust Liability:Firm Funds Other Current Liability
+Client Trust Liability:IOLTA Interest Other Current Liability
+Loan ‐ Big City Bank Other Current Liability
+Payroll Liabilities Other Current Liability
+Capital Stock Equity
+Opening Balance Equity Equity
+Retained Earnings Equity
+Shareholder Distributions Equity
+Legal Fee Income Income
+Reimbursed Client Expenses Income Income
+Accounting Fees Expense
+Advertising and Promotion Expense
+Automobile Expense Expense
+Bank Service Charges Expense
+Client Cost Expense
+Computer and Internet Expenses Expense
+Continuing Legal Education Expense
+Depreciation Expense Expense
+Dues and Subscriptions Expense
+Insurance Expense Expense
+Insurance Expense:Disability Expense
+Insurance Expense:Professional Liability Expense
+Interest Expense Expense
+Legal Library Expense
+Meals and Entertainment Expense
+Office Supplies Expense
+Payroll Expenses Expense
+Postage and Delivery Expense
+Professional Fees Expense
+Rent Expense Expense
+Repairs and Maintenance Expense
+Research Services Expense
+Telephone Expense Expense
+Travel Expense Expense
+Utilities Expense
+Ask My Accountant Other Expense
+Sample Law Firm Chart of Accounts Grouped – With Account Numbers
+Account Type
+10100 • Operating Bank
+10900 • Client Trust Account Bank
+12300 • Advanced Client Costs Other Current Asset
+12300 • Advanced Client Costs:12310 • Court Costs Other Current Asset
+12300 • Advanced Client Costs:12320 • Expert Witness Fees Other Current Asset
+12300 • Advanced Client Costs:12330 • Filing Fees Other Current Asset
+15000 • Furniture and Equipment Fixed Asset
+17000 • Accumulated Depreciation Fixed Asset
+18700 • Security Deposits Asset Other Asset
+21000 • Client Trust Liability Other Current Liability
+21000 • Client Trust Liability: Client A Other Current Liability
+24000 • Payroll Liabilities Other Current Liability
+30000 • Opening Balance Equity Equity
+30700 • Owner Draw Equity
+32000 • Owner Equity Equity
+45400 • Legal Fee Income Income
+45500 • Reimbursed Client Expenses Income Income
+61000 • Operating Expenses Expense
+61000 • Operating Expenses:61100 • Advertising and Promotion Expense
+61000 • Operating Expenses:61200 • Automobile Expense Expense
+61000 • Operating Expenses:61400 • Bank Service Charges Expense
+61000 • Operating Expenses:61500 • Depreciation Expense Expense
+61000 • Operating Expenses:61600 • Interest Expense Expense
+61000 • Operating Expenses:61700 • Postage and Delivery Expense
+61000 • Operating Expenses:61900 • Taxes & Licenses Expense
+63000 • Office Expense Expense
+63000 • Office Expense:63100 • Computer and Internet Expenses Expense
+63000 • Office Expense:63200 • Equipment Rental/Lease Expense
+63000 • Office Expense:63300 • Maintenance & Repair‐Equipment Expense
+63000 • Office Expense:63400 • Office Supplies Expense
+63000 • Office Expense:63500 • Rent Expense Expense
+63000 • Office Expense:63600 • Stationery & Printing Expense
+63000 • Office Expense:63700 • Telephone Expense Expense
+63000 • Office Expense:63800 • Utilities Expense
+64000 • Insurance Expense Expense
+64000 • Insurance Expense:64100 • General Business & Liability Expense
+64000 • Insurance Expense:64200 • Key‐Man Insurance Expense
+64000 • Insurance Expense:64300 • Professional Liability Expense
+64000 • Insurance Expense:64500 • Worker’s Comp Insurance Expense
+64000 • Insurance Expense:64600 • Other Expense
+65000 • Payroll Expenses Expense
+65000 • Payroll Expenses:65100 • Lawyer Salary Expense
+65000 • Payroll Expenses:65200 • Paralegals & Legal Secretaries Expense
+65000 • Payroll Expenses:65300 • Administrative Staff Wages Expense
+65000 • Payroll Expenses:65400 • Payroll Taxes Expense
+66000 • Employee Benefits Expense
+66000 • Employee Benefits:66100 • Employee Disability Insurance Expense
+66000 • Employee Benefits:66200 • Employee Health Insurance Expense
+66000 • Employee Benefits:66300 • Officer Disability Insurance Expense
+66000 • Employee Benefits:66400 • Officer Health Insurance Expense
+67000 • Professional Expenses Expense
+67000 • Professional Expenses:67100 • Continuing Legal Education Expense
+67000 • Professional Expenses:67200 • Dues and Subscriptions Expense
+67000 • Professional Expenses:67300 • Library & Reference Materials Expense
+67000 • Professional Expenses:67400 • Research Services Expense
+68000 • Other Expenses Expense
+68000 • Other Expenses:68100 • Contracted Services Expense
+68000 • Other Expenses:68200 • Meals and Entertainment Expense
+68000 • Other Expenses:68400 • Travel Expense Expense
+80000 • Ask My Accountant Other Expense
+
+
+======================================================================
+https://www.gabar.org/committeesprogramssections/programs/lpm/upload/mca.pdf
+Standard Chart of Accounts for Smaller Law Offices
+Assets
+100 Cash in Bank
+109 Petty Cash
+120 Client Advances-Unbilled-CTRL
+130 Client Advances-Billed-CTRL
+140 Other Receivables, Deposits, etc.
+150 Furniture, Fixtures & Equipment
+160 Leasehold Improvements
+170 Real Property
+180 Reserve: Depreciation &
+Amortization
+190 Other Assets
+198 Client Billings-CTRL
+199 Lawyer Billings-CTRL
+Liabilities
+200 Accounts Payable
+210 Federal Income Tax Withheld
+211 State Income Tax Withheld
+212 Employee FICA Tax Withheld
+220 Employee Medical/Retirement
+Withheld
+Segregated Liabilities
+298 Client Trust Funds-CTRL
+299 Liability: Client Trust Funds-CTRL
+Owners Equity
+300 Equity Account: Owner #1 (et al.)
+301 Drawing Account: Owner #1 (et al.)
+Profit/Loss Accounts
+400 Fees: Income from Clients-CTRL
+460 Other Income/Receipts
+480 Costs: Income-Producing Property
+Compensation Costs
+500 Secretarial
+501 Word Processing
+502 Paralegals/Clerks
+503 Lawyers
+504 Other Non-Owner Employees
+510 FICA & Unemployment Taxes
+514 Employee Retirement Benefits
+518 Employee Training & Education
+519 Other Employee Costs
+Occupancy
+520 Office Rent
+521 Parking
+523 Real Estate Taxes & Insurance
+525 Utilities Other Than Telephone
+527 Cleaning/Housekeeping -- Office
+530 Depreciation/Amortization -- Office
+531 Maintenance & Repairs -- Office
+Office Operations
+540 Supplies, Stationery & Printing
+541 Postage & Delivery
+542 Library & Subscriptions
+543 Telephone/Communications
+545 Photocopy Expense
+546 Computer Equipment
+548 Equipment Rental
+550 Depreciation: Furniture, Fixtures &
+Equipment
+551 Other Maintenance Repairs
+Professional/Promotion
+570 Travel & Related Expense
+571 Professional Dues & CLE
+572 Recruiting: Professional Staff
+573 Entertainment
+574 Promotion & Advertising
+Other Costs/Expenses
+580 Insurance: Professional/Other
+581 Other Taxes and Similar Costs
+582 Client Advances Written Off-CTRL

@@ -1,0 +1,131 @@
+<template>
+<div>
+
+    <div style="display: flex; align-items: center;" class="mb-2">
+
+        <column-search/>
+        <div style="display: flex; flex: 1; justify-content: flex-end; align-items: center;">
+            <select-fee-sheet
+                :id="tableId + '-select-feesheet'"
+                _class="mr-3 w-50"
+                title="Display Fee Codes for this Fee Sheet"
+                :ref="tableId + '-select-feesheet'" 
+                :form-ref="tableId + '-select-feesheet'"
+                :placeholder="'Select a Fee Sheet'"
+                :clearIcon="true"
+                :label="''"
+            />
+
+            <div>
+                <table-options/>
+                <new-record-button v-if="newRecordButton" type="button" :title="'Create a new ' + singular" text="Add"/>
+            </div>
+
+        </div>
+
+    </div>
+
+    <table :id="tableId" class="table bordered" style="width:100%"></table>
+
+</div>
+</template>
+
+<script>
+
+import tableTemplate from "@components/tables/table-template";
+
+export default {
+
+    mixins: [tableTemplate],
+
+    components: {
+        SelectFeeSheet: () => import("@pages/feesheets/SelectFeeSheet"),
+    },
+
+    created() {
+        this.url = "/feecodes/get";
+        this.route = "feecodes";
+        this.title = 'Fee Codes';
+        this.plural = 'Fee Codes';
+        this.singular = 'Fee Code';
+    },
+
+    methods: {
+
+        clearSelectFeeSheet() {
+
+            console.log('clearSelectFeeSheet');
+
+            this.parentId = null;
+            this.table.order( this.initialOrder ).ajax.reload();
+
+            this.selectFeeSheet.record = {};
+            this.selectFeeSheet.displayClearIcon = false;
+
+
+        },
+
+        feeSheetSelected(id, description) {
+            
+            this.selectFeeSheet.displayClearIcon = true;
+
+            this.parentId = id;
+            this.table.order( this.initialOrder ).ajax.reload();
+
+            this.selectFeeSheet.record = {
+                id: id,
+                description: htmlDecode(description),
+            };
+
+        },
+
+
+        defineTableColDefs() {
+
+            const targets = this.selectTableFlag ? 2 : 1;
+
+            let tableColumnDefs = [
+                {
+                    title: "Code",
+                    name: "fee_codes.code",
+                    width: '20%',
+                    data: null,
+                    targets: targets,
+                    render: (data) => { 
+                        if (this.selectTableFlag) {
+                            return lookupWrapper('Fee Code', data.id, htmlDecode(data.code));
+                        } else {
+                            return htmlDecode(data.code);
+                        }
+                    }
+                },
+                {
+                    title: "Fee Sheet",
+                    name: "fee_codes.feeSheetDescription",
+                    data: null,
+                    targets: targets + 1,
+                    render: function (data) {
+                        return htmlDecode(data.feeSheetDescription);
+                    }
+                },
+                {
+                    title: "Description",
+                    name: "fee_codes.description",
+                    data: null,
+                    targets: targets + 2,
+                    render: function (data) {
+                        return htmlDecode(data.description);
+                    }
+                },
+
+            ];
+        
+            return tableColumnDefs;
+        }
+
+    },
+
+
+
+}  
+</script>

@@ -1,0 +1,410 @@
+<template>
+<section>
+
+    <div class="modal" :id="id">
+
+        <div class="modal-dialog modal-dialog-centered modal-lgr">
+            <div class="modal-content red-border">
+
+                <div class="modal-header red-bg">
+                    <h2 class="modal-title"><i class="fa fa-envelope-o mr-2"></i>Email</h2>
+                    <i title="Close this window" class="cp top-right fa fa-times-circle fa-2x text-white" data-dismiss="modal"></i>
+                </div>
+
+                <div class="modal-body p-3" style="min-height: 35vh; max-height: 75vh; overflow-y: auto;">
+
+                    <div class="d-flex justify-content-between mb-2">
+
+                        <div class="w-25">
+                            <select-email-folder
+                                :id="id + '-select-email-folder'"
+                                placeholder=""
+                                :options="folders" 
+                                v-model="selectedFolder"
+                                :tabindex="-1"
+                                :allow-empty="false"
+                                :show-labels="false"
+                            >
+                            <template slot="noResult">Folder not found</template>
+                            </select-email-folder>
+
+                        </div>
+
+                        <div>
+                            <input 
+                                class="form-control search-input"
+                                :id="id + '-search-email-folder'"
+                                type="search"
+                                placeholder="Search..."
+                            >
+                        </div>
+                    </div>
+
+                    <div v-show="numberOfPages > 1" class="mb-1">
+
+                        <span v-show="currentPage > 0" 
+                        title="Previous page"
+                        @click="previousPage">
+                            <i class="fa fa-toggle-left fa-lg cp mr-1"></i>
+                        </span>
+
+                        <span>Showing {{pageStart}} - {{pageEnd}} of {{numberOfEmails}}</span>
+
+                        <span v-show="currentPage + 1 < numberOfPages" 
+                        title="Next page"
+                        @click="nextPage">
+                            <i class="fa fa-toggle-right fa-lg cp ml-1"></i>
+                        </span>
+
+                    </div>
+
+                    <table :id="id + '-table'" class="table bordered" style="table-layout: auto; width:100%"></table>
+
+
+
+                </div>
+
+                <div class="modal-footer justify-content-between">
+                    <div>
+                    </div>
+                    <div>
+                        <button class="btn btn-danger form-button shadowed" type="button" data-dismiss="modal" title="Close this window"><i class="fa fa-times-circle fa-lg mr-2"></i>Close</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</section>
+</template>
+
+<script>
+
+import modalTemplate from "../modals/modal-template";
+import Multiselect from 'vue-multiselect'
+
+export default {
+
+    mixins: [modalTemplate],
+
+    components: {
+        SelectEmailFolder: Multiselect,
+    },    
+
+    props: {
+        id: String,
+    },
+
+    data() {
+        return {
+            tableRows: [],
+            params: null,
+            folders: ['INBOX'],
+            newFolderFlag: true,
+            selectedFolder: 'INBOX',
+            folderMailIds: [],
+            pages: [],
+            numberOfEmails: 0,
+            numberOfPages: 0,
+            currentPage: 0,
+            pageSize: 50,
+
+        }
+    },
+
+    computed: {
+        pageStart() {
+            return this.currentPage ? 
+            (this.currentPage * this.pageSize) + 1
+            : 1;
+        },
+
+        pageEnd() {
+
+            return this.pageStart + this.pageSize > this.numberOfEmails ?
+            this.numberOfEmails :
+            this.pageStart + this.pageSize - 1;
+        }
+    },
+
+    watch: {
+
+        selectedFolder(newValue) {
+
+            this.resetPaging();
+
+            this.getEmailMessages(newValue)
+
+            .then( (data) => {
+
+                this.newFolderFlag = false;
+
+                this.table.destroy();
+
+                this.loadDataTable( data );
+
+            });
+
+
+
+        },
+    },
+
+    methods: {
+
+        resetPaging() {
+
+            this.newFolderFlag = true;
+            this.folderMailIds = [];
+            this.pages = [];
+            this.numberOfEmails = 0;
+            this.numberOfPages = 0;
+            this.currentPage = 0;
+            this.pageSize = 50;
+
+        },
+
+        async openModal(emails) {
+
+            this.resetPaging();
+
+            this.folders = ['INBOX'];
+            this.selectedFolder = 'INBOX';
+
+            this.show();
+
+            this.loadDataTable( emails );
+
+            //https://stackoverflow.com/questions/5990386/datatables-search-box-outside-datatable
+            $('#' + this.id + '-search-email-folder').keyup(function(){
+                _this.table.search($(this).val()).draw() ;
+            })            
+            
+            await this.getFolders()
+
+            .then( ( folders ) => {
+
+                this.folders = folders
+
+            });
+
+        },
+
+        loadDataTable( emails) {
+
+            let _this = this;
+
+            //Calculate the table Height manually
+            // let $thisForm = $('#' + this.id);
+            // let $formBody = $thisForm.find('.form-tab-body');
+            // let scrollY = (Math.round( $formBody.outerHeight() ) - 20)  + 'px';
+            
+
+            this.table = $('#' + this.id + '-table').DataTable({
+                destroy: true,
+                dom: "t",
+                data: emails,
+                serverSide: false,
+                paging: false,
+                select: false,
+                scrollX: true,
+                responsive: false,
+                scrollY: '50vh',
+                scroller: false,
+                scrollCollapse: false,
+                rowId: "uid",
+                ordering: true,
+                order: [[1, "desc"]],
+                language: {emptyTable: "No Emails found" },                
+                columnDefs: [
+                    {
+                        title: "Action",
+                        data: null,
+                        class: "text-center",
+                        width: "20%",
+                        orderable: false,
+                        targets: 0,
+                        render: function (data) {
+                                return '<span class="badge badge-success action-button-badge" onclick="componentFunction(\'selectRemoteEmails\',\'viewEmail\',' + data.uid + ')"  title ="View this email message">View</span>';
+                        }
+                    },
+                    {
+                        title: "Date",
+                        data: null,
+                        width: "20%",
+                        targets: 1,
+                        render: function (data) {
+                            return moment(data.date).format('YYYY-MM-DD HH:mm:ss');
+                        }
+                    },
+                    {
+                        title: "From",
+                        data: null,
+                        width: "20%",
+                        targets: 2,
+                        render: function (data) {
+                            return data.from;
+                        }
+                    },
+                    {
+                        title: "To",
+                        data: null,
+                        width: "20%",
+                        targets: 3,
+                        render: function (data) {
+                            return data.to;
+                        }
+                    },
+                    {
+                        title: "Subject",
+                        data: null,
+                        width: "20%",
+                        targets: 4,
+                        render: function (data) {
+                            return data.subject ? data.subject : '';
+                        }
+                    },
+                ]
+            });
+
+        },
+
+
+        async getEmailMessages( folder = 'INBOX') {
+
+            this.selectedFolder = folder;
+
+            return new Promise(async (resolve, reject) => {
+
+                await this.$root.emailModal.checkSmtpDetails()
+
+                .then( ( smtpDetails) => {
+
+                    let notifyMessage = 'Folder: ' + this.selectedFolder;
+
+                    root.$snotify.simple(notifyMessage, 'Fetching Email', { timeout: 0, icon: 'img/cogs.gif' });
+
+                    this.params = {
+                        incomingServer: smtpDetails.incomingServer,
+                        incomingPort: smtpDetails.incomingPort,
+                        incomingEncryption: smtpDetails.incomingEncryption,
+                        userName: smtpDetails.smtpUserName,
+                        password: smtpDetails.smtpPassword,
+                        folder: folder,
+                        mailIds: this.folderMailIds,
+                        currentPage: this.currentPage,
+                        pageSize: this.pageSize,
+                    };
+
+                    axios.post('/mail/getMessages',this.params)
+
+                    .then(response => {
+
+                        root.$snotify.clear();
+
+                        if (response.data.error) {
+
+                            showError('Email Server Error',response.data.error);
+
+                            reject();
+
+                        } else {
+
+                            if ( this.newFolderFlag ) {
+
+                                this.newFolderFlag = false;
+
+                                this.folderMailIds = response.data.folderMailIds;
+
+                                this.numberOfEmails = this.folderMailIds.length;
+
+                                if ( this.numberOfEmails ) {
+
+                                    this.numberOfPages = Math.ceil(this.numberOfEmails/this.pageSize);
+
+                                } else {
+
+                                    this.numberOfPages = 0
+
+                                }
+
+                            }
+
+                            console.log('numberOfEmails',this.numberOfEmails);
+                            console.log('numberOfPages',this.numberOfPages);
+
+                            resolve(response.data.emails);
+
+                        }
+
+
+                    }).catch(error => { reject(); showError('Error Reading Email', error); });    
+
+                }).catch(error => { reject(); showError('Error Getting SMTP details', error); });    
+
+            });
+
+        },
+
+
+        previousPage() {
+            this.currentPage--;
+        },
+
+        nextPage() {
+            this.currentPage++;
+        },
+
+        async viewEmail(id) {
+
+            root.$snotify.simple('Retrieving message...', 'View email', { timeout: 0, icon: 'img/cogs.gif' });
+
+            axios.post('/mail/getMessage', {...this.params, id: id, folder: this.selectedFolder})
+
+            .then(response => {
+
+                root.$snotify.clear();
+
+                if (response.data.error) {
+
+                    showError('Email Server Error',response.data.error);
+
+                } else {
+                    
+                    console.log('getMessage response.data',response.data);
+                    showHelp(response.data.subject,response.data.body);
+
+
+                }
+
+            });
+
+        },
+
+        getFolders() {
+
+            return new Promise(async (resolve, reject) => {
+
+                let response = await axios.post('/mail/getFolders',this.params)
+
+                if (response.data.error) {
+
+                    showError('Email Server Error','<p>An error was encountered getting the Mailbox folders.</p><p>' + response.data.error + '</p>');
+                    reject();
+
+                } else {
+
+                    resolve(response.data.folders);
+
+                }
+
+            });
+
+        },
+
+
+    }
+
+}  
+</script>

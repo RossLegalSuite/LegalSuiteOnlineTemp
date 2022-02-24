@@ -1,0 +1,273 @@
+
+    // ***************************************
+    // Document protection (See: https://github.com/PHPOffice/PHPWord/blob/develop/docs/general.rst)
+    // The document (or parts of it) can be password protected.
+    // ***************************************
+
+    $documentProtection = $phpWord->getSettings()->getDocumentProtection();
+    $documentProtection->setEditing(DocProtect::READ_ONLY);
+    $documentProtection->setPassword('myPassword');
+
+
+    // ***************************************
+    // Document information
+    // You can set the document information such as title, creator, and company name. Use the following functions:
+    // ***************************************
+
+    $properties = $phpWord->getDocInfo();
+    $properties->setCreator('My name');
+    $properties->setCompany('My factory');
+    $properties->setTitle('My title');
+    $properties->setDescription('My description');
+    $properties->setCategory('My category');
+    $properties->setLastModifiedBy('My name');
+    $properties->setCreated(mktime(0, 0, 0, 3, 12, 2014));
+    $properties->setModified(mktime(0, 0, 0, 3, 14, 2014));
+    $properties->setSubject('My subject');
+    $properties->setKeywords('my, key, word');
+
+    // ***************************************
+    //Download the produced file automatically
+    // ***************************************
+    //Use php://output as the filename.
+
+    $phpWord = new \PhpOffice\PhpWord\PhpWord();
+    $section = $phpWord->createSection();
+    $section->addText('Hello World!');
+    $file = 'HelloWorld.docx';
+    header("Content-Description: File Transfer");
+    header('Content-Disposition: attachment; filename="' . $file . '"');
+    header('Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+    header('Content-Transfer-Encoding: binary');
+    header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
+    header('Expires: 0');
+    $xmlWriter = \PhpOffice\PhpWord\IOFactory::createWriter($phpWord, 'Word2007');
+    $xmlWriter->save("php://output");
+
+
+    // ***************************************
+    // Using LibreOffice to convert to PDF
+    // ***************************************
+
+    //Presuming LibreOffice installed in the www directory - but maybe better to install it in the document root
+
+    Testing from php artisan tinker:
+    chdir('../program');
+    $myCommand = "soffice --convert-to pdf "..\Ettorney\public\uploads\acme\merged\Letter (JOR10003).docx" --outdir "..\Ettorney\public\uploads\acme\merged" --headless";
+    exec ($myCommand);
+
+    Testing from shell
+   
+
+    c:\laragon\www\program>soffice --convert-to pdf "..\Ettorney\public\uploads\acme\merged\Letter (JOR10003).docx" --outdir "..\Ettorney\public\uploads\acme\merged" --headless
+
+
+    //first copy the file to the magic place where we can convert it to a pdf on the fly
+
+    copy($_POST["filename"], "../LibreOffice/cde-package/cde-root/home/robert/Desktop/".$_POST["filename"]);
+
+    //change to that directory
+    chdir('../LibreOffice/cde-package/cde-root/home/robert');
+    //the magic command that does the conversion
+    $myCommand = "./libreoffice.cde --headless -convert-to pdf Desktop/".$_POST["filename"]." -outdir Desktop/";
+    exec ($myCommand);
+
+    //copy the file back
+    copy("Desktop/".str_replace(".docx", ".pdf", $_POST["filename"]), "../../../../../documents/".str_replace(".docx", ".pdf", $_POST["filename"]));
+
+    //delete all the files out of the magic place where we can convert it to a pdf on the fly
+    $files1 = scandir('Desktop');
+    //my files that I generated all happened to start with a number.
+    $pattern = '/^[0-9]/';
+    foreach ($files1 as $value)
+    {
+        preg_match($pattern, $value, $matches);
+        if(count($matches) > 0)
+        {
+            unlink("Desktop/".$value);
+        }
+    }
+    //changing the header to the location of the file makes it work well on androids
+    header( 'Location: '.str_replace(".docx", ".pdf", $_POST["filename"]) );
+
+    // ***************************************
+    // Save as PDF
+    // ***************************************
+
+
+	$phpWord = new \PhpOffice\PhpWord\PhpWord();
+	\PhpOffice\PhpWord\Settings::setPdfRendererPath('vendor/dompdf/dompdf');
+	\PhpOffice\PhpWord\Settings::setPdfRendererName('DomPDF');
+	
+	$document = $phpWord->loadTemplate($getDoc);
+	$document->saveAs($temDoc);
+	$phpWord = \PhpOffice\PhpWord\IOFactory::load($temDoc);
+	$xmlWriter = \PhpOffice\PhpWord\IOFactory::createWriter($phpWord,'PDF');
+	$xmlWriter->save($newPdf);  // Save to PDF
+	unlink($temDoc);
+
+
+
+
+
+
+    // ***************************************
+    // USE Word to Save as PDF
+    // https://github.com/PHPOffice/PHPWord/issues/311
+    // ***************************************
+
+
+    Really out of the box thinking is just to let MS Word open the file and save it as a PDF.
+    You'll need to install MS Word on your server, 
+    enable the COM extension in your php.ini (extension=php_com_dotnet.dll), 
+    and make sure the user that runs the Apache server has permissions to read / write in the folder.
+
+    Hope this helps someone:
+
+    $word = new COM("word.application") or die("Unable to instantiate Word");
+    $word->Visible = FALSE;
+
+    // Open file
+    $readOnly = true;
+    $wdOpenFormatAuto = 0;
+    $msoEncodingAutoDetect=50001;
+    $word->Documents->Open( $sourcePath, false, $readOnly, false, "", "", true,"", "", $wdOpenFormatAuto, $msoEncodingAutoDetect);
+
+    // Save as PDF
+    $XlFixedFormatTypePDF = 17;
+    $word->ActiveDocument->ExportAsFixedFormat($destinationPath, $XlFixedFormatTypePDF, false, 0, 0, 0, 0, 7, true, true, 2, true, true, true);
+
+
+
+    // ***************************************
+    // Save as HTML
+    // ***************************************
+
+    public function saveAsHtml(Request $request)
+
+    {
+        $this->returnData = new \stdClass();
+        $this->returnData->error = '';
+
+        $this->returnData->sourcePath = strtolower( session('companyCode') . '/' . $request->sourceFolder);
+        $this->returnData->destinationPath = strtolower( session('companyCode') . '/' . $request->destinationFolder);
+
+        $source = 'uploads/' .  $this->returnData->sourcePath . '/' . $request->sourceFileName;
+        $destination = 'uploads/' .  $this->returnData->destinationPath . '/' . $request->destinationFileName;
+
+        $phpWord = \PhpOffice\PhpWord\IOFactory::load($source);
+
+        $htmlWriter = new \PhpOffice\PhpWord\Writer\HTML($phpWord);
+
+        $htmlWriter->save($destination);
+
+        return json_encode($this->returnData);
+
+    }
+    //****************************************************************
+    Usage in JS:
+        axios.post('/word/saveAsHtml',{
+            sourceFileName: this.record.fileName,
+            sourceFolder: 'documents',
+            destinationFileName: this.record.fileName.split('.')[0] + '.html',
+            destinationFolder: 'merged',
+        })
+
+        .then(response => {
+
+            if ( response.data.error ) {
+
+                showError('Template Error',response.data.error);
+
+            } else {
+
+                console.log('Saved as Html', this.record.fileName.split('.')[0] + '.html');
+            }
+        });
+    //****************************************************************
+
+
+
+    public function create(Request $request)
+    {
+
+        $returnData = new \stdClass();
+
+        $returnData->path = strtolower( session('companyCode') . '/' . $request->folder);
+
+        $destination = 'uploads/' .  $returnData->path . '/' . $request->fileName;
+
+        $returnData->url = asset( $destination );
+
+        $phpWord = new \PhpOffice\PhpWord\PhpWord();
+
+        $phpWord->getCompatibility()->setOoxmlVersion(15);
+
+        $section = $phpWord->addSection();
+        $text = $section->addText('Test document',array('name'=>'Arial','size' => 20,'bold' => true));
+        $text = $section->addText('Test paragraph');
+
+        $objWriter = \PhpOffice\PhpWord\IOFactory::createWriter($phpWord, 'Word2007');
+        $objWriter->save($destination);                
+        
+
+        return json_encode($returnData);
+
+    }
+
+
+
+    //You can do this to assign an array (without pushing)
+    //$results[] = preg_replace('/{{(.*?)\}/', '{{\\1#' . $i . '}', $string);
+
+
+    // Useful function (which works well) but not needed here
+    // private function is__writable($path) {
+
+        
+    //     if (file_exists($path)) {
+    //         if (!($f = @fopen($path, 'r+')))  return false;
+    //         fclose($f);
+    //         return true;
+    //     }
+        
+    //     if (!($f = @fopen($path, 'w'))) return false;
+
+    //     fclose($f);
+
+    //     unlink($path);
+
+    //     return true;
+
+    // }
+
+
+    //**** USE IT LIKE THIS  */
+    // $fileName = $request->fileName;
+
+    // $counter = 1;
+
+    // while ( !$this->is__writable($returnData->path . '/' . $fileName) ) { 
+
+    //     $path_parts = pathinfo($request->fileName);
+
+    //     $fileName = $path_parts['filename'] . '(' . $counter . ').' . $path_parts['extension']; 
+
+    //     logger('NEW fileName',[$fileName]);
+
+    //     $counter++;
+    
+    // }
+
+    // $returnData->fileName = $fileName;
+
+
+        From WordController.php
+        //Don't need this in production because the user can never open the file on the Server
+        // if ( !Utils::isWritable($saveAs) ) {
+
+        //     $this->returnData->error = $request->destinationFileName . ' is being used by another program';
+
+        //     return json_encode($this->returnData);            
+
+        // }

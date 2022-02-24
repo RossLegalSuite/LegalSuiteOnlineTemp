@@ -1,0 +1,356 @@
+<template>
+<span>
+
+
+    <b-dropdown :id="$parent.tableId + '-dropdown-menu'" size="sm" right variant="danger" class="mr-2">
+
+        <template v-slot:button-content>
+            <span title="Filter the table to display certain records">
+                <i class="fa fa-filter mr-2" ></i>Filter
+            </span>
+        </template>
+
+        <div class="text-center mb-2" style="font-size:larger">
+            <i class="fa fa-filter mr-2"></i>Filter Records
+        </div>
+
+        <b-dropdown-form>
+
+            <div class="px-3 py-3 mt-1" style="min-width: 12rem; background: rgba(0, 0, 0, 0.09); border: 1px solid; border-radius: 5px; margin-left: -10px; margin-right: -10px;">
+
+                <span v-if="myRecordsFilterFlag" :title="'Display my ' + this.source">
+
+                <b-form-checkbox
+                    class="mt-1 mb-3"
+                    v-model="myRecordsSelected"
+                    value="1"
+                    unchecked-value="0"
+                    @change="myRecordsChanged"
+                >
+                My {{source}}
+                </b-form-checkbox>
+                </span>
+
+                <div v-if="periodFilterFlag" class="text-primary font-weight-bold mb-1">{{periodFilterLabel}}</div>
+
+                <b-form-select
+                    v-if="periodFilterFlag"
+                    :title="'Filter by ' + periodFilterLabel"
+                    class="text-primary d-block mb-3"
+                    size="sm"
+                    v-model="periodSelected"
+                    :options="['All','Today','This Week','This Month','This Year','Last Week','Last Month','Last Year']"
+                    @change="periodSelectedChanged"
+                />
+
+                <div v-if="customSelectFilterFlag" v-html="customSelectFilter.label" class="text-primary font-weight-bold mb-1"/>
+
+                <b-form-select
+                    v-if="customSelectFilterFlag"
+                    :title="customSelectFilter.title"
+                    class="text-primary d-block mb-3"
+                    size="sm"
+                    v-model="customSelected"
+                    :options="customSelectFilter.options"
+                    @change="customSelectChanged"
+                />
+
+                <div v-if="custom1SelectFilterFlag" v-html="custom1SelectFilter.label" class="text-primary font-weight-bold mb-1"/>
+
+                <b-form-select
+                    v-if="custom1SelectFilterFlag"
+                    :title="custom1SelectFilter.title"
+                    class="text-primary d-block mb-3"
+                    size="sm"
+                    v-model="custom1Selected"
+                    :options="custom1SelectFilter.options"
+                    @change="custom1SelectChanged"
+                />
+
+                <div v-if="customRadioButtonFilterFlag" v-html="customRadioButtonFilter.label" class="text-primary font-weight-bold mt-3 mb-1"/>
+
+                <b-form-radio-group v-model="customRadioButtonValue" :title="customRadioButtonFilter.title" :name="$parent.tableId + '-custom-radiobutton'" @change="customRadioButtonValueChanged">
+                    <b-form-radio v-for="customRadioButtonOption in customRadioButtonFilter.options" :value="customRadioButtonOption.value" :key="customRadioButtonOption.value">
+                        {{ customRadioButtonOption.label }}
+                    </b-form-radio>
+                </b-form-radio-group>
+
+                <filter-balances v-if="balanceFilterFlag" :parent="this" :columnName="balanceFilterColumnName" :quickFilterKey="balanceFilterKey"/>
+
+            </div>
+
+        </b-dropdown-form>
+
+        <div class="mt-3 mb-2 px-3 d-flex justify-content-between">
+
+            <div>
+                <button type="button" class="btn btn-primary btn-sm" 
+                    title="Apply additional filters"
+                    @click="loadAdvancedFilters">
+                    <i class="fa fa-plus-circle mr-2"></i>More Filters
+                </button>
+            </div>
+
+            <div>
+                <button type="button" class="btn btn-danger btn-sm" 
+                    title="Close filters"
+                    @click="closeDropdown">
+                    <i class="fa fa-times-circle mr-2"></i>Close
+                </button>
+            </div>
+
+
+        </div>
+
+    </b-dropdown>
+
+</span>
+</template>
+
+<script>
+
+import filterBalances from "@components/filters/custom/FilterBalances";
+
+export default {
+
+    props: {
+        source: {
+            type: String,
+            default: 'Not specified'
+        },
+        myRecordsColumnName: {
+            type: String,
+            default: 'employees.name'
+        },
+        myRecordsFilterFlag: {
+            type: Boolean,
+            default: false
+        },
+        periodFilterFlag: {
+            type: Boolean,
+            default: false
+        },
+        balanceFilterFlag: {
+            type: Boolean,
+            default: false
+        },
+        balanceFilterColumnName: {
+            type: String,
+            default: 'balance'
+        },
+        balanceFilterKey: {
+            type: String,
+            default: 'balanceFilterKeyNotSpecified'
+        },
+        periodFilterLabel: {
+            type: String,
+            default: 'Date'
+        },
+        periodColumnName: {
+            type: String,
+            default: 'date'
+        },
+        customSelectFilterFlag: {
+            type: Boolean,
+            default: false
+        },
+        customSelectFilter: {
+            type: Object,
+            default: function () {
+                return {}
+            },        
+        },
+        custom1SelectFilterFlag: {
+            type: Boolean,
+            default: false
+        },
+        custom1SelectFilter: {
+            type: Object,
+            default: function () {
+                return {}
+            },        
+        },
+        customRadioButtonFilterFlag: {
+            type: Boolean,
+            default: false
+        },
+        customRadioButtonFilter: {
+            type: Object,
+            default: function () {
+                return {}
+            },        
+        },
+
+    },
+
+    data() {
+        // Note: These are primed in table-template.js using setFilterDropDown()
+        return {
+            periodSelected: 'All',
+            myRecordsSelected: '0',
+            customSelected: 'All',
+            custom1Selected: 'All',
+            customRadioButtonValue: 'All',
+        }
+    },
+
+    mounted() {
+
+        this.$parent.filterOptions = this;
+
+    },    
+
+    methods: {
+
+        myRecordsChanged(newValue) {
+
+            this.deleteQuickFilter('MyRecordsQuickFilter');
+
+            if (newValue == 1) {
+                    
+                this.addQuickFilter(this.myRecordsColumnName, 'MyRecordsQuickFilter', loggedInEmployeeName);
+
+            }
+
+            this.$parent.setUserFilters();
+
+            this.$parent.table.ajax.reload();
+            
+        },
+
+        periodSelectedChanged(newValue) {
+
+            console.log('periodSelectedChanged', newValue);
+
+            this.deleteQuickFilter('PeriodQuickFilter');
+
+            if ( newValue !== 'All') {
+                this.addQuickFilter(this.periodColumnName, 'PeriodQuickFilter', newValue);
+            }
+
+            this.$parent.setUserFilters();
+
+            this.$parent.table.ajax.reload();
+
+        },
+
+        customSelectChanged(newValue) {
+
+            this.deleteQuickFilter('CustomSelectQuickFilter');
+
+            if ( newValue !== 'All') {
+                this.addQuickFilter(this.customSelectFilter.columnName, 'CustomSelectQuickFilter', newValue);
+            }
+
+            this.$parent.setUserFilters();
+
+            this.$parent.table.ajax.reload();
+
+        },
+
+        custom1SelectChanged(newValue) {
+
+            this.deleteQuickFilter('Custom1SelectQuickFilter');
+
+            if ( newValue !== 'All') {
+                this.addQuickFilter(this.custom1SelectFilter.columnName, 'Custom1SelectQuickFilter', newValue);
+            }
+
+            this.$parent.setUserFilters();
+
+            this.$parent.table.ajax.reload();
+
+        },
+
+        customRadioButtonValueChanged(newValue) {
+
+            this.deleteQuickFilter('CustomRadioButtonQuickFilter');
+
+            if ( newValue !== 'All') {
+                this.addQuickFilter(this.customRadioButtonFilter.columnName, 'CustomRadioButtonQuickFilter', newValue);
+            }
+
+            this.$parent.setUserFilters();
+
+            this.$parent.table.ajax.reload();
+
+        },
+
+
+        addQuickFilter(columnName, key, value, method = 'Equals') {
+
+
+            let columnDefIndex = this.$parent.columnDefs.findIndex( columnDef => columnDef.name === columnName);
+
+            if ( columnDefIndex === -1 ) {
+                console.error('columnDef named ' + columnName + ' not found in addQuickFilter() in FilterOptions');
+                return;
+            } 
+
+            this.$root.columnFilterForm.addingNewRecord = true;
+            this.$root.columnFilterForm.tableId = this.$parent.tableId;
+            this.$root.columnFilterForm.tableColumn = this.$parent.columnDefs[columnDefIndex];
+
+            let filterType = this.$parent.columnDefs[columnDefIndex].filterType;
+            
+            this.$root.columnFilterForm.record = {
+                key: key,
+                fromDate: filterType === 'Date' ? value : null,
+                toDate: filterType === 'Date' ? value : null,
+                period: filterType === 'Date' ? value : null,
+                fromAmount: filterType === 'Number' ? value : null,
+                toAmount: filterType === 'Number' ? value : null,
+                value: value,
+                method: method,
+                join: 'and',
+            };
+
+            this.$root.columnFilterForm.saveFilter(false);
+
+        },
+
+        deleteQuickFilter(key) {
+
+            let tableFilter = this.getQuickFilter(key);
+
+            if ( tableFilter ) {
+
+                this.$root.tableFilterSettings.tableId = this.$parent.tableId;
+
+                this.$root.tableFilterSettings.deleteTableFilter(tableFilter.index,false)
+
+            }
+
+
+        },
+
+        getQuickFilter(key) {
+
+            let tableFilters = getTableFilter(this.$parent.tableId)
+
+            let filterIndex = tableFilters.findIndex( tableFilter => tableFilter.key === key);
+
+            if ( filterIndex > -1 ) {
+
+                return {index: filterIndex, settings: tableFilters[filterIndex]};
+
+            }
+
+            return null;
+        },
+
+        loadAdvancedFilters() {
+
+            this.closeDropdown();
+
+            this.$root.tableFilterSettings.openModal(this.$parent.tableId, this.$parent)
+
+        },
+
+        closeDropdown() {
+            $('body').click();
+        }
+
+    }
+}  
+</script>

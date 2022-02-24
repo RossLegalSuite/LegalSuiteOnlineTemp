@@ -1,0 +1,59 @@
+To Replace Column names with lowercase
+---------------------------------------
+E.G.
+"Employee.Name as EmployeeName",
+"Party.Name as PartyName",
+"Party.MatterPrefix as PartyMatterPrefix",
+
+Search: as (\w+)
+Replace: as \L$1
+
+
+Using hard returns and Tabs
+---------------------------------------
+Search: \n(.*?)initFormData()
+Replace: \n\t\tinitFormData()\n\t\ttaddKeyListeners(this.id);
+
+Using placeholders $1...$24
+---------------------------------------
+Search: return truncate\((.*?)\)
+Replace: return $1
+
+Using placeholders to change "callback" to "callingComponent"
+only for Party or Matter
+---------------------------------------
+Search: (Party|Matter).(callback) = 
+Replace: $1.callingComponent = 
+
+Searching for props
+-------------------
+Search: :tableComponent="\$refs\['(.*?)'\]"
+Replace:  parentTableRef="$1"
+
+Replacing line breaks and tabs stops
+------------------------------------
+
+Search:      (.*?):loading="\$root.dropdownIsLoading"\n
+Replace:     $1:loading="$root.dropdownIsLoading"\n$1:internal-search="false"\n
+
+Search across line breaks - use [\s\S\r]+
+-----------------------------------------
+
+Search:  if \(!this\.modal\)[\s\S\r]+this\.show\(\);\n\n(.*?)\}
+Replace: this.displayForm();
+
+Search for word which doesn't start with a letter (e.g. want order but not border)
+----------------------------------------------------------------------------------
+[^b]order
+
+Inserting the Models
+---------------------
+Search: use App\\([A-Za-z]*);
+Replace: use App\Models\\$1;
+
+Saved
+-----
+
+Commenting out a line:
+[^/]if \( typeof this\.\$parent\._inactive
+//if ( typeof this.$parent._inactive

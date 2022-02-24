@@ -1,0 +1,699 @@
+<template>
+<div>
+    <div class="modal" :id="id">
+        <div class="modal-dialog modal-dialog-centered modal-lgr">
+            <div :class="'modal-content ' + borderColor">
+
+                <div :class="'modal-header ' + headerColor">
+                    <div class="page-title">
+                        <h3>
+                            <i class='fa fa-clone mr-2'></i>
+                            <span v-html="title"></span>
+                        </h3>
+                        <i :id="id + '-modal-close-button'" title="Close this window" class="cp top-right fa fa-times-circle fa-2x text-white" data-dismiss="modal"></i>
+                    </div>
+                </div>
+
+                <div class="modal-body p-3" style="height:75vh; overflow: unset">
+
+
+                    <div v-show="multipleRecordsFlag || multipleTemplatesFlag" class="leftRightFlexContainer mb-3">
+
+                        <div v-show="multipleRecordsFlag">
+
+                            <table>
+                                <tr>
+                                    <td>
+                                        <span><strong>{{multipleRecordsLabel}}</strong></span>
+                                    </td>
+                                    <td class="pr-2">
+                                        <pop-over 
+                                            v-if="multipleRecordsLabel == 'Party'"
+                                            content="
+                                            <h4>Party</h4>
+                                            <p>Multiple documents will be generated for each Party.</p>
+                                            <p>Select a Party to preview the Document that will be generated for that Party.</p>"
+                                        />
+                                        <pop-over 
+                                            v-if="multipleRecordsLabel == 'Matter'"
+                                            content="
+                                            <h4>Matter</h4>
+                                            <p>Multiple documents will be generated for each Matter.</p>
+                                            <p>Select a Matter to preview the Document that will be generated for that Matter.</p>"
+                                        />
+                                    </td>
+                                    <td :class="multipleTemplatesFlag ? 'v-select-15' : 'v-select-25'">
+                                        <v-select
+                                            :options="multipleRecords" 
+                                            :clearable="false" 
+                                            :searchable="false" 
+                                            :reduce="multipleRecords => multipleRecords.value"
+                                            v-model="selectedRecord"
+                                            @option:selected="selectRecordChanged"
+                                        />
+                                    </td>
+                                </tr>
+                            </table>
+
+                        </div>
+
+                        <div v-show="multipleTemplatesFlag">
+
+                            <table>
+                                <tr>
+                                    <td>
+                                        <span><strong>Template</strong></span>
+                                    </td>
+                                    <td class="pr-2">
+                                        <pop-over 
+                                            placement="left"
+                                            content="
+                                            <h4>Multiple Templates selected</h4>
+                                            <p>Multiple documents will be generated for each selected Template.</p>
+                                            <p>Select a Template to preview the Document that will be generated for each Template.</p>"
+                                        />
+                                    </td>
+                                    <td class="v-select-15">
+                                        <v-select
+                                            :options="multipleTemplates" 
+                                            :clearable="false" 
+                                            :searchable="false" 
+                                            :reduce="multipleTemplates => multipleTemplates.value"
+                                            v-model="selectedTemplate"
+                                            @option:selected="selectTemplateChanged"
+                                        />
+                                    </td>
+                                </tr>
+                            </table>
+
+                        </div>
+
+                    </div>
+
+                    <div :id="id + '-top-of-form-marker'"/>
+
+                    <div v-html="documentContents" :id="id + '-document-contents'" class="p-3 overflow-auto bordered"/>
+
+                </div>
+
+                <div class="modal-footer justify-content-between">
+                    <div/>
+                    <div>
+                        <button class="btn btn-success form-button shadowed mr-2" type="button" @click="okClicked" title="Generate the Document(s)">
+                            <i class="fa fa-cog fa-lg mr-2"></i>Generate Document<span v-show="multipleRecordsFlag || multipleRolesFlag || multipleTemplatesFlag" v-text="'s'"/>
+                        </button>
+                        <button class="btn btn-danger form-button shadowed" type="button" data-dismiss="modal" title="Abort generating Documents"><i class="fa fa-times-circle fa-lg mr-2"></i>Cancel</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+</div>
+</template>
+
+<script>
+
+import modalTemplate from "../modals/modal-template";
+import templateMethods from "@pages/system-templates/common-template-methods";
+import { mapGetters } from 'vuex';
+import { mapMutations } from 'vuex';
+
+export default {
+
+    mixins: [modalTemplate, templateMethods],
+
+    props: {
+        id: String,
+    },
+    data() {
+        return {
+            title: 'Generate Documents',
+            headerColor: 'red-bg',
+            borderColor: 'red-border',
+            documentContents: '',
+            templateId: null,
+
+            multipleRecords: [],
+            selectedRecord: null,
+            multipleRecordsFlag: false,
+            multipleRecordsLabel: '',
+
+            multipleRoles: [],
+            selectedRole: null,
+            multipleRolesFlag: false,
+            multipleRolesLabel: 'Role',
+
+            multipleTemplates: [],
+            selectedTemplate: null,
+            multipleTemplatesFlag: false,
+
+            templateContents: null,
+            templateData: null,
+            callingComponent: null,
+            errors: {},
+        }
+    },
+
+    computed: {
+        ...mapGetters(['leftTabs']),
+    },
+
+    methods: {
+
+        ...mapMutations([
+            'displayLeftTab',
+        ]),     
+
+        initialize( callingComponent ) {
+
+            this.callingComponent = callingComponent;
+
+            this.documentContents = '';
+
+            this.multipleRecordsLabel = 'Record';
+            this.multipleRecords = [];
+            this.selectedRecord = null;
+            this.multipleRecordsFlag = false;
+
+            this.multipleRolesLabel = 'Role';
+            this.multipleRoles = [];
+            this.selectedRole = null;
+            this.multipleRolesFlag = false;
+
+            this.multipleTemplates = [];
+            this.selectedTemplate = null;
+            this.multipleTemplatesFlag = false;
+
+            this.templateContents = null;
+            this.templateData = null;
+
+        },
+
+        selectRecordChanged(option) {
+
+            this.documentContents = '<h3 class="mt-5 text-center">Generating preview .... please wait.</h3>';
+
+            this.getTemplate( this.selectedTemplate )
+
+            .then( ( templateRecord ) => {
+
+                this.templateContents = templateRecord.contents;
+
+                let roleId = null;
+                let sorter = null;
+
+                if ( templateRecord.roleid ) {
+                    roleId = templateRecord.roleid;
+                    sorter = 1;
+                }
+
+                root.createRecordTemplateData(this.callingComponent.generateDocumentsSource,templateRecord, option.value, roleId, sorter)
+
+                .then( (templateData) => {
+
+                    // Check if a MatParty was found for this RoleId
+                    if ( roleId && $.isEmptyObject(templateData.matParty)) {
+
+                        this.documentContents = '<h3 class="mt-5 text-center">This Matter does not have a ' + root.partyRoles.filter(role => role.recordid == roleId)[0].description + '.</h3>';
+                        this.documentContents += '<h3 class="mt-2 text-center">A ' + templateRecord.title + ' will not be generated for this Matter.</h3>';
+
+                    } else {
+
+                        this.templateData = templateData;
+
+                        root.vueRender( this.templateContents, this.templateData )
+
+                        .then( (renderedHtml) => {
+
+                            this.documentContents = renderedHtml;
+
+                        }).catch(error => { 
+
+                            showError('Error', error)
+
+                        });  
+                    }
+
+
+                }).catch( (error) => {
+
+                    showError('Error',error);
+
+                });
+
+
+            }).catch( (error) => {
+                showError('Error',error)
+            });
+
+        },
+
+
+        selectTemplateChanged( option ) {
+
+            this.documentContents = '<h3 class="mt-5 text-center">Generating preview .... please wait.</h3>';
+
+            axios.post('/lolsystemtemplate/get/' + option.value)
+
+            .then(response => {
+
+                if ( response.data.errors ) {
+
+                    showError('Error',response.data.errors);
+
+                } else {
+
+                    let thisTemplateRecord = response.data.data[0];
+
+                    this.templateContents = thisTemplateRecord.contents;
+
+                    let roleId = null;
+                    let sorter = null;
+
+                    if ( thisTemplateRecord.roleid ) {
+                        roleId = thisTemplateRecord.roleid;
+                        sorter = 1;
+                    }
+
+                    root.createRecordTemplateData(this.callingComponent.generateDocumentsSource, thisTemplateRecord, this.selectedRecord, roleId, sorter)
+
+                    .then( (templateData) => {
+
+                        // Check if a MatParty was found for this RoleId
+                        if ( roleId && $.isEmptyObject(templateData.matParty)) {
+
+                            this.documentContents = '<h3 class="mt-5 text-center">This Matter does not have a ' + root.partyRoles.filter(role => role.recordid == roleId)[0].description + '.</h3>';
+                            this.documentContents += '<h3 class="mt-2 text-center">A ' + thisTemplateRecord.title + ' will not be generated for this Matter.</h3>';
+
+                        } else {
+
+                            this.templateData = templateData;
+
+                            root.vueRender( this.templateContents, this.templateData )
+
+                            .then( (renderedHtml) => {
+
+                                this.documentContents = renderedHtml;
+
+                            }).catch(error => { 
+
+                                showError('Error', error)
+
+                            });  
+
+                        }
+
+                    }).catch( (error) => {
+
+                        showError('Error',error);
+
+                    });
+
+                }
+
+            }).catch(error => {
+                showError('Error', error); 
+            });
+
+        },
+
+        getTemplate( id ) {
+
+            return new Promise((resolve, reject) => {
+
+                axios.post("/lolsystemtemplate/get/" + id)
+                
+                .then(response => {
+
+                    if (response.data.errors) {
+
+                        reject(response.data.errors);
+
+                    } else {
+
+                        resolve( response.data.data[0]);
+
+                    }
+
+                }).catch( (error) => {
+                    reject('Error getting Template: ' + error ); 
+                });
+
+            });
+
+        },
+
+        generateFirstDocumentContents() {
+
+            this.documentContentsContainer = $('#' + this.id + '-document-contents');
+
+            root.getAvailableSpace('#' + this.id + '-top-of-form-marker', '#' + this.id + ' .modal-footer', 75)
+
+            .then( (availableSpace ) => {
+
+                this.documentContentsContainer.height( availableSpace + 30);
+
+            }).catch( (error) => {
+                showError('Error',error)
+            });
+
+
+            root.vueRender( this.templateContents, this.templateData )
+
+            .then( (renderedHtml) => {
+
+                this.documentContents = renderedHtml;
+
+            }).catch(error => { 
+
+                showError('Error', error)
+
+            });  
+
+        },
+
+        async okClicked() {
+
+            this.createDocuments();
+
+            this.hide();
+
+        },
+
+        async createDocuments() {
+
+            //try {
+
+                this.generatedDocuments = [];
+                let thisRecord = null;
+                let thisTemplate = null;
+                this.abortProcess = false;
+
+                // Copy these arrays by value
+                let records = JSON.parse(JSON.stringify(this.multipleRecords));
+                let templates = JSON.parse(JSON.stringify(this.multipleTemplates));
+
+                root.generatingDocumentsModal.reset();
+                root.generatingDocumentsModal.callingComponent = this;
+                root.generatingDocumentsModal.cancelCallback = 'cancelCreateDocuments';
+                if (records.length === 1 && templates.length === 1) {
+                    root.generatingDocumentsModal.title = 'Generating Document';
+                    root.generatingDocumentsModal.description = 'Preparing Document';
+                } else {
+                    root.generatingDocumentsModal.title = 'Generating Documents';
+                    root.generatingDocumentsModal.description = 'Preparing Documents';
+                }
+                root.generatingDocumentsModal.description1 = 'Please wait...';
+                root.generatingDocumentsModal.show();
+
+
+                await root.asyncForEach(templates, async (template) => {
+
+                    if (!this.abortProcess ) {
+
+                        let templateResponse = await axios.post('/lolsystemtemplate/get/' + template.value)
+
+                        if ( templateResponse.data.errors ) {
+
+                            showError('Error',templateResponse.data.errors);
+                            this.abortProcess = true;
+
+                        } else {
+
+                            thisTemplate = templateResponse.data.data[0];
+
+                            this.templateId = thisTemplate.recordid;
+                            this.templateContents = thisTemplate.contents;
+
+                            // Flag to prevent re-registering the components on every iteration
+                            // Trying to speed up the document assembly process
+                            this.doingFirstRecord = true; 
+
+                            await root.asyncForEach(records, async (record) => {
+
+                                if (!this.abortProcess ) {
+
+                                    let recordResponse = await axios.post('/' + this.callingComponent.generateDocumentsSource.toLowerCase() + '/get/' + record.value);
+
+                                    thisRecord = recordResponse.data.data[0];
+
+                                    if ( this.callingComponent.generateDocumentsSource == 'Matter' && thisTemplate.roleid ) {
+
+                                        await this.assembleMatPartyDocuments(thisRecord, thisTemplate);
+
+                                    } else {
+
+                                        await root.createRecordTemplateData(this.callingComponent.generateDocumentsSource, thisTemplate, thisRecord.recordid)
+
+                                        .then( async (templateData) => {
+
+                                            this.templateData = templateData;
+                                            this.fileName = 'Document-' + thisRecord.recordid + '-' + thisTemplate.recordid + '.pdf';
+                                            root.generatingDocumentsModal.description = 'Creating ' + thisTemplate.title;
+
+                                            if (this.callingComponent.generateDocumentsSource == 'Party') {
+
+                                                root.generatingDocumentsModal.description1 = ' for ' + thisRecord.name;
+
+                                            } else if (this.callingComponent.generateDocumentsSource == 'MatParty') {
+
+                                                root.generatingDocumentsModal.description1 = ' for ' + thisRecord.partyname + ' (' + thisRecord.matterfileref + ')';
+
+                                            } else if (this.callingComponent.generateDocumentsSource == 'Matter') {
+
+                                                root.generatingDocumentsModal.description1 = ' for ' + thisRecord.fileref;
+
+                                            }
+
+                                            await generatePdfDocument({
+                                                templateRecord: thisTemplate,
+                                                templateData: templateData,
+                                                folder: 'documents',
+                                                fileName: this.fileName,
+                                                registerUserComponents: this.doingFirstRecord
+                                            })
+                                            .then(response => {
+
+                                                this.doingFirstRecord = false;
+
+                                                this.generatedDocuments.push( {
+                                                    recordId: thisRecord.recordid,
+                                                    partyId: thisRecord?.partyid,
+                                                    matterId: thisRecord?.matterid,
+                                                    tableName: this.callingComponent.generateDocumentsSource.toLowerCase(),
+                                                    title: thisTemplate.title,
+                                                    path: response.path,
+                                                    url: response.url,
+                                                    folder: 'documents',
+                                                    fileName: this.fileName,
+                                                });    
+
+                                            }).catch(error => { 
+                    
+                                                showError('Generating Pdf Error',error);
+                                                this.abortProcess = true;
+                    
+                                            });
+
+                                        }).catch( (error) => {
+
+                                            showError('Create TemplateData Error',error);
+                                            this.abortProcess = true;
+
+                                        });
+
+                                    }
+
+                                }
+
+                            });
+
+                        }
+
+                    }
+
+                });
+
+                if ( this.abortProcess ) {
+
+                    root.generatingDocumentsModal.hide();
+
+                    root.$snotify.simple('Document creation process aborted', 'Process Cancelled', { timeout: 2000, icon: 'img/delete.png' });
+
+                } else {
+
+                    if ( this.generatedDocuments.length ) {
+
+                        let docLogRecords = [];
+                        let timeNow = nowToClarionTime();
+                        let matterId = 0,partyId = 0;
+
+                        await root.asyncForEach(this.generatedDocuments, async (generatedDocument) => {
+
+                            if ( generatedDocument.tableName == 'matter' ) {
+                                matterId = generatedDocument.recordId;
+                            } else if ( generatedDocument.tableName == 'party' ) {
+                                partyId = generatedDocument.recordId;
+                            } else if ( generatedDocument.tableName == 'matparty' ) {
+                                matterId = generatedDocument.matterId;
+                                partyId = generatedDocument.partyId;
+
+                            }
+
+                            docLogRecords.push({
+                                matterId: matterId,
+                                partyId: partyId,
+                                documentId: 0,
+                                description: generatedDocument.title,
+                                employeeId: root.loggedInEmployeeId,
+                                date: root.todaysdate,
+                                time: timeNow,
+                                docLogCategoryId: root.control.doclogcategorydocumentid,
+                                direction: 1,
+                                savedName: generatedDocument.fileName,
+                                url: generatedDocument.url,
+                                emailflag: 0,
+                            });
+
+                        });
+
+                        let saveDocLogRecords = await axios.post('/doclog/storeRecords', {
+                            records: docLogRecords
+                        });
+
+                        root.generatingDocumentsModal.hide();
+
+                        if ( saveDocLogRecords.data.errors ) {
+
+                            showError('Error', saveDocLogRecords.data.errors);
+
+                        } else {
+
+                            root.generatedDocumentsTime = timeNow;
+                            root.generatedDocumentsSource = this.callingComponent.generateDocumentsSource;
+
+                            if ( root.documentsLeftComponent ) {
+
+                                root.documentsLeftComponent.reset();
+
+                                this.loadTab('Documents');
+                                
+                                setTimeout(() => {
+                                    
+                                    root.documentsLeftComponent.loadTable();
+
+                                }, 500);
+
+                            } else {
+
+                                this.loadTab('Documents');
+
+                            }
+
+                        }
+
+
+                    } else {
+                        root.generatingDocumentsModal.hide();
+                    }
+
+                }
+
+            // } catch (error) {
+
+            //     showError('Error Creating Documents', error)
+
+            // }
+
+        },
+
+        async assembleMatPartyDocuments( matterRecord, thisTemplate ) {
+
+            // Flag to prevent re-registering the components on every iteration
+            // Trying to speed up the document assembly process
+            this.doingFirstRecord = true; 
+
+            let response = await axios.post('/matparty/get', {
+                whereRaw: 'MatterId = ' + matterRecord .recordid + ' AND RoleId = ' + thisTemplate.roleid,
+                orderBy: 'MatParty.Sorter'
+            });
+
+            await root.asyncForEach(response.data.data, async (matParty) => {
+
+                if (!this.abortProcess ) {
+
+                    this.fileName = 'Document-' + matParty.recordid + '-' + thisTemplate.recordid + '.pdf';
+
+                    root.generatingDocumentsModal.description = 'Creating ' + thisTemplate.title;;
+                    root.generatingDocumentsModal.description1 = ' for ' + matParty.partyname;
+
+
+                    await root.createRecordTemplateData(this.callingComponent.generateDocumentsSource, thisTemplate, matterRecord.recordid, thisTemplate.roleid, matParty.sorter)
+
+                    .then( async (templateData) => {
+
+                        await generatePdfDocument({
+                            templateRecord: thisTemplate,
+                            templateData: templateData,
+                            folder: 'documents',
+                            fileName: this.fileName,
+                            registerUserComponents: this.doingFirstRecord
+                        })
+                        .then(response => {
+
+                            this.doingFirstRecord = false;
+
+                            this.generatedDocuments.push( {
+                                recordId: matterRecord.recordid,
+                                tableName: this.callingComponent.generateDocumentsSource.toLowerCase(),
+                                title: thisTemplate.title + ' - ' + matParty.partyname,
+                                path: response.path,
+                                url: response.url,
+                                folder: 'documents',
+                                fileName: this.fileName,
+                            });    
+
+
+                        }).catch(error => { 
+
+                            showError('Generate & Upload Pdf Error',error);
+                            abortProcess = true;
+
+                        });
+
+                    }).catch( (error) => {
+
+                        showError('Create TemplateData Error',error);
+                        this.abortProcess = true;
+
+                    });
+
+                }
+
+            });
+
+        },
+
+        cancelCreateDocuments() {
+            this.abortProcess = true;
+        },
+
+        loadTab( name ) {
+
+            let thisTab = this.leftTabs.filter(tab => tab.pageName == name);
+
+            if (thisTab.length) {
+
+                this.$router.push({ name: thisTab[0].routeName });
+
+                this.displayLeftTab(thisTab[0]);
+
+            }
+        },
+
+    }
+
+}  
+</script>

@@ -1,0 +1,226 @@
+<template>
+    <div class="card h-100 border-0">
+        <div class="card-header parties-bg">
+            <div class="d-flex justify-content-between">
+                <h3><i class="fa fa-user mr-2"></i>Parties</h3>
+                <page-close-button @closeClicked="closeLeftPage(pageName)"/>
+            </div>
+        </div>
+
+        <div v-if="$root.checkPermission('Parties', 'viewFlag')" class="card-body overflow-auto pb-1 pt-3 px-3">
+
+            <party-table 
+                ref="parties-table"
+                :lazyLoadFlag="true"
+                :tagging="true" 
+                formRef="party-right-party-form" 
+                tableId="parties-table"
+            />
+            
+        </div>
+
+    </div>
+</template>     
+
+<script>
+
+import { mapGetters } from 'vuex';
+import { mapMutations } from 'vuex';
+import leftTemplate from "../left-template";
+
+export default {
+
+    extends: leftTemplate,
+
+    components: {
+        PartyTable: () => import("./PartyTable"),
+    },
+
+    data() {
+        return {
+            tableMounted: false,
+            form: null,
+            pageName: "Parties",
+            selectedRows: [],
+            selectedAllFlag: false,
+            assembleDocumentsFlag: true,
+        };
+    },
+
+    computed: {
+        ...mapGetters(['leftTabs','activeLeftTabs']),
+    },
+
+    watch: {
+        tableMounted: function() { this.initializeTable(); },
+    },
+
+    mounted() {
+
+        let thisTab = this.leftTabs.filter(tab => tab.pageName === this.pageName);
+
+        if (thisTab.length)  this.displayLeftTab(thisTab[0]);
+
+    },    
+
+    methods: {
+
+        ...mapMutations(['displayLeftTab','hideLeftTab']),
+
+        initializeTable() {
+            
+            this.table.loadDataTable(() =>{
+
+                // Used to lazy load the Form (and all its sub components) on the right
+                this.$root.partyLeftTableLoaded = true;
+
+            });
+
+        },
+
+        initializeDocumentAssembly() {
+
+            root.documentAssembly.tablePage = root.$refs['pages'].$refs['right-page'].$refs['party-right-party-documents'];
+            root.documentAssembly.whereClause = { column: 'source', value: ['Parties'] };
+            root.documentAssembly.singular = 'Party';
+            root.documentAssembly.plural = 'Parties';
+            root.documentAssembly.abortMerge = false;
+            root.documentAssembly.batchId = Date.now();
+
+            root.documentAssembly.selectedRows = JSON.parse(JSON.stringify(this.selectedRows)); //https://stackoverflow.com/questions/7486085/copy-array-by-value
+
+        },
+
+        newRecordButtonClicked() {
+
+            this.form = root.$refs['pages'].$refs["right-page"].$refs['party-right-party-form'];
+
+            if ( !this.form.permission('Parties','insert') ) return;
+
+            this.form.insertClicked();
+
+            this.loadPage('Form');
+
+
+        },
+
+        deleteTaggedRecords() {
+
+            this.tryDeleteTaggedRecords('parties');
+
+        },
+
+        generateEmails( emailParams ) {
+            
+            let tableParams = ( this.selectedRows.length ) ? { whereIn: { column: 'parties.id', value: this.selectedRows } } :  {tableFilter: this.table.tableFilter, tableHaving: this.table.tableHaving};
+            
+            tableParams = {...tableParams, dataFormat: 'mergeFields'};
+
+            axios.post('/parties/get', tableParams)
+
+            .then(response => {
+
+                response.data.forEach( async party => {
+
+                    if ( party.email ) {
+
+                        let extraScreens = await axios.post('/extra_screens/getPartyMergeFields', {
+                            parentId: party.id,
+                            dataFormat: 'array'
+                        });
+
+                        extraScreens.data.forEach(extraScreen => {
+                            if ( typeof partyData[extraScreen.prefix] === 'undefined') {
+                                party[extraScreen.prefix] = {};
+                            }
+                            party[extraScreen.prefix][toCamelCase(extraScreen.label)] = extraScreen.value;
+                        });
+
+                        let fields = getFields(emailParams.subject);
+
+                        fields.forEach(field => {
+                            let evaluate = expressions.compile(field);
+                            emailParams.subject = emailParams.subject.replace('{' + field + '}', evaluate(party));
+                        })
+
+                        fields = getFields(emailParams.body);
+
+                        fields.forEach(field => {
+                            let evaluate = expressions.compile(field);
+                            emailParams.body = emailParams.body.replace('{' + field + '}', evaluate(party));
+                        })
+
+                        emailParams.to = [party.email];
+
+                        this.$root.emailModal.sendEmail(emailParams);
+
+                    }
+
+                });
+
+
+            });
+
+        },
+
+        emailRecords() {
+
+            let emailModal = this.$root.emailModal;
+
+            emailModal.initialize();
+            emailModal.generateComponentFlag = false;
+            emailModal.defaultAttachmentFlag = false;
+            emailModal.mailMergeFlag = true;
+            emailModal.mailMergePlural = 'Parties';
+            emailModal.mailMergeComponent = this;
+
+            emailModal.title = 'Email Parties';
+
+            emailModal.contents = '{salutation}';
+
+            let params = ( this.selectedRows.length ) ? { whereIn: { column: 'parties.id', value: this.selectedRows } } :  {tableFilter: this.table.tableFilter, tableHaving: this.table.tableHaving};
+            
+            params = {...params, tableColumns: true};
+
+            axios.post('/parties/get', params)
+
+            .then(response => {
+
+                let counter = 0, emails = [];
+
+                response.data.forEach(party => {
+
+                    if ( party.email ) emails.push(party.email);
+
+                });
+
+                emails.forEach(email => {
+
+                    counter++;
+
+                    emailModal.toAddress += email;
+
+                    emailModal.toAddress += counter === emails.length ? '' : ', ';
+
+                });
+
+                if (emails.length) {
+
+                    emailModal.mailMergeSelectedDescription = 'Selected Parties (' + emails.length + ')';
+
+                    emailModal.show();
+
+                } else {
+
+                    showError('No email Addresses found','None of the Parties selected have email addresses');
+                }
+
+            }).catch(error => {
+                showError('Data Retrieval Error', error); 
+            });
+
+        },
+
+    },
+}
+</script>

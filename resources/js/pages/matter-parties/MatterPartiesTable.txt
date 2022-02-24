@@ -1,0 +1,253 @@
+<template>
+<div>
+    <div class="d-flex justify-content-between table-functions-row">
+        <column-search/>
+        <div>
+            <table-options/>
+            <new-record-button type="button" :title="'Add a ' + singular + ' to the Matter'" text="Add"/>
+        </div>
+
+    </div>
+
+    <table :id="tableId" class="table bordered" style="width:100%"/>
+
+
+</div>
+</template>
+
+<script>
+
+import tableTemplate from "@components/tables/table-template";
+
+export default {
+
+    mixins: [tableTemplate],
+
+    created() {
+        this.url = "/generic/get";
+        this.route = "MatterParty";
+        this.title = 'Parties';
+        this.plural = 'Parties';
+        this.singular = 'Party';
+        this.tableName = 'matparty';
+    },
+
+    methods: {
+
+        defineTableColDefs() {
+            
+            let tableColumnDefs = [
+                {
+                    title: "",
+                    name: "matparty.sorter",
+                    data: null,
+                    class: 'text-center',
+                    width: root.screenNarrow ? '8%' : '5%',
+                    orderable: false,
+                    searchable: false,
+                    printable: false,
+                    targets: 0,
+                    render: (data) => {
+                        return parseInt(data.sorter) > 1 ? '<span class="cp" title="Move this Party up" onclick="componentFunction(\'' + this.formComponent + '\',\'moveMatterPartyUp\',' + data.recordid + ')">🔼</span>' : '';
+                    }
+                },
+                {
+                    title: "Party",
+                    name: "party.name",
+                    data: null,
+                    orderable: false,
+                    targets: 2,
+                    render: function (data) {
+                        return '(' + data.sorter + ') ' + htmlDecode(data.partyname);
+                    }
+                },
+                {
+                    title: "Contact",
+                    name: "contact.name",
+                    data: null,
+                    orderable: false,
+                    targets: 3,
+                    render: function (data) {
+                        return htmlDecode(data.contactname);
+                    }
+                },
+                {
+                    title: "Role",
+                    name: "role.description",
+                    data: null,
+                    orderable: false,
+                    targets: 4,
+                    render: function (data) {
+                        return parseInt(data.sorter) > 1 ? truncate(data.roledescription) + ' (' + data.sorter + ')' : truncate(data.roledescription);
+                    }
+                },
+                {
+                    title: "Reference",
+                    name: "matparty.reference",
+                    data: null,
+                    orderable: false,
+                    targets: 5,
+                    render: function (data) {
+                        return htmlDecode(data.reference);
+                    }
+                },
+                {
+                    title: "Email",
+                    name: "email.number",
+                    data: null,
+                    orderable: false,
+                    targets: 6,
+                    render: function (data) {
+                        return htmlDecode(data.emailaddress);
+                    }
+                },
+                {
+                    title: "Cell",
+                    name: "cell.number",
+                    data: null,
+                    orderable: false,
+                    targets: 7,
+                    render: function (data) {
+                        return htmlDecode(data.cellnumber);
+                    }
+                },
+                {
+                    title: "Work",
+                    name: "work.number",
+                    data: null,
+                    orderable: false,
+                    visible: false,
+                    targets: 8,
+                    render: function (data) {
+                        return htmlDecode(data.worknumber);
+                    }
+                },
+                {
+                    title: "Language",
+                    name: "language.description",
+                    data: null,
+                    orderable: false,
+                    visible: false,
+                    targets: 9,
+                    render: function (data) {
+                        return data.defaultlanguagedescription;
+                    }
+                },
+                {
+                    title: "",
+                    name: "role.description",
+                    data: null,
+                    visible: false,
+                    searchable: false,
+                    targets: 10,
+                    render: (data) => {
+                        return data.roledescription;
+                    }
+                },
+                {
+                    title: "",
+                    name: "matparty.sorter",
+                    data: null,
+                    visible: false,
+                    searchable: false,
+                    targets: 11,
+                    render: (data) => {
+                        return data.sorter;
+                    }
+                },                
+            ];
+            return tableColumnDefs;
+            
+            /*let tableColumnDefs = [
+                {
+                    title: "",
+                    data: null,
+                    class: 'text-center',
+                    width: root.screenNarrow ? '12%' : '10%',
+                    orderable: false,
+                    searchable: false,
+                    printable: false,
+                    targets: 0,
+                    render: (data) => {
+                        return parseInt(data.sorter) > 1 ? '<span class="cp" title="Move this Party up" onclick="componentFunction(\'' + this.formComponent + '\',\'moveMatterPartyUp\',' + data.recordid + ')">🔼</span>' : '';
+                    }
+                },
+                {
+                    title: "Party",
+                    name: "party.name",
+                    data: null,
+                    orderable: false,
+                    targets: 2,
+                    render: function (data) {
+                        return htmlDecode(data.name);
+                    }
+                },
+                {
+                    title: "Contact",
+                    name: "contact.name",
+                    data: null,
+                    orderable: false,
+                    targets: 3,
+                    render: function (data) {
+                        return htmlDecode('data.contactname');
+                    }
+                },
+                {
+                    title: "Role",
+                    name: "role.description",
+                    data: null,
+                    orderable: false,
+                    targets: 4,
+                    render: function (data) {
+                        return parseInt(data.sorter) > 1 ? truncate('data.roledescription') + ' (' + data.sorter + ')' : truncate('data.roledescription');
+                    }
+                },
+                {
+                    title: "Reference",
+                    name: "matparty.reference",
+                    data: null,
+                    orderable: false,
+                    targets: 5,
+                    render: function (data) {
+                        return htmlDecode(data.reference);
+                    }
+                },
+                {
+                    title: "Language",
+                    name: "language.description",
+                    data: null,
+                    orderable: false,
+                    targets: 6,
+                    render: function (data) {
+                        return 'data.languagedescription';
+                    }
+                },
+                {
+                    title: "",
+                    name: "role.description",
+                    data: null,
+                    visible: false,
+                    searchable: false,
+                    targets: 7,
+                    render: (data) => {
+                        return 'data.roledescription';
+                    }
+                },
+                {
+                    title: "",
+                    name: "matparty.sorter",
+                    data: null,
+                    visible: false,
+                    searchable: false,
+                    targets: 8,
+                    render: (data) => {
+                        return data.sorter;
+                    }
+                },                
+            ];
+            return tableColumnDefs;
+            */
+        }
+    },
+}  
+</script>

@@ -1,0 +1,78 @@
+To fire up a quick localhost server:
+
+C:\>php -S localhost:8000
+
+..OR...
+
+C:\>php artisan serve
+
+
+SQLSRV drivers
+-------------------
+
+On the Web: https://docs.microsoft.com/en-us/sql/connect/php/microsoft-php-driver-for-sql-server?view=sql-server-2017
+
+
+
+Put this in the php\ext directory
+php_pdo_sqlsrv_73_ts_x64.dll
+
+Copied them for Microsoft to E:\laragon\etc\php
+Use thread safe if Apache ot non thread safe for IIS
+
+For Tinker, the PHP INI is at: 
+C:\Program Files (x86)\EasyPHP-Devserver-17\eds-binaries\php\php713vc14x86x170427165753\php.ini
+
+For Laragon, the PHP INI is at: 
+E:\laragon\bin\php\php-7.1.20-Win32-VC14-x64\php.ini
+
+Add this to the "Dynamic Extensions" section of the php.ini
+extension=php_pdo_sqlsrv_72_ts_x64.dll
+
+Installing on a Linux server
+-----------------------------
+
+See: https://www.microsoft.com/en-us/sql-server/developer-get-started/php/ubuntu/step/2.html
+
+sudo pecl install sqlsrv
+sudo pecl install pdo_sqlsrv
+sudo su
+echo extension=pdo_sqlsrv.so >> `php --ini | grep "Scan for additional .ini files" | sed -e "s|.*:\s*||"`/30-pdo_sqlsrv.ini
+echo extension=sqlsrv.so >> `php --ini | grep "Scan for additional .ini files" | sed -e "s|.*:\s*||"`/20-sqlsrv.ini
+exit
+
+
+Customer Support said this:
+
+From: https://control.cloud.co.za/viewticket.php?tid=952535&c=Rw1rq8O0
+
+Hi,
+
+
+I have installed the following 
+ea-php56-php-mssql.x86_64 
+on the server, by using the yum install command. 
+You can also search yum if you ever get stuck trying to find the right module by doing yum search 
+and that you looking for.
+
+Kind Regards,
+Jean
+Customer Service
+Support @ Cloud
+
+
+
+Upgrade PHP
+-----------
+
+See: https://forum.laragon.org/topic/166/tutorial-how-to-add-another-php-version-php-7-3
+
+
+Upgrade Apache
+---------------
+
+See: https://forum.laragon.org/topic/165/tutorial-how-to-add-another-apache-version
+
+But for PHP ver 7.3 you need VC15 version of Apache
+
+https://www.apachelounge.com/download/VC15/

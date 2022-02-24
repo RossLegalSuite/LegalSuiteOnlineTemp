@@ -1,0 +1,72 @@
+Function Batch_Replace( strCalcFilePath$, iSheetIndex%, strCellRange$, bUseRegularExpressions As Boolean, bCaseSensitive As Boolean, bWholeWords As Boolean ) As Long
+REM Perform multiple Find/Replace operations within the current Office document, using a Calc spreadsheet that holds the terms to Find/Replace.
+REM Tested once on small batch; This works on Writer documents and Calc documents ( active sheet only ).
+REM <strCalcFilePath>:  Full Path pointing to the spreadsheet file that contains the terms to Find/Replace.
+REM <iSheetIndex>:      0-based index of the Sheet that contains the specified CellRange.
+REM <strCellRange>:     CellRange containing the terms to Find/Replace, must have at least 2 columns, e.g. "A1:B4999".
+REM                     The 1st column of this range should contain the terms to Find, the 2nd column should contain the terms to Replace.
+REM <bUseRegularExpressions>:   Pass TRUE if the terms to Find/Replace should be treated as Regular Expressions.
+REM <bCaseSensitive>:   Pass TRUE if the terms to search are Case Sensitive.
+REM <bWholeWords>:      Pass TRUE if the terms to search must be whole words.
+REM This function returns the total number of found/replaced occurrences.
+REM Example call:       Batch_Replace( "/home/user/Desktop/Find_Replace_List.ods", 0, "A1:B20", false, false, false )
+
+    Dim oFileAccess as Object
+    oFileAccess = createUnoService( "com.sun.star.ucb.SimpleFileAccess" )
+    If Not oFileAccess.Exists( strCalcFilePath ) Then
+        Msgbox( "The specified file does not exist: '" & strCalcFilePath & "'.", 16, "macro:Batch_Replace()" )
+        Exit Function
+    End If
+
+    Dim aProps(0) As New com.sun.star.beans.PropertyValue   REM Open the spreadsheet file invisibly.
+    aProps(0).Name = "Hidden"
+    aProps(0).Value = True
+
+    Dim oCalcDoc As Object
+    oCalcDoc = StarDesktop.loadComponentFromURL( ConvertToURL( strCalcFilePath ), "_blank", 0, aProps() )
+    If IsNull( oCalcDoc ) Then
+        Msgbox( "Could not open the specified file: '" & strCalcFilePath & "'.", 16, "macro:Batch_Replace()" )
+        Exit Function
+    End If
+
+    If Not oCalcDoc.supportsService( "com.sun.star.sheet.SpreadsheetDocument" ) Then
+        Msgbox( "The specified document must be a SpreadsheetDocument: '" & strCalcFilePath & "'.", 16, "macro:Batch_Replace()" )
+        GoTo Exit_Function
+    End If
+
+    If iSheetIndex < 0 Or iSheetIndex > oCalcDoc.Sheets.getCount() - 1 Then
+        Msgbox( "Invalid Sheet index: " & iSheetIndex & ".", 16, "macro:Batch_Replace()" )
+        GoTo Exit_Function
+    End If
+
+    Dim oSheet As Object, oRange As Object, aData As Variant
+    oSheet = oCalcDoc.Sheets.getByIndex( iSheetIndex )          REM sheet containing the Find/Replace terms.
+    oRange = oSheet.getCellRangeByName( strCellRange )
+    aData = oRange.getDataArray()
+
+    Dim oDoc As Object : oDoc = ThisComponent                   REM Assume oDoc = Writer document.
+    If oDoc.SupportsService( "com.sun.star.sheet.SpreadsheetDocument" ) Then
+        oDoc = oDoc.CurrentController.ActiveSheet               REM oDoc = Calc document.
+    End If
+
+    Dim oReplace as Object
+    oReplace = oDoc.createReplaceDescriptor()
+    oReplace.SearchRegularExpression = bUseRegularExpressions
+    oReplace.SearchCaseSensitive     = bCaseSensitive
+    oReplace.SearchWords             = bWholeWords
+
+    Dim i As Integer, nReplaced As Integer, aRow As Variant
+    If uBound( aData ) >= 0 And uBound( aData(0) ) > 0 Then     REM Require at least 1 row and 2 columns.
+        For i = 0 To uBound( aData )                            REM Traverse rows.
+            aRow = aData( i )
+            oReplace.setSearchString( aRow( 0 ) )
+            oReplace.setReplaceString( aRow( 1 ) )
+            nReplaced = nReplaced + oDoc.replaceAll( oReplace ) REM Perform a Find & Replace.
+        Next i
+    End If
+
+    Batch_Replace = nReplaced
+
+Exit_Function:
+    If Not IsNull( oCalcDoc ) Then oCalcDoc.Close( True )
+End Function

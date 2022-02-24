@@ -1,0 +1,19 @@
+                    /*if ( feeItem.vattypeflag == 'E') {
+
+                        feeItem.taxAmount =  parseFloat(feeItem.amount) * (parseFloat(feeItem.vatpercentage) / 100);
+
+                        console.log("feeItem.taxAmount",feeItem.taxAmount);
+    
+                        feeItem.totalAmount = parseFloat(feeItem.amount) + parseFloat(feeItem.taxAmount);
+
+                        console.log("feeItem.totalAmount",feeItem.totalAmount);
+
+                    } else {
+
+                        feeItem.taxAmount = parseFloat(feeItem.amount) / (1 + parseFloat(feeItem.vatpercentage)/100);
+    
+                        feeItem.amount = parseFloat(feeItem.amount) - parseFloat(feeItem.taxAmount);
+
+                        feeItem.totalAmount = feeItem.amount;
+
+                    }*/

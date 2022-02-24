@@ -1,0 +1,2 @@
+cd /usr/lib64/libreoffice
+soffice --convert-to pdf "https://ettorney.s3.af-south-1.amazonaws.com/acme/documents/Client%20Letter.docx" --outdir "/var/www/html/storage/app/public/vanb/1" --headless

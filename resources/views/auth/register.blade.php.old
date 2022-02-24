@@ -1,0 +1,302 @@
+@extends('layouts.guest')
+@section('title', 'Register')
+
+
+@section('content')
+
+    <guest-navbar page="register"></guest-navbar>
+
+    <div class="row justify-content-center pt-5">
+        <div class="col-md-8">
+            <form id="register-form" method="POST" action="{{ route('register') }}">
+                @csrf
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h1>Register</h1>
+                    </div>
+        
+                    <div class="card-body py-3">
+        
+                        <div class="row justify-content-center">
+        
+                            <div class="col-md-12">
+        
+                                {{-- <div class="mb-3">Welcome to Ettorney. Registration requires a number of steps to ensure that your profile is setup correctly.</div> --}}
+        
+                                <div class="row">
+                                    <div class="col-lg-6">
+                                        <fieldset>
+                                            <legend>&nbsp;&nbsp;Company Details&nbsp;&nbsp;</legend>
+                                            <div class="form-group row">
+                                                <label for="code" class="col-md-3 col-form-label text-md-right">Code</label>
+        
+                                                <div class="col-md-8">
+                                                    <input id="company_code" type="text" class="form-control{{ $errors->has('company_code') ? ' is-invalid' : '' }}" name="company_code" required value="{{ old('company_code') }}">
+                                                    <span class="small mr-2">Provide a code to identify your company.</span><span class="badge badge-soft-danger" onclick="ShowCompanyCodeNotes()">Read More</span>
+                                                    @if($errors->has('company_code'))
+                                                    <span class="invalid-feedback" role="alert"><strong>{{ $errors->first('company_code') }}</strong></span>
+                                                    @endif
+                                                </div>
+                                            </div>
+        
+                                            <div class="form-group row">
+                                                <label for="company_name" class="col-md-3 col-form-label text-md-right">Company Name</label>
+        
+                                                <div class="col-md-8">
+                                                    <input id="company_name" type="text" class="form-control{{ $errors->has('company_name') ? ' is-invalid' : '' }}" name="company_name" required value="{{ old('company_name') }}">
+                                                    <span class="small">Enter the legal name of your company.</span>  
+                                                    @if($errors->has('company_name'))
+                                                    <span class="invalid-feedback" role="alert"><strong>{{ $errors->first('company_name') }}</strong></span>
+                                                    @endif
+                                                </div>
+                                            </div>
+        
+                                            <div class="form-group row">
+                                                <label for="company_trading_name" class="col-md-3 col-form-label text-md-right">Trading Name</label>
+        
+                                                <div class="col-md-8">
+                                                    <input id="company_trading_name" type="text" class="form-control{{ $errors->has('company_trading_name') ? ' is-invalid' : '' }}" name="company_trading_name" required value="{{ old('company_trading_name') }}">
+                                                    <span class="small">Enter the trading name of your company.</span>  
+                                                    @if($errors->has('company_trading_name'))
+                                                    <span class="invalid-feedback" role="alert"><strong>{{ $errors->first('company_trading_name') }}</strong></span>
+                                                    @endif
+                                                </div>
+                                            </div>
+
+
+                                            <div class="form-group row">
+                                                <label for="company_trading_name" class="col-md-3 col-form-label text-md-right">Country</label>
+                                                <select class="form-control" 
+                                                id="select-country" 
+                                                name="company_country" 
+                                                title="The country this Company operates in">
+                                                    <option value="ZA" selected>South Africa</option>
+                                                </select>
+                                    
+        
+        
+        
+        
+                                        </fieldset>
+                                        
+                                    </div>
+        
+                                    <div class="col-lg-6 mt-3 mt-lg-0">
+        
+                                        <fieldset>
+                                            <legend>&nbsp;&nbsp;User&nbsp;&nbsp;</legend>
+        
+
+                                            <div class="form-group row">
+                                                <label for="name" class="col-md-4 col-form-label text-md-right">{{ __('Name') }}</label>
+                    
+                                                <div class="col-md-6">
+                                                    <input id="name" type="text" class="form-control @error('name') is-invalid @enderror" name="name" value="{{ old('name') }}" required autocomplete="name">
+                                                    <span class="small mr-2">You will be the administrator of this company.</span><span class="badge badge-soft-danger" id="administrator-notes"  onclick="ShowAdministratorNotes()">Read More</span>
+                                                    @error('name')
+                                                        <span class="invalid-feedback" role="alert">
+                                                            <strong>{{ $message }}</strong>
+                                                        </span>
+                                                    @enderror
+                                                </div>
+                                            </div>
+                    
+                                            <div class="form-group row">
+                                                <label for="email" class="col-md-4 col-form-label text-md-right">{{ __('Email Address') }}</label>
+                    
+                                                <div class="col-md-6">
+                                                    <input id="email" type="email" class="form-control @error('email') is-invalid @enderror" name="email" value="{{ old('email') }}" required autocomplete="email">
+                    
+                                                    @error('email')
+                                                        <span class="invalid-feedback" role="alert">
+                                                            <strong>{{ $message }}</strong>
+                                                        </span>
+                                                    @enderror
+                                                </div>
+                                            </div>
+                    
+                                            <div class="form-group row">
+                                                <label for="password" class="col-md-4 col-form-label text-md-right">{{ __('Password') }}</label>
+                    
+                                                <div class="col-md-6">
+                                                    <input id="password" type="password" class="form-control @error('password') is-invalid @enderror" name="password" required autocomplete="new-password">
+                    
+                                                    @error('password')
+                                                        <span class="invalid-feedback" role="alert">
+                                                            <strong>{{ $message }}</strong>
+                                                        </span>
+                                                    @enderror
+                                                </div>
+                                            </div>
+                    
+                                            <div class="form-group row">
+                                                <label for="password-confirm" class="col-md-4 col-form-label text-md-right">{{ __('Confirm Password') }}</label>
+                    
+                                                <div class="col-md-6">
+                                                    <input id="password-confirm" type="password" class="form-control" name="password_confirmation" required autocomplete="new-password">
+                                                </div>
+                                            </div>
+                                            
+                                        </fieldset>
+        
+        
+                                    </div>
+                                </div>
+        
+                            </div>
+        
+                        </div>
+        
+        
+                    </div>
+        
+                    <div class="card-footer">
+        
+                            <div class="text-right">
+                                <button type="button" onclick="submitForm()" class="btn btn-lg btn-primary"><i class="fa fa-check-circle"></i> Register</button>                    </div>
+                            </div>
+        
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="modal" id="company-code-notes-modal">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+        
+                    <div class="modal-header">
+                        <h2 class="modal-title"><i class="fa fa-building mr-2"></i><span>Company Code</span></h2>
+                        <i title="Close this window" class="top-right fa fa-times-circle fa-2x text-danger cp" data-dismiss="modal"></i>
+                    </div>
+        
+                    <div class="modal-body" p-3>
+                        <h4>
+                            <p>You can regsiter multiple Companies on Ettorney. The Company Code identifies the company on the Ettorney system.</p>
+                            <p>You will use this Code to connect to this Company when you login.</p>
+                            <p>A Code can be any alpha numeric characters with a minimum of 4 characters and a maximum of 20 characters.</p>
+                            <p>Remember this code - you will need it to login once you have registered.</p>
+                        </h4>
+                    </div>
+        
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-danger" data-dismiss="modal"><i class="fa fa-times-circle fa-lg"></i> Close</button>
+                    </div>
+        
+                </div>
+            </div>
+        </div>
+
+        <div class="modal" id="administrator-notes-modal">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+        
+                    <div class="modal-header">
+                        <h2 class="modal-title"><i class="fa fa-user-secret mr-2"></i><span>Administrator</span></h2>
+                        <i title="Close this window" class="top-right fa fa-times-circle fa-2x text-danger cp" data-dismiss="modal"></i>
+                    </div>
+        
+                    <div class="modal-body" p-3>
+                        <h4>
+                            <p>When you register a Company, you will automatically be an Employee of the Company.
+                                A Company can have multiple Employees with different security levels. You will have Administrator privileges.
+                            </p>
+                            <p>The Adminstrator has the highest security level and is responsible for maintaining and administering the Company, it's Employees and overall Setup.</p>
+                            <p>As the Adminstrator, you can add and remove Employees and also restrict their access to certain areas of the program if necessary.</p>
+                        </h4>
+                    </div>
+        
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-danger" data-dismiss="modal"><i class="fa fa-times-circle fa-lg"></i> Close</button>
+                    </div>
+        
+                </div>
+            </div>
+        </div>
+        
+
+    </div>
+@endsection
+@section('scripts')
+
+<script>
+
+    let dummyEmail = Math.random().toString(12).substring(2, 10) + '@gmail.com';
+    let dummyCode = Math.random().toString(12).substring(2, 10);
+
+    // Data for testing....
+    $("#company_code").val('ACME');
+    //$("#company_code").val(dummyCode);
+    $("#company_name").val('Acme Inc');
+    $("#company_trading_name").val('Acme Attorneys');
+    //$("#company_name").val(dummyCode  + ' Company');
+    $("#name").val("Rick Jordan");
+    $("#email").val('acme@legalsuite.co.za');
+    //$("#email").val(dummyEmail);
+    $("#password").val("secret");
+    $("#password-confirm").val("secret");
+
+
+function submitForm() {
+
+    if ( checkData() === true ) {
+
+        $('#register-form').submit();
+
+    }
+}
+
+function checkData() {
+
+    if ( ! $("#name")[0].checkValidity() ) {
+        validationError('Please enter your name'); 
+        return false;
+    }
+
+    if ( ! $("#email")[0].checkValidity() ) {
+        validationError('Please enter your email address'); 
+        return false;
+    }
+
+    if ( ! $("#password")[0].checkValidity() ) {
+        validationError('Please provide a password'); 
+        return false;
+    }
+    
+
+    if ( ! $("#company_code")[0].checkValidity() ) {
+        validationError('Please provide a company code'); 
+        return false;
+    }
+
+    if ( ! $("#company_name")[0].checkValidity() ) {
+        validationError('Please provide a company name'); 
+        return false;
+    }
+    
+    
+    return true;
+}
+
+
+function validationError(message) {
+
+    $('#messageModalTitleText').text('Incomplete Information');
+    $('#messageModalTitle').removeClass('text-success').addClass('text-danger');
+    $('#messageModalTitleIcon').removeClass('fa-check-circle').addClass('fa-times-circle');
+    $('#messageModalBody').html(message);
+    $('#messageModal').modal('show');
+
+}
+
+function ShowAdministratorNotes() {
+    $('#administrator-notes-modal').modal('show');
+}
+function ShowCompanyCodeNotes() {
+    $('#company-code-notes-modal').modal('show');
+}
+
+</script>
+
+@endsection

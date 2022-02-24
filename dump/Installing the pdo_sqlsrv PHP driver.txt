@@ -1,0 +1,33 @@
+Hi
+
+Ok - I finally resolved it.
+
+I see that you used WHM to upload the sqlsrv_pdo driver.
+
+The LAST STEP was to tell PHP to use the extension.
+
+In PHP 7 and later, there is this note in the php.ini file:
+
+; Note: packaged extension modules are now loaded via the .ini files
+; found in the directory /etc/php.d; these are loaded by default.
+
+In previous versions of PHP, we simply added something like this to the php.ini:
+
+extension=pdo_sqlsrv.so
+
+But now we have to add an ini file like this:
+
+ /opt/cpanel/ea-php72/root/etc/php.d/30-pdo_sqlsrv.ini
+
+ with one line in it:
+
+ extension=pdo_sqlsrv.so
+
+ I created this file and then restarted PHP-FPM and Apache
+
+ /scripts/restartsrv_apache_php_fpm
+ /scripts/restartsrv_httpd
+
+... and it all works perfectly. 
+
+Thanks for all your help. 

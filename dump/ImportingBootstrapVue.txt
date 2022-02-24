@@ -1,0 +1,12 @@
+import { BFormCheckbox } from 'bootstrap-vue';
+
+export default {
+
+    components: {
+        'b-form-checkbox': BFormCheckbox,
+    },
+
+    // Doing this because Vue automatically prefixes directive names with `v-`
+    // directives: {
+    //     'b-form-checkbox': BFormCheckbox,
+    // }, 

@@ -1,0 +1,65 @@
+<template>
+    <div :class="_class">
+        <select class="form-control" 
+        :id="id" 
+        name="option" 
+        model="option" 
+        title="Select an option"/> 
+    </div>
+</template>
+
+<script>
+export default {
+
+    props: {
+        id: String,
+        _class: {
+            type: String,
+            default: 'col-md-6',
+        },
+        popOver: {
+            type: String,
+            default:'',
+        },
+
+    },
+
+    data() {
+        return {
+            selectedOption: null,
+            options: [],
+        }  
+    },
+
+    methods: {
+
+        loadComponent() {
+
+            let _this = this;
+
+            var $select = $('#' + this.id);
+
+            $select.empty();
+
+            $.each(this.options, function(index, value) {
+                $select.append('<option value="' + value + '">' + value + '</option>');
+            });
+
+            $select.selectpicker();
+
+            $select.selectpicker('refresh');
+            
+            $select.selectpicker('val',  this.selectedOption);
+
+            $select.off('changed.bs.select').on('changed.bs.select', function () {
+
+                _this.$parent.record.value = $(this).val();
+
+            });
+
+
+        },
+
+    },
+};
+</script>

@@ -1,0 +1,243 @@
+<template>
+<div :id="id" :class="_class">
+
+    <div class="form-group row">
+        <select-date-period 
+            _class="col-md-5" 
+            :id="id + '-select-date-period'" 
+            ref="select-date-period"
+            :label="label"
+            parentRecord="filterRecord"
+        />
+
+        <div class="col-md-3">
+
+            <button 
+                style="margin-top: 1.8rem"
+                type="button" class="btn btn-success btn-sm"
+                v-show="showApplyButton"
+                title="Apply this filter"
+                @click="applyFilter">
+                <i class="fa fa-plus-circle mr-2"></i>Apply
+            </button>
+
+        </div>
+
+    </div>
+
+    <div v-show="filterRecord.period === 'Custom'" class="form-group row">
+
+        <div class="col-md-4">
+            <label>From</label>
+            <date-picker v-model="filterRecord.fromDate" :config="$root.datePickerIsoOptions"/>
+            <div v-if="fromDateError.length" v-html="fromDateError[0]" class="invalid-feedback"></div>
+        </div>
+        <div class="col-md-4">
+            <label>To</label>
+            <date-picker v-model="filterRecord.toDate" :config="$root.datePickerIsoOptions"/>
+            <div v-if="toDateError.length" v-html="toDateError[0]" class="invalid-feedback"></div>
+        </div>
+
+    </div>
+
+</div>
+</template>
+
+<script>
+export default {
+
+    props: {
+        id: String,
+        _class: {
+            type: String,
+            default:'',
+        },
+        label: {
+            type: String,
+            default:'Date',
+        },
+    },
+
+    data() {
+
+        return {
+            filterName: null,
+            filterColumn: null,
+            showApplyButton: true,
+            currentPeriod: 'This Week',
+            currentFromDate: null,
+            currentToDate: null,
+            filterRecord: {
+                fromDate: null,
+                toDate: null,
+                period: null,
+            },
+            fromDateError: [],
+            toDateError: [],
+        }
+
+    },
+
+    computed: {
+
+        filterPeriod() {
+            return this.filterRecord.period;
+        },
+
+        filterFromDate() {
+            return this.filterRecord.fromDate;
+        },
+
+        filterToDate() {
+            return this.filterRecord.toDate;
+        },
+
+    },
+
+    watch: {
+
+        filterPeriod: function (newValue) {
+
+            if ( newValue === this.currentPeriod ) return;
+            
+            this.showApplyButton = true;
+
+            this.currentPeriod = newValue;
+
+        },
+
+        filterFromDate: function (newValue) {
+
+            if ( newValue === this.currentFromDate ) return;
+            
+            this.toDateError = [];
+            this.fromDateError = [];
+
+            if (!newValue) {
+                this.fromDateError.push('Please enter a Date');
+                this.showApplyButton = false;
+                return;
+            }
+            if (!this.filterRecord.toDate) {
+                this.toDateError.push('Please enter a Date');
+                this.showApplyButton = false;
+                return;
+            }
+
+            if ( moment(this.filterRecord.toDate).isBefore(newValue) ) {
+                this.fromDateError.push('The From Date cannot be after the To Date');
+                this.showApplyButton = false;
+                return;
+            }
+
+            this.showApplyButton = true;
+
+            this.currentFromDate = newValue;
+
+
+        },
+
+        filterToDate: function (newValue) {
+
+            if ( newValue === this.currentToDate ) return;
+
+            this.toDateError = [];
+            this.fromDateError = [];
+
+            if (!newValue) {
+                this.toDateError.push('Please enter a Date');
+                this.showApplyButton = false;
+                return;
+            }
+
+            if (!this.filterRecord.fromDate) {
+                this.fromDateError.push('Please enter a Date');
+                this.showApplyButton = false;
+                return;
+            }
+
+            if ( moment(newValue).isBefore(this.filterRecord.toDate) ) {
+                this.toDateError.push('The To Date cannot be before the From Date');
+                this.showApplyButton = false;
+                return;
+            }
+
+            this.showApplyButton = true;
+
+            this.currentToDate = newValue;
+
+        },
+
+    },
+
+    methods: {
+
+        primeFilter(filterName, filterColumn) {
+
+            this.filterName = filterName;
+            this.filterColumn = filterColumn;
+
+            this.showApplyButton = true;
+
+            this.fromDateError = [];
+            this.toDateError = [];
+
+            this.periodDropDown = this.$refs['select-date-period'];
+
+            // Set the Clear FilterIcon
+            this.existingDateFilter = this.$parent.getFilter(this.filterName) ? true : false;
+            this.periodDropDown.clearIcon = this.existingDateFilter;
+
+            this.currentPeriod = 'This Week';
+
+            this.filterRecord.period = this.currentPeriod;
+
+            this.periodDropDown.selectedPeriod = this.filterRecord.period; 
+
+            let dateRange = this.$root.getDateRange(this.periodDropDown.selectedPeriod);
+
+            this.filterRecord.fromDate = this.currentFromDate = dateRange.fromDate;
+            this.filterRecord.toDate = this.currentToDate = dateRange.toDate;
+            
+            this.periodDropDown.loadComponent();
+
+        },
+
+        applyFilter() {
+
+            this.showApplyButton = false;
+
+            this.periodDropDown.clearIcon = true;
+
+            this.$parent.deleteFilter(this.filterName);
+
+            this.$parent.addFilter(this.filterColumn, this.filterName, this.filterRecord.fromDate, this.filterRecord.toDate, null, this.filterRecord.period);
+
+            this.$parent.parent.setUserFilters();
+
+            this.$parent.parent.table.ajax.reload();
+
+
+        },
+
+        clearFilter() {
+
+            this.showApplyButton = true;
+
+            this.periodDropDown.clearIcon = false;
+
+            this.$parent.deleteFilter(this.filterName);
+
+            this.$parent.parent.setUserFilters();
+
+            this.$parent.parent.table.ajax.reload();
+
+        },
+
+
+    }
+
+
+}
+</script>
+

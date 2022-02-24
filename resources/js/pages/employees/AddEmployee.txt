@@ -1,0 +1,69 @@
+<template>
+        <div class="modal" :id="id" >
+
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+
+                <div class="modal-content" style="border-color:steelblue">
+
+                    <div class="modal-header steelblue">
+                        <h2 class="modal-title page-title"><i class="fa fa-male mr-2"></i>Employee will be Added</h2>
+                        <i title="Close this window" class="cp top-right fa fa-times-circle fa-2x text-white" data-dismiss="modal"></i>
+                    </div>
+
+                    <div class="modal-body p-3" style="max-height: 75vh;overflow-y: auto;">
+                        
+                        <form :id="id + '-form'" ref="add-employee-form" :modal="true" @formSubmitted="hide"/>
+
+                    </div>
+
+                    <div class="modal-footer ">
+                        <button class="btn btn-success form-button mr-3" @click="saveEmployee" title="Add the Employee"><i class="fa fa-check-circle fa-lg mr-2"></i>OK</button>
+                        <button class="btn btn-danger form-button" @click="hide" title="Exit without saving"><i class="fa fa-times-circle fa-lg mr-2"></i>Cancel</button>
+                    </div>
+
+
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+</template>
+
+<script>
+
+import modalTemplate from "@components/modals/modal-template";
+
+export default {
+
+    mixins: [modalTemplate],       
+
+    components: {
+        EmployeeForm: () => import("./EmployeeForm"),
+    },
+
+    methods: {
+
+        initNewRecord() {
+
+            this.$refs['add-employee-form'].table = this.$parent.table;
+            this.$refs['add-employee-form'].insertClicked();
+
+            this.show();
+
+        },
+
+
+        saveEmployee() {
+
+            this.$refs['add-employee-form'].submitForm();
+
+        },
+        
+    },
+
+}  
+</script>
+

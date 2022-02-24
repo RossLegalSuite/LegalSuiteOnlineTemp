@@ -1,0 +1,271 @@
+
+export default Vue.extend({
+
+    data() {
+        return {
+            currentRecord: null,
+            currentSorter: null,
+        };
+    },
+
+    methods: {
+
+        setOptions() {
+
+            this.options = {
+                title: 'Generated Documents', 
+                notifyMessage: null,
+                folder: 'documents', 
+                fileName: this.fileName,
+                templateId: this.templateId,
+                templateContents: this.templateContents,
+                createTemplateData: this.createTemplateData,
+            };
+
+        },
+
+        async createTemplateData() {
+
+            return await root.createRecordTemplateData(this.generateDocumentsSource.toLowerCase(), this.templateRecord, this.currentRecord.recordid, this.currentSorter )
+
+            .then( (templateData) => {
+
+                return templateData;
+
+            }).catch( (error) => {
+
+                showError('Generating Documents createTemplateData Error',error);
+
+                return {};
+
+            });
+
+        },
+
+        async assembleDocuments(templateId) {
+
+            try {
+
+                this.currentSorter = null;
+
+                this.templateId = templateId;
+                
+                let template = await axios.post('/lolsystemtemplate/get/' + templateId)
+                
+                if ( template.data.errors ) {
+                    
+                    showError('Error',template.data.errors);
+                    
+                } else {
+
+                    this.templateRecord = template.data.data[0];
+                    this.templateContents = template.data.data[0].contents;
+
+                    root.createRecordTemplateData(this.generateDocumentsSource.toLowerCase(), this.templateRecord, this.selectedRows[0])
+
+                    .then( (templateData) => {
+
+                        this.templateData = templateData;
+
+                        root.generateDocumentsModal.load(this);
+
+                    }).catch( (error) => {
+
+                        showError('Generating Documents Error',error);
+
+                    });
+
+                }
+
+            } catch(error) { 
+
+                showError('Error', error); 
+
+            };
+
+        },
+
+        // Called by GenerateDocumentsModal.vue
+        async createDocuments( method = 'preview') {
+
+            try {
+
+                this.currentSorter = null;
+
+                root.$snotify.simple('Please wait...', 'Generating Documents', { timeout: 0, icon: 'img/cogs.gif' });
+
+                let savedFileName = 'Documents-' + moment().format('YYYY-MM-DD-HH-mm-ss') + '.pdf';
+
+                await this.addDocuments( method );
+
+                if ( this.pdfFiles.length ) {
+
+                    axios.post('/pdf/combine', {
+                        pdfFiles: JSON.stringify(this.pdfFiles),
+                        folder: 'documents',
+                        saveAs: savedFileName
+                    })
+
+                    .finally(() => {
+                        root.$snotify.clear();
+                    })
+
+                    .then(( response ) => {
+
+                        if ( response.data.error ) {
+
+                            showError('Error combining Documents',response.data.error);
+
+                        } else {
+
+                            this.$root.documentGenerator.executeMethod( method, 'Documents',  savedFileName, response.data.url, response.data.path);
+
+                        }
+
+                    });
+
+                } else {
+
+                    root.$snotify.clear();
+
+                }
+
+
+            } catch(error) { 
+                showError('Error', error); 
+            };
+
+        },
+
+        async addDocuments( method) {
+
+            try {
+
+                this.pdfFiles = [];
+
+                // Bug: This will not work if selectedAllFlag is set
+
+                await root.asyncForEach(this.selectedRows, async (id) => {
+                    
+                    let record = await axios.post('/' + this.generateDocumentsSource.toLowerCase() + '/get/' + id);
+
+                    this.record = record.data.data[0];
+
+                    let notificationMessage = '';
+                    
+                    if ( this.generateDocumentsSource == 'Matter' && this.templateRecord.roleid ) {
+
+                        await this.assembleMatPartyDocuments(this.record);
+
+                    } else {
+
+                        if (this.generateDocumentsSource == 'Party') {
+                            
+                            this.pageTitle = 'Document: ' + this.record.name;
+                            
+                            this.fileName = 'Document' + this.record.matterprefix + '.pdf';
+
+                            notificationMessage = 'Assembling document for Party (' + this.record.matterprefix + ')';
+                            
+                        } else if (this.generateDocumentsSource == 'Matter') {
+                            
+                            this.pageTitle = 'Document: ' + this.record.description;
+                            
+                            this.fileName = 'Document' + this.record.fileref + '.pdf';
+
+                            notificationMessage = 'Assembling document for Matter (' + this.record.fileref + ')';
+
+                        }
+
+                        $('.snotify-centerCenter .snotifyToast__body').text(notificationMessage);
+
+                        if (this.selectedRows.length === 1 ) {
+                            
+                            this.setOptions();
+                            
+                            await this.generateDocument( method, this.options );
+                            
+                        } else {
+                            
+                            this.setOptions();
+
+                            await this.generateDocument( 'create', {noPassword: true, ...this.options} );
+
+                            let uploadedDocument = this.$root.documentGenerator.getDocumentDetails();
+
+                            this.pdfFiles.push( {
+                                path: uploadedDocument.documentPath,
+                                fileName: uploadedDocument.documentFileName
+                            });    
+
+                        }
+                    }
+
+                });
+
+                if (this.pdfFiles.length ) {
+
+                    $('.snotify-centerCenter .snotifyToast__body').text('Created ' + this.pdfFiles.length + ' documents');
+
+                } else {
+
+                    $('.snotify-centerCenter .snotifyToast__body').text('Created ' + this.selectedRows.length + ' documents');
+
+                }
+            } catch(error) { 
+                showError('Error', error); 
+            };
+
+
+        },
+
+
+        async assembleMatPartyDocuments( matterRecord ) {
+
+            try {
+
+                let response = await axios.post('/matparty/get', {
+                    whereRaw: 'MatterId = ' + matterRecord .recordid + ' AND RoleId = ' + this.templateRecord.roleid,
+                    orderBy: 'MatParty.Sorter'
+                });
+
+                await root.asyncForEach(response.data.data, async (matParty) => {
+
+                    this.pageTitle = 'Document: ' + matterRecord.fileref + '(' + matParty.partyname + ')';
+                            
+                    this.fileName = 'Document' + matterRecord.fileref + '/' + matParty.partymatterprefix + '.pdf';
+
+                    this.currentSorter = matParty.sorter;
+
+                    $('.snotify-centerCenter .snotifyToast__body').text('Creating ' + this.fileName);
+
+                    this.setOptions();
+
+                    await this.generateDocument( 'create', {noPassword: true, ...this.options} );
+
+                    let uploadedDocument = this.$root.documentGenerator.getDocumentDetails();
+
+                    this.pdfFiles.push( {
+                        path: uploadedDocument.documentPath,
+                        fileName: uploadedDocument.documentFileName
+                    });    
+
+                });
+            } catch(error) { 
+                showError('Error', error); 
+            };
+
+        },
+
+        async generateDocument( method, options ) {
+
+            this.currentRecord = this.record; // Required to create TemplateData
+
+            await this.$root.documentGenerator.generateDocument(method, options);
+
+        },
+
+
+    }
+
+})

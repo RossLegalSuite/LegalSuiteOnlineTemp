@@ -1,0 +1,41 @@
+The following explains how to use trust accounting in QuickBooks Online
+
+1. Chart of accounts.
+
+You need two bank accounts: a BUSINESS bank account and a TRUST bank account where you keep client trust money. 
+
+To prepare QuickBooks Online for trust accounting, you need to create the liability account. That’s a detailed trust account liabilities that we’ll call “Funds held in trust.” 
+This liability account balances out the bank account — they always need to be in balance. But we use the liability account to keep track of to which client we owe which money. 
+
+2. Record a Trust Deposit
+
+The first step is to add a client in QuickBooks Online. The temptation here, is to do a “receive payment” or maybe a “credit memo” but that is not the way to do it. 
+
+What we have to do is first prepare the chart of accounts so that there’s a sub-account under “funds held in trust” for that client.
+
+We then create another liability account, with the detail type of Trust account liabilities. We’ll name it for the client: “Sample Client” — and then the key thing is to make it a sub-account under the “funds held in trust” liability account. Now, we have a sub-account and as we take money from clients, sub-accounts will appear under the “funds held in trust” and we can immediately see how much money out of the bank account we account for which client. That prepares us for receiving a retainer from that client.
+
+Next, we create a deposit into the TRUST account. We say that it’s received from our sample client and here’s the key: the account for this deposit line item needs to be the sub-account under sub-liability account that we just created. This is important to keep track of the money correctly. We click, “received retainer.” Let’s say it was a check in the amount of R5000. Press “save.” Now, we can go to the chart of accounts to see that we have R5000 in our bank account and that we show R5000 under the sample client, so it means that they have R5000 in our trust account.
+
+Let’s create “another client” and then we’ll create an account for them under the liability account, sub-account of “funds held in trust.” Press Save. Let’s clear another deposit and for this client, we now set the account to their account under “funds held in trust.” It’s another retainer. Let’s say we got R2000 from them. Now, we have a clear picture of the trust account. R7000 total. R2000 from the other client and R5000 from the sample client. 
+
+3. Invoices
+
+We create an invoice: New transaction invoice, R2000 worth of work. Now, we have R5000 in the trust account, but it doesn’t show up in QuickBooks Online. In QuickBooks Online, it’s difficult to see in the right places what the balance is.
+
+To see the balance of the trust account, you have to go over to the accounting tab and see that this client has R5000 available. I want to put that on the invoice. The only option is to use the memo field to say, “Current retainer balance R5000. Balance after invoice payment, R3000.” We put into the memo field what we want to communicate to the client in terms of how this should be paid. This becomes a notice that we’re going to be paying this through the trust account. You need to update manually the memo field to correctly reflect what the trust account balance is.
+
+4. Payment
+
+There’s an open invoice for R2000 and I want to pay it through the trust. We do a check where we pick the client, sample client, and we pick the TRUST account as the bank account and then we add a line item where we reference the liability account for that client and say “Payment of invoice.” R2000 Client, Sample Client. And then the 2nd step we need to do is record a payment of the invoice.
+
+So we insert, for example, check, payment invoice R2000, save. Let’s look at what that did in terms of our balances. Now, the Sample Client – his account balance is zero. And when you go to the chart of accounts, the TRUST bank account balance is R6000 and the operating account balance is R2000. We transfer R2000 essentially from the trust account to our operating account. So now, it’s the lawyer’s money. On the liability side, we now see that the client’s liability is down to R3000. So he has R3000 left that we’re holding in trust for this one. It’s all accurate.
+
+The key thing is to have those two transactions go in and then also, we need to then transfer the money from the bank account. So that’s a payment. It’s two transactions.
+
+5. Trust Statements
+
+At any moment, you have to be audit ready. That includes always being able to account for the money in the trust account and giving detailed statements of transactions for each client. 
+If you want to see the summary of all the clients balances for your trust account, you click the chart of accounts showing a list of liability sub-accounts. 
+And if you want to see the detailed transactions for a specific client or matter, you just click on their liability account.
+

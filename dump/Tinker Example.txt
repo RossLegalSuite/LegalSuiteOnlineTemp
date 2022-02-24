@@ -1,0 +1,25 @@
+$companyCode = 'test';
+$dbHost = \Config::get('values.dbhost');
+$db = strtolower(preg_replace('/[^a-zA-Z0-9-_\.]/','', $companyCode));
+$user = $db . '_user';
+$password = $db . '_1024';
+
+config(['database.default' => 'user']);
+
+config(['database.connections.user' =>
+[
+    'driver' =>     'mysql',
+    "host" =>       $dbHost,
+    "database" =>   $db,
+    "port" =>       '3306',
+    "username" =>   $user,
+    "password" =>   $password,
+    'charset' =>    'utf8mb4',
+    'collation' =>  'utf8mb4_unicode_ci',
+    'prefix' =>     '',
+    'prefix_indexes' => true,
+    'strict' => true,
+    'engine' => null,
+]]);
+
+$x = App\Models\Party::first();

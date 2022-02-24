@@ -1,0 +1,42 @@
+
+====================================================================================
+Advanced Notes - Create a Laravel application with custom domain name outside apache2 directory
+====================================================================================
+
+See: https://hackernoon.com/a-step-by-step-guide-to-setup-php-laravel-environment-linux-50b55a4fd15e
+
+first create a config file under /etc/apache2/sites-available directory.
+
+cd /etc/apache2/sites-available
+sudo touch lara_app.conf
+Past and update DocumentRoot and Directory with your app folder inside the file.
+
+<VirtualHost *:80>.
+ServerName lara_app.dev
+ServerAdmin webmaster@localhost
+# Your Custom folder 
+DocumentRoot /media/disk2/Work/lara_app/public/
+<Directory /media/disk2/Work/lara_app/public/>
+Options Indexes FollowSymLinks
+AllowOverride None
+Require all granted
+</Directory>
+ErrorLog ${APACHE_LOG_DIR}/error.log
+CustomLog ${APACHE_LOG_DIR}/access.log
+</VirtualHost>
+
+Next, give to your custom folder the permission to execute
+
+chmod -R 755 /media/disk2/Work/lara_app/public/
+
+Then disable the default site and enable you new lara_app site.
+
+sudo a2dissite 000-default
+sudo a2ensite lara_app
+At last, you can configure the lara_app.dev domain name by adding this line into /etc/hosts file.
+
+# /etc/hosts
+127.0.0.1 localhost
+127.0.0.1 lara_app.dev
+Now you can access to your app through your custom domain name : http://lara_app.dev
+

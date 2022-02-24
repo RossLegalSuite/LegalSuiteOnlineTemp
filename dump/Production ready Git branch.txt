@@ -1,0 +1,40 @@
+====================================================================================
+Have a production ready Git branch of your App
+====================================================================================
+
+When we are developing our app we don’t want to have to make sure all our changes constantly need to be ready for production.
+
+As such, we need to create a production version of our app which we can merge production ready changes into when they are fit for deployment.
+
+On your local machine where you are developing our app (assuming we have installed Git installed) open a terminal and navigate to the folder where you are developing and have your repo. Create a production branch of the project.
+
+//On your local/dev machine!
+git branch production
+
+Whenever your development or other branches are ready to have their changes pushed into production we have to enter into the production branch.
+
+So let’s switch into the production branch.
+
+git checkout production
+
+Merge our development changes. Make sure you have committed your changes in the development branch! (Replace master with your development branch name).
+
+git merge --no-ff master
+
+Note: Adding ‘ -- no-ff’ makes sure it creates a new commit is made so we can track development merges into production.
+
+
+Push this new branch so it appears on our remote GitHub repository.
+
+git push origin production
+
+(You may want to switch back to your dev branch to develop on it later. Simply use the command ‘git checkout master’ to switch back.)
+
+
+On the webserver
+---------------
+Pull in your production branch
+
+Note: Whenever you need to pull down the production branch of your project just cd into the directory and run ‘git pull origin production’.
+
+git pull origin production

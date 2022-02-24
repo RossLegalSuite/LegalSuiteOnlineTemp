@@ -1,0 +1,27 @@
+Notes from Ross:
+
+ettorney cloning
+
+Clone Project
+
+-> Composer Install
+-> Npm Install
+
+-> Create env file
+-> Create Database
+
+-> Link Databases either through env or Database.php
+
+->Remove --skip-grant-tables from sql ini file
+
+-> php artisan migrate
+
+css issue,
+
+In webpack.mix.js .sass("resources/sass/app.scss", "public/css") needs to run to create an app.scss in the public css folder which will have bootstrap etc in it.
+
+->  php artisan key:generate
+
+-> npm run dev
+
+Ready to go.

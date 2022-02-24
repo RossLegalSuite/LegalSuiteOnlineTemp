@@ -1,0 +1,167 @@
+        setUserFilters() {
+
+            this.tableFilter = this.tableHaving = this.tableFilterDescription = '';
+
+            let columnFilterJoin, dateRange, toDate, fromDate;
+
+            let tableFilters = getTableFilter(this.tableId);
+
+            tableFilters = _.sortBy(tableFilters, function(tableFilter) { return tableFilter.index; })
+
+            let normalFilterCounter = 0
+
+            tableFilters.forEach( ( tableFilter ) => {
+
+                if ( !tableFilter.calculatedColumn ) {
+
+                    columnFilterJoin = !normalFilterCounter ? '' : ' ' + tableFilter.join + ' ';
+
+                    normalFilterCounter++;
+
+                    this.tableFilterDescription += columnFilterJoin;
+
+                    if ( tableFilter.filterType === 'String' ) {
+
+                        if ( tableFilter.method === 'Starts with' ) {
+
+                            this.tableFilter += columnFilterJoin + tableFilter.name + ' like "' + tableFilter.value + '%"';
+
+                        } else if ( tableFilter.method === 'Contains' ) {
+
+                            this.tableFilter += columnFilterJoin + tableFilter.name + ' like "%' + tableFilter.value + '%"';
+
+                        } else if ( tableFilter.method === 'Equals' ) {
+
+                            this.tableFilter += columnFilterJoin + tableFilter.name + ' = "' + tableFilter.value + '"';
+
+                        }
+
+                    } else if ( tableFilter.filterType === 'Boolean' ) {
+
+                        this.tableFilter += columnFilterJoin + tableFilter.name + ' = ' + tableFilter.value;
+
+                    } else if ( tableFilter.filterType === 'Lookup' || tableFilter.filterType === 'Dropdown' ) {
+
+                        this.tableFilter += columnFilterJoin + tableFilter.name + ' = "' + tableFilter.value + '"';
+
+                    } else if ( tableFilter.filterType === 'RadioButton' ) {
+
+                        this.tableFilter += columnFilterJoin + tableFilter.name + ' = "' + tableFilter.value + '"';
+
+                    } else if ( tableFilter.filterType === 'Date' ) {
+
+                        if ( tableFilter.period === 'Custom' ) {
+
+                            fromDate = moment(tableFilter.fromDate).format('YYYY-MM-DD');
+                            toDate = moment(tableFilter.toDate).add(1,'days').format('YYYY-MM-DD');
+
+                        } else {
+
+                            dateRange = this.$root.getDateRange(tableFilter.period);
+
+                            fromDate = moment(dateRange.fromDate).format('YYYY-MM-DD');
+                            toDate = moment(dateRange.toDate).add(1,'days').format('YYYY-MM-DD');
+
+                        }
+
+                        this.tableFilter += columnFilterJoin + '(' + tableFilter.name + ' >= "' + fromDate + '" and ' + tableFilter.name + ' < "' + toDate + '")';
+                        
+                    } else if ( tableFilter.filterType === 'Number' ) {
+
+                        if ( tableFilter.method === 'Between' ) {
+
+                            this.tableFilter += columnFilterJoin + '(' + tableFilter.name + ' >= ' + tableFilter.fromAmount + ' and ' + tableFilter.name + ' <= ' + tableFilter.toAmount + ')';
+
+                        } else if ( tableFilter.method === 'Equal to' ) {
+
+                            this.tableFilter += columnFilterJoin + '(' + tableFilter.name + ' = ' + tableFilter.fromAmount + ')';
+
+                        } else if ( tableFilter.method === 'Less than' ) {
+
+                            this.tableFilter += columnFilterJoin + '(' + tableFilter.name + ' < ' + tableFilter.fromAmount + ')';
+
+                        } else if ( tableFilter.method === 'Less than or equal to' ) {
+
+                            this.tableFilter += columnFilterJoin + '(' + tableFilter.name + ' <= ' + tableFilter.fromAmount + ')';
+
+                        } else if ( tableFilter.method === 'Greater than' ) {
+
+                            this.tableFilter += columnFilterJoin + '(' + tableFilter.name + ' > ' + tableFilter.fromAmount + ')';
+
+                        } else if ( tableFilter.method === 'Greater than or equal to' ) {
+
+                            this.tableFilter += columnFilterJoin + '(' + tableFilter.name + ' >= ' + tableFilter.fromAmount + ')';
+
+                        }
+
+                    } else {
+
+                        this.tableFilter += columnFilterJoin + ' 1 = 1';
+                        console.error('Unknown tableFilter.filterType', tableFilter.filterType);
+                    }
+
+                    this.tableFilterDescription += getFilterDescription(tableFilter);
+
+                }
+            });
+
+            let havingFilterCounter = 0
+
+            // Add "having" clause to filter by calculated columns
+            tableFilters.forEach( ( tableFilter ) => {
+
+                if ( tableFilter.calculatedColumn ) {
+
+                    columnFilterJoin = !havingFilterCounter ? '' : ' ' + tableFilter.join + ' ';
+
+                    havingFilterCounter++;
+
+                    this.tableFilterDescription += columnFilterJoin;
+
+                    if ( tableFilter.filterType === 'Number' ) {
+
+                        if ( tableFilter.method === 'Between' ) {
+
+                            this.tableHaving += columnFilterJoin + '(' + tableFilter.name + ' >= ' + tableFilter.fromAmount + ' and ' + tableFilter.name + ' <= ' + tableFilter.toAmount + ')';
+
+                        } else if ( tableFilter.method === 'Equal to' ) {
+
+                            this.tableHaving += columnFilterJoin + tableFilter.name + ' = ' + tableFilter.fromAmount;
+
+                        } else if ( tableFilter.method === 'Less than' ) {
+
+                            this.tableHaving += columnFilterJoin + tableFilter.name + ' < ' + tableFilter.fromAmount;
+
+                        } else if ( tableFilter.method === 'Less than or equal to' ) {
+
+                            this.tableHaving += columnFilterJoin + tableFilter.name + ' <= ' + tableFilter.fromAmount;
+
+                        } else if ( tableFilter.method === 'Greater than' ) {
+
+                            this.tableHaving += columnFilterJoin + tableFilter.name + ' > ' + tableFilter.fromAmount;
+
+                        } else if ( tableFilter.method === 'Greater than or equal to' ) {
+
+                            this.tableHaving += columnFilterJoin + tableFilter.name + ' >= ' + tableFilter.fromAmount;
+
+                        }
+
+                    } else {
+
+                        this.tableHaving += columnFilterJoin + ' 1 = 1';
+                        console.error('Unknown tableFilter.filterType', tableFilter.filterType);
+                    }
+
+                    this.tableFilterDescription += getFilterDescription(tableFilter);
+
+                }
+            });
+
+            if ( this.tableFilter ) this.tableFilter = '(' + this.tableFilter + ')';
+
+
+            //console.log('tableFilter',this.tableFilter);
+            // console.log('tableHaving',this.tableHaving);
+            // console.log('Filter Description',this.tableFilterDescription);
+
+        },

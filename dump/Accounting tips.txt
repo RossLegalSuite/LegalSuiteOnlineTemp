@@ -1,0 +1,17 @@
+First: Debit what comes in, Credit what goes out.
+Second: Debit all expenses and losses, Credit all incomes and gains.
+Third: Debit the receiver, Credit the giver.
+
+
+Remember this equation:
+Assets = liabilities + equity
+
+Assets are on the left side of the equal sign. 
+Asset accounts are increased with a debit. 
+Liability and equity accounts are on the right side on the equal sign and they are increased with credits. 
+If you need to increase the balance of an account, consider what type of account it is. 
+Once you know that, you’ll know how to increase the account (either debit or credit).
+
+Say that you need to increase accounts payable. 
+Payables are liability accounts. 
+That means that you increase accounts payable by crediting.

@@ -1,0 +1,8 @@
+Cpanel
+
+https://ettorney.co.za:2083/
+
+ettorney
+Bacon1024!!
+
+ssh ettorney@ettorney.co.za

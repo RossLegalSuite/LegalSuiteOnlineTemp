@@ -1,0 +1,486 @@
+/* Datatables CSS  */
+
+/* 12 Dec 2021 - Tweaks to "bordered" table looks better with DataTables*/
+
+
+
+table.bordered {
+    border-style: hidden;
+}
+
+table.bordered th {
+    border-right: 1px solid whitesmoke;
+}
+
+table.bordered thead tr th:last-child {
+    border-right-width: 0;
+}
+
+table.bordered td {
+    border-top-width: 0;
+    border-left-width: 0;
+    border-right: 1px solid #dee2e6;
+    border-bottom: 1px solid #dee2e6;
+}
+
+table.bordered td:last-child {
+    border-right-width: 0;
+}
+
+
+
+/*********************************
+Tagging using datatables-select
+Copied from datatables-select.css
+/*********************************
+
+/* Adjust to fixed font size */
+table.dataTable td.select-checkbox  {
+    font-size: 12px;
+}
+
+
+
+.dataTables_scrollHead thead th.select-checkbox, table.dataTable tbody td.select-checkbox {
+    position: relative;
+    cursor: pointer;
+}
+
+/* NEW WAY */
+.dataTables_scrollHead thead th.select-checkbox:before, table.dataTable tbody td.select-checkbox:before,
+.dataTables_scrollHead thead th.select-checkbox:after, table.dataTable tbody td.select-checkbox:after {
+    display: block;
+    position: absolute;
+    box-sizing: border-box;
+    margin: auto;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 16px;
+    height: 16px;
+}
+
+.dataTables_scrollHead thead th.select-checkbox:before, table.dataTable tbody td.select-checkbox:before {
+    content: ' ';
+    border: 1px solid black;
+    border-radius: 3px;
+    background-color: ghostwhite;
+}
+
+.dataTables_scrollHead thead th.selected.select-checkbox:after, table.dataTable tbody tr.selected td.select-checkbox:after {
+    content: '\2714';
+    text-align: center;
+    color: black;
+}
+
+/* OLD WAY
+.dataTables_scrollHead thead th.select-checkbox:before, table.dataTable tbody td.select-checkbox:before,
+.dataTables_scrollHead thead th.select-checkbox:after, table.dataTable tbody td.select-checkbox:after {
+    display: block;
+    position: absolute;
+    bottom: 9.5px;
+    left: 50%;
+    width: 16px;
+    height: 16px;
+    box-sizing: border-box;
+}
+
+.dataTables_scrollHead thead th.select-checkbox:before, table.dataTable tbody td.select-checkbox:before {
+    content: ' ';
+    margin-top: -3px;
+    margin-left: -8px;
+    border: 1px solid black;
+    border-radius: 3px;
+    background-color: ghostwhite;
+}
+
+.dataTables_scrollHead thead th.select-checkbox:before {
+    bottom: 9px;
+}
+
+.dataTables_scrollHead thead th.selected.select-checkbox:after, table.dataTable tbody tr.selected td.select-checkbox:after {
+  content: '\2714';
+  margin-top: -4px;
+  margin-left: -8px;
+  text-align: center;
+  color: black;
+}
+*/
+
+
+
+
+
+
+/*https://datatables.net/forums/discussion/61547/scrolling-position*/
+.dts_label {
+    display: none !important; /* Bug in datatables scroller 2.0? */
+}
+
+.dataTables_scroll {
+    background-color: white;
+}
+
+
+/* Begin - Fixed Width Tables */
+
+.dataTables_scrollBody {
+    width: 100% !important;
+}
+
+
+table.dataTable {
+    table-layout: fixed;
+    width: 100% !important;
+    white-space: nowrap;
+    margin-top: 0px !important;
+}
+
+table.dataTable th {
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+table.dataTable td {
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.action-button-badge {
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+    padding-top: 0.35rem !important;
+    padding-bottom: 0.35rem !important;
+    min-width: 80%;
+}
+
+table.dataTable td.text-no-ellipse {
+    text-overflow: unset;
+}
+
+table.dataTable td.text-number, table.dataTable th.text-number {
+    text-align: right;
+    text-overflow: unset;
+}
+
+/* End - Fixed Width Tables */
+
+
+
+
+table.dataTable thead th  {
+    color: #ffffff;
+    padding-top: 0.85rem; /* Centering the text */
+    padding-bottom: 0.5rem; /* Centering the text */
+    white-space: nowrap !important; 
+}
+
+table.dataTable td {
+    user-select: text; 
+    padding: 0.5rem;  
+    vertical-align: middle !important;
+}
+
+table.dataTable tfoot th {
+    padding: 0.5rem; 
+    vertical-align: middle !important;
+}
+
+
+/*
+table.dataTable td, table.dataTable tfoot th {
+    user-select: text; 
+    padding: 0.5rem; 
+    vertical-align: middle !important;
+}
+*/
+
+table.dataTable tr {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+
+/* Datatables TreeGrid https://github.com/homfen/dataTables.treeGrid.js  */
+
+
+/* A better way may be with a class function. See https://datatables.net/forums/discussion/60118 is done */
+
+.child-expand-button-image {
+    background: url('/images/details_open.png') no-repeat center center;
+}
+.child-close-button-image {
+    background: url('/images/details_close.png') no-repeat center center;
+}
+
+table.dataTable tr.parent-row td.treegrid-control  {
+    background: url('/images/details_open.png') no-repeat center center;
+    cursor: pointer;
+}
+
+table.dataTable tr.parent-row td.treegrid-control-open  {
+    background: url('/images/details_close.png') no-repeat center center;
+    cursor: pointer;
+}
+
+table.dataTable tr.child-row td.action-button  {
+    text-align: right !important;
+}
+
+
+/* Child Row */
+table.dataTable tr[parent-index]  {
+    background-color: lemonchiffon;
+}
+
+table.dataTable tr.child-row.highlighted  {
+    background-color: #F9E79F !important;
+}
+
+/* table.dataTable tr[parent-index] td:nth-child(1) {
+    background-color: #ffffff;
+} */
+
+table.dataTable tr[parent-index] td:nth-child(1), table.dataTable tr[parent-index] td:nth-child(2)  {
+    border-right: none;
+}
+
+
+
+/* Search highlighter */
+table.dataTable span.highlight {
+    background-color: #FFFF88;
+}
+
+.dataTables_scrollFoot table {
+    border: none;
+}
+
+.dataTables_scrollFoot {
+     background-color: #EFEFEF;   /*Bit of a hack - need to use SASS to define all the colors */
+}
+
+fieldset .dataTables_scrollFoot {
+    background-color: inherit; 
+}
+
+table.dataTable tfoot th {
+    border: none;
+}
+
+.dataTable tr.highlighted:not(.custom-colors), .dataTable tr.selected:not(.custom-colors) {
+    background-color: #DDD !important;
+    color: inherit !important;
+}
+
+.dataTable tr.highlighted.custom-colors, .dataTable tr.selected.custom-colors {
+    filter: brightness(90%);
+}
+
+
+
+
+/* Replace the "Loading..." indicator with an animated GIF */
+
+.dataTables_wrapper {
+    position: relative;
+}
+
+.dataTables_wrapper .dataTables_processing {
+    z-index: 1001;
+}
+
+.dataTables_wrapper .dataTables_processing::after {
+    content: url("/img/ajax-loader2.gif");
+}
+
+/*  Give the print view some space */
+.dt-print-view {
+    padding: 10px 20px !important;
+}
+
+.dt-print-view thead > tr > th {
+    background-color: #E5E5E5 !important;
+    color: #000;
+    font-weight: bold;
+}
+
+.dt-print-view table {
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+}
+
+
+
+
+/* Responsive font-size */
+
+table.dataTable tr {
+    font-size: 0.75vw;
+}
+  
+
+/*
+table.dataTable tr {
+  font-size: 0.8rem;
+}
+
+
+@media (max-width: 575.98px) {
+  table.dataTable tr {
+    font-size: 0.65rem;
+  }
+ }
+
+ @media (max-width: 767.98px) {
+  table.dataTable tr {
+    font-size: 0.7rem
+  }
+ }
+
+ @media (max-width: 991.98px) {
+  table.dataTable tr {
+    font-size: 0.75rem;
+  }
+ }
+
+@media (max-width: 1199.98px) {
+  table.dataTable tr {
+    font-size: 0.75rem;
+  }
+ }
+ 
+*/
+
+/* Position the responsive plus button  */
+table.dataTable.dtr-inline.collapsed
+    > tbody
+    > tr[role="row"]
+    > td:first-child:before,
+table.dataTable.dtr-inline.collapsed
+    > tbody
+    > tr[role="row"]
+    > th:first-child:before {
+    top: 17px;
+    height: 16px;
+    width: 16px;
+    line-height: 17px;
+}
+
+.dataTables_wrapper th {
+    font-weight: 700;
+}
+
+.dataTables_wrapper td {
+    white-space: nowrap;
+}
+
+.html5buttons {
+    float: right;
+    padding-left: 5px;
+}
+.dataTables_length {
+    float: left;
+}
+
+.html5buttons button {
+    border: 1px solid #e7eaec;
+    background: #fff;
+    color: #676a6c;
+    box-shadow: none;
+    padding: 6px 8px;
+    font-size: 12px;
+}
+
+.dataTables_scrollHead {
+
+    background: steelblue;
+
+    /* border-top: solid 1px steelblue !important; */
+    border-left: solid 1px steelblue !important;
+    border-right: solid 1px steelblue !important;
+
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+}
+
+.dataTables_scrollHead table {
+    border: none;
+    margin-top: 0px !important;    
+}
+
+.dataTables_scrollHead thead th {
+    border-top: none;
+    border-bottom: none;
+}
+
+
+
+.dataTables_scrollBody {
+
+    border-left: solid 1px #676a6c;
+    border-right: solid 1px #676a6c;
+    border-bottom: solid 1px #676a6c;
+
+}
+
+.table-footer-container {
+    margin-top: 0.5rem;
+    padding-right: 0.5rem;
+    padding-top: 0.25rem;
+    font-weight: 600;
+    text-align: right;
+}
+
+.table-footer-print-container {
+    margin-top: 0px;
+    border: none;
+}
+
+
+.dataTable tfoot, .dataTable tfoot > tr > th {
+    /* border-radius: 0px;
+    border: 1px solid darkgrey; */
+    border: none;
+}
+
+.datatables-search-box {
+    float: left;
+    margin-bottom: 5px;
+}
+
+/* .datatables-search {
+    margin-bottom: 0.5rem;
+} */
+
+.datatables-search-input-group {
+    display: inline-block;
+}
+
+.datatables-search-button {
+    margin-left: 0.5rem;    
+}
+
+
+/* Search on the left */
+div.dataTables_wrapper div.dataTables_filter {
+    /* text-align: left; */
+    float: left;
+}
+
+
+
+
+.datatables-title {
+    margin: 0px 0px 15px 0px;
+}

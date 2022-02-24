@@ -1,0 +1,286 @@
+                    colors:[
+                        {name: 'Black', hex:'#000000'},
+                        {name: 'White', hex:'#FFFFFF'},
+                        {name: 'AliceBlue', hex:'#F0F8FF'},
+                        {name: 'AntiqueWhite', hex:'#FAEBD7'},
+                        {name: 'Aqua', hex:'#00FFFF'},
+                        {name: 'Aquamarine', hex:'#7FFFD4'},
+                        {name: 'Azure', hex:'#F0FFFF'},
+                        {name: 'Beige', hex:'#F5F5DC'},
+                        {name: 'Bisque', hex:'#FFE4C4'},
+                        {name: 'BlanchedAlmond', hex:'#FFEBCD'},
+                        {name: 'Blue', hex:'#0000FF'},
+                        {name: 'BlueViolet', hex:'#8A2BE2'},
+                        {name: 'Brown', hex:'#A52A2A'},
+                        {name: 'BurlyWood', hex:'#DEB887'},
+                        {name: 'CadetBlue', hex:'#5F9EA0'},
+                        {name: 'Chartreuse', hex:'#7FFF00'},
+                        {name: 'Chocolate', hex:'#D2691E'},
+                        {name: 'Coral', hex:'#FF7F50'},
+                        {name: 'CornflowerBlue', hex:'#6495ED'},
+                        {name: 'Cornsilk', hex:'#FFF8DC'},
+                        {name: 'Crimson', hex:'#DC143C'},
+                        {name: 'Cyan', hex:'#00FFFF'},
+                        {name: 'DarkBlue', hex:'#00008B'},
+                        {name: 'DarkCyan', hex:'#008B8B'},
+                        {name: 'DarkGoldenRod', hex:'#B8860B'},
+                        {name: 'DarkGray', hex:'#A9A9A9'},
+                        {name: 'DarkGreen', hex:'#006400'},
+                        {name: 'DarkKhaki', hex:'#BDB76B'},
+                        {name: 'DarkMagenta', hex:'#8B008B'},
+                        {name: 'DarkOliveGreen', hex:'#556B2F'},
+                        {name: 'DarkOrange', hex:'#FF8C00'},
+                        {name: 'DarkOrchid', hex:'#9932CC'},
+                        {name: 'DarkRed', hex:'#8B0000'},
+                        {name: 'DarkSalmon', hex:'#E9967A'},
+                        {name: 'DarkSeaGreen', hex:'#8FBC8F'},
+                        {name: 'DarkSlateBlue', hex:'#483D8B'},
+                        {name: 'DarkSlateGray', hex:'#2F4F4F'},
+                        {name: 'DarkTurquoise', hex:'#00CED1'},
+                        {name: 'DarkViolet', hex:'#9400D3'},
+                        {name: 'DeepPink', hex:'#FF1493'},
+                        {name: 'DeepSkyBlue', hex:'#00BFFF'},
+                        {name: 'DimGray', hex:'#696969'},
+                        {name: 'DodgerBlue', hex:'#1E90FF'},
+                        {name: 'FireBrick', hex:'#B22222'},
+                        {name: 'FloralWhite', hex:'#FFFAF0'},
+                        {name: 'ForestGreen', hex:'#228B22'},
+                        {name: 'Fuchsia', hex:'#FF00FF'},
+                        {name: 'Gainsboro', hex:'#DCDCDC'},
+                        {name: 'GhostWhite', hex:'#F8F8FF'},
+                        {name: 'Gold', hex:'#FFD700'},
+                        {name: 'GoldenRod', hex:'#DAA520'},
+                        {name: 'Gray', hex:'#808080'},
+                        {name: 'Green', hex:'#008000'},
+                        {name: 'GreenYellow', hex:'#ADFF2F'},
+                        {name: 'HoneyDew', hex:'#F0FFF0'},
+                        {name: 'HotPink', hex:'#FF69B4'},
+                        {name: 'IndianRed', hex:'#CD5C5C'},
+                        {name: 'Indigo', hex:'#4B0082'},
+                        {name: 'Ivory', hex:'#FFFFF0'},
+                        {name: 'Khaki', hex:'#F0E68C'},
+                        {name: 'Lavender', hex:'#E6E6FA'},
+                        {name: 'LavenderBlush', hex:'#FFF0F5'},
+                        {name: 'LawnGreen', hex:'#7CFC00'},
+                        {name: 'LemonChiffon', hex:'#FFFACD'},
+                        {name: 'LightBlue', hex:'#ADD8E6'},
+                        {name: 'LightCoral', hex:'#F08080'},
+                        {name: 'LightCyan', hex:'#E0FFFF'},
+                        {name: 'LightGoldenRodYellow', hex:'#FAFAD2'},
+                        {name: 'LightGray', hex:'#D3D3D3'},
+                        {name: 'LightGreen', hex:'#90EE90'},
+                        {name: 'LightPink', hex:'#FFB6C1'},
+                        {name: 'LightSalmon', hex:'#FFA07A'},
+                        {name: 'LightSeaGreen', hex:'#20B2AA'},
+                        {name: 'LightSkyBlue', hex:'#87CEFA'},
+                        {name: 'LightSlateGray', hex:'#778899'},
+                        {name: 'LightSteelBlue', hex:'#B0C4DE'},
+                        {name: 'LightYellow', hex:'#FFFFE0'},
+                        {name: 'Lime', hex:'#00FF00'},
+                        {name: 'LimeGreen', hex:'#32CD32'},
+                        {name: 'Linen', hex:'#FAF0E6'},
+                        {name: 'Magenta', hex:'#FF00FF'},
+                        {name: 'Maroon', hex:'#800000'},
+                        {name: 'MediumAquaMarine', hex:'#66CDAA'},
+                        {name: 'MediumBlue', hex:'#0000CD'},
+                        {name: 'MediumOrchid', hex:'#BA55D3'},
+                        {name: 'MediumPurple', hex:'#9370DB'},
+                        {name: 'MediumSeaGreen', hex:'#3CB371'},
+                        {name: 'MediumSlateBlue', hex:'#7B68EE'},
+                        {name: 'MediumSpringGreen', hex:'#00FA9A'},
+                        {name: 'MediumTurquoise', hex:'#48D1CC'},
+                        {name: 'MediumVioletRed', hex:'#C71585'},
+                        {name: 'MidnightBlue', hex:'#191970'},
+                        {name: 'MintCream', hex:'#F5FFFA'},
+                        {name: 'MistyRose', hex:'#FFE4E1'},
+                        {name: 'Moccasin', hex:'#FFE4B5'},
+                        {name: 'NavajoWhite', hex:'#FFDEAD'},
+                        {name: 'Navy', hex:'#000080'},
+                        {name: 'OldLace', hex:'#FDF5E6'},
+                        {name: 'Olive', hex:'#808000'},
+                        {name: 'OliveDrab', hex:'#6B8E23'},
+                        {name: 'Orange', hex:'#FFA500'},
+                        {name: 'OrangeRed', hex:'#FF4500'},
+                        {name: 'Orchid', hex:'#DA70D6'},
+                        {name: 'PaleGoldenRod', hex:'#EEE8AA'},
+                        {name: 'PaleGreen', hex:'#98FB98'},
+                        {name: 'PaleTurquoise', hex:'#AFEEEE'},
+                        {name: 'PaleVioletRed', hex:'#DB7093'},
+                        {name: 'PapayaWhip', hex:'#FFEFD5'},
+                        {name: 'PeachPuff', hex:'#FFDAB9'},
+                        {name: 'Peru', hex:'#CD853F'},
+                        {name: 'Pink', hex:'#FFC0CB'},
+                        {name: 'Plum', hex:'#DDA0DD'},
+                        {name: 'PowderBlue', hex:'#B0E0E6'},
+                        {name: 'Purple', hex:'#800080'},
+                        {name: 'RebeccaPurple', hex:'#663399'},
+                        {name: 'Red', hex:'#FF0000'},
+                        {name: 'RosyBrown', hex:'#BC8F8F'},
+                        {name: 'RoyalBlue', hex:'#4169E1'},
+                        {name: 'SaddleBrown', hex:'#8B4513'},
+                        {name: 'Salmon', hex:'#FA8072'},
+                        {name: 'SandyBrown', hex:'#F4A460'},
+                        {name: 'SeaGreen', hex:'#2E8B57'},
+                        {name: 'SeaShell', hex:'#FFF5EE'},
+                        {name: 'Sienna', hex:'#A0522D'},
+                        {name: 'Silver', hex:'#C0C0C0'},
+                        {name: 'SkyBlue', hex:'#87CEEB'},
+                        {name: 'SlateBlue', hex:'#6A5ACD'},
+                        {name: 'SlateGray', hex:'#708090'},
+                        {name: 'Snow', hex:'#FFFAFA'},
+                        {name: 'SpringGreen', hex:'#00FF7F'},
+                        {name: 'SteelBlue', hex:'#4682B4'},
+                        {name: 'Tan', hex:'#D2B48C'},
+                        {name: 'Teal', hex:'#008080'},
+                        {name: 'Thistle', hex:'#D8BFD8'},
+                        {name: 'Tomato', hex:'#FF6347'},
+                        {name: 'Turquoise', hex:'#40E0D0'},
+                        {name: 'Violet', hex:'#EE82EE'},
+                        {name: 'Wheat', hex:'#F5DEB3'},
+                        {name: 'WhiteSmoke', hex:'#F5F5F5'},
+                        {name: 'Yellow', hex:'#FFFF00'},
+                        {name: 'YellowGreen', hex:'#9ACD32'},
+                    ],
+
+.AliceBlue-background { background-color: #F0F8FF !important }
+.AntiqueWhite-background { background-color: #FAEBD7 !important }
+.Aqua-background { background-color: #00FFFF !important }
+.Aquamarine-background { background-color: #7FFFD4 !important }
+.Azure-background { background-color: #F0FFFF !important }
+.Beige-background { background-color: #F5F5DC !important }
+.Bisque-background { background-color: #FFE4C4 !important }
+.Black-background { background-color: #000000 !important }
+.BlanchedAlmond-background { background-color: #FFEBCD !important }
+.Blue-background { background-color: #0000FF !important }
+.BlueViolet-background { background-color: #8A2BE2 !important }
+.Brown-background { background-color: #A52A2A !important }
+.BurlyWood-background { background-color: #DEB887 !important }
+.CadetBlue-background { background-color: #5F9EA0 !important }
+.Chartreuse-background { background-color: #7FFF00 !important }
+.Chocolate-background { background-color: #D2691E !important }
+.Coral-background { background-color: #FF7F50 !important }
+.CornflowerBlue-background { background-color: #6495ED !important }
+.Cornsilk-background { background-color: #FFF8DC !important }
+.Crimson-background { background-color: #DC143C !important }
+.Cyan-background { background-color: #00FFFF !important }
+.DarkBlue-background { background-color: #00008B !important }
+.DarkCyan-background { background-color: #008B8B !important }
+.DarkGoldenRod-background { background-color: #B8860B !important }
+.DarkGray-background { background-color: #A9A9A9 !important }
+.DarkGreen-background { background-color: #006400 !important }
+.DarkKhaki-background { background-color: #BDB76B !important }
+.DarkMagenta-background { background-color: #8B008B !important }
+.DarkOliveGreen-background { background-color: #556B2F !important }
+.DarkOrange-background { background-color: #FF8C00 !important }
+.DarkOrchid-background { background-color: #9932CC !important }
+.DarkRed-background { background-color: #8B0000 !important }
+.DarkSalmon-background { background-color: #E9967A !important }
+.DarkSeaGreen-background { background-color: #8FBC8F !important }
+.DarkSlateBlue-background { background-color: #483D8B !important }
+.DarkSlateGray-background { background-color: #2F4F4F !important }
+.DarkTurquoise-background { background-color: #00CED1 !important }
+.DarkViolet-background { background-color: #9400D3 !important }
+.DeepPink-background { background-color: #FF1493 !important }
+.DeepSkyBlue-background { background-color: #00BFFF !important }
+.DimGray-background { background-color: #696969 !important }
+.DodgerBlue-background { background-color: #1E90FF !important }
+.FireBrick-background { background-color: #B22222 !important }
+.FloralWhite-background { background-color: #FFFAF0 !important }
+.ForestGreen-background { background-color: #228B22 !important }
+.Fuchsia-background { background-color: #FF00FF !important }
+.Gainsboro-background { background-color: #DCDCDC !important }
+.GhostWhite-background { background-color: #F8F8FF !important }
+.Gold-background { background-color: #FFD700 !important }
+.GoldenRod-background { background-color: #DAA520 !important }
+.Gray-background { background-color: #808080 !important }
+.Green-background { background-color: #008000 !important }
+.GreenYellow-background { background-color: #ADFF2F !important }
+.HoneyDew-background { background-color: #F0FFF0 !important }
+.HotPink-background { background-color: #FF69B4 !important }
+.IndianRed-background { background-color: #CD5C5C !important }
+.Indigo-background { background-color: #4B0082 !important }
+.Ivory-background { background-color: #FFFFF0 !important }
+.Khaki-background { background-color: #F0E68C !important }
+.Lavender-background { background-color: #E6E6FA !important }
+.LavenderBlush-background { background-color: #FFF0F5 !important }
+.LawnGreen-background { background-color: #7CFC00 !important }
+.LemonChiffon-background { background-color: #FFFACD !important }
+.LightBlue-background { background-color: #ADD8E6 !important }
+.LightCoral-background { background-color: #F08080 !important }
+.LightCyan-background { background-color: #E0FFFF !important }
+.LightGoldenRodYellow-background { background-color: #FAFAD2 !important }
+.LightGray-background { background-color: #D3D3D3 !important }
+.LightGreen-background { background-color: #90EE90 !important }
+.LightPink-background { background-color: #FFB6C1 !important }
+.LightSalmon-background { background-color: #FFA07A !important }
+.LightSeaGreen-background { background-color: #20B2AA !important }
+.LightSkyBlue-background { background-color: #87CEFA !important }
+.LightSlateGray-background { background-color: #778899 !important }
+.LightSteelBlue-background { background-color: #B0C4DE !important }
+.LightYellow-background { background-color: #FFFFE0 !important }
+.Lime-background { background-color: #00FF00 !important }
+.LimeGreen-background { background-color: #32CD32 !important }
+.Linen-background { background-color: #FAF0E6 !important }
+.Magenta-background { background-color: #FF00FF !important }
+.Maroon-background { background-color: #800000 !important }
+.MediumAquaMarine-background { background-color: #66CDAA !important }
+.MediumBlue-background { background-color: #0000CD !important }
+.MediumOrchid-background { background-color: #BA55D3 !important }
+.MediumPurple-background { background-color: #9370DB !important }
+.MediumSeaGreen-background { background-color: #3CB371 !important }
+.MediumSlateBlue-background { background-color: #7B68EE !important }
+.MediumSpringGreen-background { background-color: #00FA9A !important }
+.MediumTurquoise-background { background-color: #48D1CC !important }
+.MediumVioletRed-background { background-color: #C71585 !important }
+.MidnightBlue-background { background-color: #191970 !important }
+.MintCream-background { background-color: #F5FFFA !important }
+.MistyRose-background { background-color: #FFE4E1 !important }
+.Moccasin-background { background-color: #FFE4B5 !important }
+.NavajoWhite-background { background-color: #FFDEAD !important }
+.Navy-background { background-color: #000080 !important }
+.OldLace-background { background-color: #FDF5E6 !important }
+.Olive-background { background-color: #808000 !important }
+.OliveDrab-background { background-color: #6B8E23 !important }
+.Orange-background { background-color: #FFA500 !important }
+.OrangeRed-background { background-color: #FF4500 !important }
+.Orchid-background { background-color: #DA70D6 !important }
+.PaleGoldenRod-background { background-color: #EEE8AA !important }
+.PaleGreen-background { background-color: #98FB98 !important }
+.PaleTurquoise-background { background-color: #AFEEEE !important }
+.PaleVioletRed-background { background-color: #DB7093 !important }
+.PapayaWhip-background { background-color: #FFEFD5 !important }
+.PeachPuff-background { background-color: #FFDAB9 !important }
+.Peru-background { background-color: #CD853F !important }
+.Pink-background { background-color: #FFC0CB !important }
+.Plum-background { background-color: #DDA0DD !important }
+.PowderBlue-background { background-color: #B0E0E6 !important }
+.Purple-background { background-color: #800080 !important }
+.RebeccaPurple-background { background-color: #663399 !important }
+.Red-background { background-color: #FF0000 !important }
+.RosyBrown-background { background-color: #BC8F8F !important }
+.RoyalBlue-background { background-color: #4169E1 !important }
+.SaddleBrown-background { background-color: #8B4513 !important }
+.Salmon-background { background-color: #FA8072 !important }
+.SandyBrown-background { background-color: #F4A460 !important }
+.SeaGreen-background { background-color: #2E8B57 !important }
+.SeaShell-background { background-color: #FFF5EE !important }
+.Sienna-background { background-color: #A0522D !important }
+.Silver-background { background-color: #C0C0C0 !important }
+.SkyBlue-background { background-color: #87CEEB !important }
+.SlateBlue-background { background-color: #6A5ACD !important }
+.SlateGray-background { background-color: #708090 !important }
+.Snow-background { background-color: #FFFAFA !important }
+.SpringGreen-background { background-color: #00FF7F !important }
+.SteelBlue-background { background-color: #4682B4 !important }
+.Tan-background { background-color: #D2B48C !important }
+.Teal-background { background-color: #008080 !important }
+.Thistle-background { background-color: #D8BFD8 !important }
+.Tomato-background { background-color: #FF6347 !important }
+.Turquoise-background { background-color: #40E0D0 !important }
+.Violet-background { background-color: #EE82EE !important }
+.Wheat-background { background-color: #F5DEB3 !important }
+.White-background { background-color: #FFFFFF !important }
+.WhiteSmoke-background { background-color: #F5F5F5 !important }
+.Yellow-background { background-color: #FFFF00 !important }
+.YellowGreen-background { background-color: #9ACD32 !important }
+

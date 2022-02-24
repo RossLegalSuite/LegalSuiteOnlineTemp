@@ -1,0 +1,628 @@
+<?php
+
+namespace App\Http\Controllers\App;
+
+use App\Models\Party;
+use App\Models\PartyEntity;
+use App\Models\PartyNumber;
+use App\Models\PartyExtraScreen;
+use App\Models\ContactMethod;
+use App\Custom\DataTablesHelper;
+use Illuminate\Http\Request;
+use App\Custom\Utils;
+use DB;
+use Datatables;
+use Validator;
+
+use Maatwebsite\Excel\Facades\Excel;
+use Maatwebsite\Excel\Concerns\{FromQuery, Exportable, WithHeadings, WithEvents, RegistersEventListeners, ShouldAutoSize};
+use Maatwebsite\Excel\Events\{BeforeExport, AfterSheet};
+use PhpOffice\PhpSpreadsheet\Style\{NumberFormat, Alignment};
+
+class PartyController extends Controller {
+
+    use Exportable, RegistersEventListeners;
+
+    private function tableJoins(&$query)
+    {
+
+        $query
+        ->leftJoin('marriage_types', 'parties.marriageId', '=', 'marriage_types.id')
+        ->leftJoin('party_entities', 'parties.entityId', '=', 'party_entities.id')
+        ->leftJoin('party_types', 'parties.typeId', '=', 'party_types.id')
+        ->leftJoin('provinces as physicalProvince', 'parties.physicalProvinceId', '=', 'physicalProvince.id')
+        ->leftJoin('provinces as postalProvince', 'parties.postalProvinceId', '=', 'postalProvince.id')
+        ->leftJoin('countries as physicalCountry', 'parties.physicalCountryId', '=', 'physicalCountry.id')
+        ->leftJoin('countries as postalCountry', 'parties.postalCountryId', '=', 'postalCountry.id')
+        ->leftJoin('party_numbers as emailAddress', function ($join)  {
+            $join->on('parties.id', '=', 'emailAddress.partyId')
+                ->whereRaw('emailAddress.id IN (select max(id) from party_numbers WHERE methodId = ' . session('emailMethodId') . ' AND partyId = parties.id AND defaultFlag = 1 group by methodId)');
+            })
+        ->leftJoin('party_numbers as mobileNumber', function ($join)  {
+            $join->on('parties.id', '=', 'mobileNumber.partyId')
+                ->whereRaw('mobileNumber.id IN (select max(id) from party_numbers WHERE methodId = ' . session('mobileMethodId') . ' AND partyId = parties.id AND defaultFlag = 1 group by methodId)');
+        });
+
+    }
+    
+    private function basicColumns(&$query, $prefix)
+    {
+
+        $query->addSelect("parties.id as {$prefix}id");
+        $query->addSelect("parties.code as {$prefix}code");
+        $query->addSelect("parties.name as {$prefix}name");
+        $query->addSelect(DB::raw("CONCAT(parties.code, ' - ', parties.name) as `{$prefix}party`"));
+
+    }
+
+    private function tableColumns(&$query, $prefix)
+    {
+        $formatBegin = "FORMAT( ";
+        $formatEnd = ", 2, 'en_" . session('countryCode')  . "')";
+
+        $query->addSelect("parties.id as {$prefix}id");
+        $query->addSelect("parties.code as {$prefix}code");
+        $query->addSelect("parties.name as {$prefix}name");
+        $query->addSelect("parties.idNumber as {$prefix}idNumber");
+        $query->addSelect("party_types.description  as {$prefix}typeDescription");
+        $query->addSelect("party_entities.description as {$prefix}entityDescription");
+        $query->addSelect( DB::raw("CASE WHEN emailAddress.description IS NOT NULL THEN emailAddress.description ELSE '' END as `{$prefix}email`"));
+        $query->addSelect( DB::raw("CASE WHEN mobileNumber.description IS NOT NULL THEN mobileNumber.description ELSE '' END as `{$prefix}mobile`"));
+
+        $query->addSelect(DB::raw("CONCAT(parties.code, ' - ', parties.name) as `{$prefix}party`"));
+        $query->addSelect("party_entities.textColor as {$prefix}textColor");
+        $query->addSelect("party_entities.backgroundColor as {$prefix}backgroundColor");
+
+        $query->addSelect(DB::raw("IFNULL((SELECT {$formatBegin} unreservedBalance {$formatEnd} FROM client_trust_balances WHERE partyId = parties.id), 0.00) as `{$prefix}unreservedTrustBalance`") );
+        $query->addSelect(DB::raw("IFNULL((SELECT {$formatBegin} reservedBalance {$formatEnd} FROM client_trust_balances WHERE partyId = parties.id), 0.00) as `{$prefix}reservedTrustBalance`") );
+        $query->addSelect(DB::raw("IFNULL((SELECT {$formatBegin} balance {$formatEnd} FROM client_trust_balances WHERE partyId = parties.id), 0.00) as `{$prefix}trustBalance`") );
+
+    }
+
+
+    private function addAging(&$query, $prefix) {
+
+        $formatBegin = "FORMAT( ";
+        $formatEnd = ", 2, 'en_" . session('countryCode')  . "')";
+
+        $query->leftJoin('client_aging', 'parties.id', '=', 'client_aging.partyId');
+
+        $query->addSelect( DB::raw("CASE WHEN client_aging.current IS NOT NULL THEN {$formatBegin}client_aging.current{$formatEnd} ELSE 0.00 END as `{$prefix}current`"));
+        $query->addSelect( DB::raw("CASE WHEN client_aging.days30 IS NOT NULL THEN {$formatBegin}client_aging.days30{$formatEnd} ELSE 0.00 END as `{$prefix}days30`"));
+        $query->addSelect( DB::raw("CASE WHEN client_aging.days60 IS NOT NULL THEN {$formatBegin}client_aging.days60{$formatEnd} ELSE 0.00 END as `{$prefix}days60`"));
+        $query->addSelect( DB::raw("CASE WHEN client_aging.days90 IS NOT NULL THEN {$formatBegin}client_aging.days90{$formatEnd} ELSE 0.00 END as `{$prefix}days90`"));
+        $query->addSelect( DB::raw("CASE WHEN client_aging.days120 IS NOT NULL THEN {$formatBegin}client_aging.days120{$formatEnd} ELSE 0.00 END as `{$prefix}days120`"));
+
+        $query->addSelect( DB::raw("CASE WHEN client_aging.current IS NOT NULL THEN client_aging.current ELSE 0.00 END as currentRaw"));
+        $query->addSelect( DB::raw("CASE WHEN client_aging.days30 IS NOT NULL THEN client_aging.days30 ELSE 0.00 END as days30Raw"));
+        $query->addSelect( DB::raw("CASE WHEN client_aging.days60 IS NOT NULL THEN client_aging.days60 ELSE 0.00 END as days60Raw"));
+        $query->addSelect( DB::raw("CASE WHEN client_aging.days90 IS NOT NULL THEN client_aging.days90 ELSE 0.00 END as days90Raw"));
+        $query->addSelect( DB::raw("CASE WHEN client_aging.days120 IS NOT NULL THEN client_aging.days120 ELSE 0.00 END as days120Raw"));
+
+        $query->addSelect(DB::raw("IFNULL( 
+            (SELECT {$formatBegin}SUM(balance){$formatEnd} FROM client_business_balances 
+            WHERE partyId = parties.id GROUP BY partyId), 0.00) as `{$prefix}balance`") );
+
+        $query->addSelect(DB::raw("IFNULL( 
+            (SELECT SUM(balance) FROM client_business_balances 
+            WHERE partyId = parties.id GROUP BY partyId), 0.00) as balanceRaw") );
+
+    }
+
+    private function allColumns(&$query, $request, $prefix)
+    {
+
+        $formatBegin = "FORMAT( ";
+        $formatEnd = ", 2, 'en_" . session('countryCode')  . "')";
+
+        $query->addSelect("parties.id as {$prefix}id")
+        ->addSelect("parties.code as {$prefix}code")
+        ->addSelect("parties.name as {$prefix}name")
+        ->addSelect("parties.firstName as {$prefix}firstName")
+        ->addSelect("parties.lastName as {$prefix}lastName")
+        ->addSelect("parties.title as {$prefix}title")
+        ->addSelect("parties.friendlyName as {$prefix}friendlyName")
+        ->addSelect("parties.salutation as {$prefix}salutation")
+        ->addSelect("parties.idNumber as {$prefix}idNumber")
+        ->addSelect( DB::raw("CASE 
+        WHEN parties.idType = 'I' THEN 'Identity Document'
+        WHEN parties.idType = 'S' THEN 'Social Security'
+        WHEN parties.idType = 'P' THEN 'Passport'
+        WHEN parties.idType = 'D' THEN 'Drivers Licence'
+        WHEN parties.idType = 'B' THEN 'Birth Certificate'
+        WHEN parties.idType = 'T' THEN 'Temporary Residence'
+        WHEN parties.idType = 'X' THEN 'Tax Certificate'
+        WHEN parties.idType = 'A' THEN 'Armed Forces ID'
+        WHEN parties.idType = 'O' THEN 'Other'
+        ELSE parties.idType END as `{$prefix}idTypeDescription`"))
+        ->addSelect( DB::raw("DATE_FORMAT( CONVERT_TZ(parties.birthdate,'+00:00','" . session('timeZone') . "'), '" . Utils::sqlDateFormat() . "') as `{$prefix}birthDate`"))
+        ->addSelect("party_entities.description as {$prefix}entityDescription")
+        ->addSelect("party_types.description  as {$prefix}typeDescription")
+        ->addSelect('marriage_types.description as ' . $prefix . "marriageDescription")
+        ->addSelect("parties.physicalLine1 as {$prefix}physicalLine1")
+        ->addSelect("parties.physicalLine2 as {$prefix}physicalLine2")
+        ->addSelect("parties.physicalLine3 as {$prefix}physicalLine3")
+        ->addSelect("parties.physicalCode as {$prefix}physicalCode")
+        ->addSelect("physicalProvince.description as {$prefix}physicalProvince")
+        ->addSelect("physicalCountry.description as {$prefix}physicalCountry")
+        ->addSelect("parties.postalLine1 as {$prefix}postalLine1")
+        ->addSelect("parties.postalLine2 as {$prefix}postalLine2")
+        ->addSelect("parties.postalLine3 as {$prefix}postalLine3")
+        ->addSelect("parties.postalCode as {$prefix}postalCode")
+        ->addSelect("postalProvince.description as {$prefix}postalProvince")
+        ->addSelect("postalCountry.description as {$prefix}postalCountry");
+
+        if ( $request->dataFormat === 'export' ) {
+            $query->addSelect("parties.vatVendor as {$prefix}vatVendor");
+
+            $query->addSelect( DB::raw("CASE 
+            WHEN parties.vatVendor = 1 THEN 'Yes'
+            WHEN parties.vatVendor = 0 THEN 'No'
+            END as vatVendor"));
+
+        } else {
+            $query->addSelect("parties.vatVendor as {$prefix}vatVendor");
+        }
+        $query->addSelect("parties.vatNumber as {$prefix}vatNumber");
+        $query->addSelect( DB::raw("CASE WHEN emailAddress.description IS NOT NULL THEN emailAddress.description ELSE '' END as `{$prefix}email`"));
+        $query->addSelect( DB::raw("CASE WHEN mobileNumber.description IS NOT NULL THEN mobileNumber.description ELSE '' END as `{$prefix}mobile`"));
+
+        $query->addSelect(DB::raw("IFNULL((SELECT unreservedBalance FROM client_trust_balances WHERE partyId = parties.id), 0.00) as `{$prefix}unreservedTrustBalance`") );
+        $query->addSelect(DB::raw("IFNULL((SELECT reservedBalance FROM client_trust_balances WHERE partyId = parties.id), 0.00) as `{$prefix}reservedTrustBalance`") );
+        $query->addSelect(DB::raw("IFNULL((SELECT balance FROM client_trust_balances WHERE partyId = parties.id), 0.00) as `{$prefix}trustBalance`") );
+
+
+    }
+
+    private function formColumns(&$query)
+    {
+        $formatBegin = "FORMAT( ";
+        $formatEnd = ", 2, 'en_" . session('countryCode')  . "')";
+
+        $query->addSelect(DB::raw("CONCAT(parties.code, ' - ', parties.name) as party"));
+        $query->addSelect( DB::raw("CASE WHEN emailAddress.id IS NOT NULL THEN emailAddress.id ELSE NULL END as emailId") );
+
+        $query->addSelect("parties.entityId");
+        $query->addSelect("parties.typeId");
+        $query->addSelect("party_entities.type as entityType");
+        $query->addSelect("party_types.type as partyType");
+        $query->addSelect("parties.marriageId");
+        $query->addSelect("parties.idType");
+        $query->addSelect("parties.postalProvinceId");
+        $query->addSelect("parties.postalCountryId");
+        $query->addSelect("parties.physicalProvinceId");
+        $query->addSelect("parties.physicalCountryId");
+        $query->addSelect("physicalProvince.code as physicalProvinceCode");
+        $query->addSelect("postalProvince.code as postalProvinceCode");
+        $query->addSelect("physicalCountry.code as physicalCountryCode");
+        $query->addSelect("postalCountry.code as postalCountryCode");
+        $query->addSelect("parties.vatVendor");
+        $query->addSelect("parties.vatNumber");
+
+        $query->addSelect(DB::raw("IFNULL((SELECT {$formatBegin} unreservedBalance {$formatEnd} FROM client_trust_balances WHERE partyId = parties.id), 0.00) as unreservedTrustBalance") );
+        $query->addSelect(DB::raw("IFNULL((SELECT {$formatBegin} reservedBalance {$formatEnd} FROM client_trust_balances WHERE partyId = parties.id), 0.00) as reservedTrustBalance") );
+        $query->addSelect(DB::raw("IFNULL((SELECT {$formatBegin} balance {$formatEnd} FROM client_trust_balances WHERE partyId = parties.id), 0.00) as trustBalance") );
+
+    }
+    
+    private function extraScreenColumns(&$query, $request, $prefix)
+    {
+    }
+    
+    public function get(Request $request)
+    {
+        
+        $prefix = ( $request->dataFormat === 'mergeArray' ) ? 'party-&gt;' : '';
+
+        $query = DB::table('parties');
+        
+        if ( $request->dataFormat === 'mergeArray') {
+
+            $query->orderBy('parties.code');
+
+            $this->allColumns($query, $request, $prefix);
+
+            $this->extraScreenColumns($query, $request, $prefix);
+
+            $this->addAging($query, $prefix);
+
+            $this->tableJoins($query);
+
+        } else if ( $request->dataFormat === 'idArray') {
+
+            $query->orderBy('parties.code');
+
+            $query->addSelect("parties.id");
+            $query->addSelect("parties.code");
+            $query->addSelect("parties.name");
+
+        } else if ($request->basicColumns) {
+
+            $this->basicColumns($query,$prefix);
+
+        } else if ($request->tableColumns) {
+
+            $this->tableColumns($query, $prefix);
+
+            $this->tableJoins($query);
+
+            $this->addAging($query, $prefix);
+    
+        } else if ($request->dataFormat === 'export') {
+
+            $query->orderBy('parties.code');
+
+            $this->allColumns($query, $request, $prefix);
+
+            $this->tableJoins($query);
+
+        } else {
+
+            $this->allColumns($query, $request, $prefix);
+
+            $this->formColumns($query);
+
+            $this->addAging($query, $prefix);
+
+            $this->tableJoins($query);
+
+        }
+
+
+        if ($request->id) $query->where('parties.id',$request->id);
+
+        if ($request->code) $query->where('parties.code',$request->code);
+
+        DataTablesHelper::AddCommonWhereClauses($query, $request);
+
+        //Utils::LogSqlQuery($query);
+
+        if ($request->dataFormat === "dataTables") {
+
+            $datatables = Datatables::of($query);
+
+            if ( $request->tableFilter ) {
+
+                $datatables->filterColumn('balanceRaw', function($query, $keyword) {
+                    $sql = "IFNULL( 
+                        (SELECT SUM(balance) FROM client_business_balances 
+                        WHERE partyId = parties.id GROUP BY partyId), 0.00) like ?";
+                    $query->whereRaw($sql, ["%{$keyword}%"]);
+                });
+
+
+            }
+
+            return $datatables->make(true);
+
+        } else  {
+
+            return DataTablesHelper::ReturnData($query, $request);
+        }
+        
+    }
+
+    public function export(Request $request)
+    {
+
+        $newRequest = new Request;
+        $newRequest->tableColumns = false;
+        $newRequest->dataFormat = 'export';
+
+        $query = $this->get($newRequest);
+
+        Utils::SetExcelMacros();
+
+        // https://github.com/Maatwebsite/Laravel-Excel/issues/1610
+        // To avoid defining an export class for each model, use an anonymous class:
+
+        return Excel::download(new class($query) implements FromQuery, WithHeadings, WithEvents, ShouldAutoSize {
+        
+            public function __construct($query)
+            {
+                $this->query = $query;
+            }
+
+            public function headings(): array
+            {
+                return [
+                    'Id',
+                    'Code',
+                    'Name',
+                    'First Name',
+                    'Last Name',
+                    'Title',
+                    'Friendly Name',
+                    'Salutation',
+                    'Id/Reg Number',
+                    'Identification',
+                    'Birth/Reg Date',
+                    'Entity',
+                    'Type',
+                    'Marriage',
+                    'Physical Line1',
+                    'Physical Line2',
+                    'Physical Line3',
+                    'Physical Code',
+                    'Physical Province',
+                    'Physical Country',
+                    'Postal Line1',
+                    'Postal Line2',
+                    'Postal Line3',
+                    'Postal Code',
+                    'Postal Province',
+                    'Postal Country',//Z
+                    'Vat Vendor',
+                    'Vat Number',
+                    'Email',
+                    'Mobile',
+                    'unreservedTrustBalance',
+                    'reservedTrustBalance',
+                    'trustBalance',
+                ];
+            }
+
+            public function registerEvents(): array
+            {
+
+                return [
+                    // AfterSheet::class => function(AfterSheet $event) {
+
+                    //     $event->sheet->styleCells(
+                    //         'AE1:AG1', ['alignment' => ['horizontal' => Alignment::HORIZONTAL_RIGHT, ],]
+                    //     );
+                    // },
+
+                    BeforeExport::class => function(BeforeExport $event) {
+
+                        $event->writer->getProperties()->setTitle('Parties');
+                        $event->writer->getProperties()->setCreator(session('employeeName'));
+                        $event->writer->getProperties()->setCompany(session('companyName'));
+                    },
+
+                ];
+            }
+
+            public function query() { return $this->query; }
+
+        },'parties.xlsx');
+
+    }
+
+    public function emails(Request $request)
+    {
+
+        $query = PartyNumber::where('contact_methods.type','Email')
+        ->join('parties', 'parties.id', '=', 'party_numbers.partyId')
+        ->join('contact_methods', 'contact_methods.id', '=', 'party_numbers.methodId');
+        
+        $query->addSelect("party_numbers.id");
+        $query->addSelect("parties.code");
+        $query->addSelect("parties.name");
+        $query->addSelect("party_numbers.description");
+
+        return DataTablesHelper::ReturnData($query, $request);
+
+    }
+
+    public function store(Request $request)
+    {
+
+        $returnData = new \stdClass();
+
+        $entity = PartyEntity::find($request->entityId);
+
+        $request->entityType = $entity->type;
+
+        if ( $request->entityType === 'J') {
+
+            $rules = [
+                'name' => 'required|min:4',
+                'salutation' => 'required',
+                'idNumber' => 'nullable|string|max:50',
+                'physicalCode' => 'nullable|string|max:50',
+                'postalCode' => 'nullable|string|max:50',
+                'postalProvinceId' => 'required',
+                'physicalProvinceId' => 'required',
+                'postalCountryId' => 'required',
+                'physicalCountryId' => 'required',
+                ];
+
+        } else {
+            
+            $rules = [
+                'title' => 'max:50',
+                'firstName' => 'required',
+                'lastName' => 'required',
+                'salutation' => 'required',
+                'idNumber' => 'nullable|string|max:50',
+                'physicalCode' => 'nullable|string|max:50',
+                'postalCode' => 'nullable|string|max:50',
+                'postalProvinceId' => 'required',
+                'physicalProvinceId' => 'required',
+                'postalCountryId' => 'required',
+                'physicalCountryId' => 'required',
+            ];
+        }
+
+        $messages = [
+            'code.required' => 'Please specify a Code for this Party',
+            'postalProvinceId.required' => 'Please select a Province',
+            'physicalProvinceId.required' => 'Please select a Province',
+            'postalCountryId.required' => 'Please select a Country',
+            'physicalCountryId.required' => 'Please select a Country',
+        ];
+
+
+        $validator = Validator::make($request->all(), $rules,$messages); 
+        
+        if ($validator->fails()) {
+
+            $returnData->errors = $validator->errors();
+            return json_encode($returnData);            
+
+        }        
+
+        try {
+
+            // Inserting a new record
+            if ( !isset($request->id) ) {
+                
+                $party = new Party;
+
+                if ( $request->entityType === 'N') {
+                    
+                    $party->code = $this->generatePartyCode($request->lastName);
+                    
+                } else {
+
+                    $party->code = $this->generatePartyCode($request->name);
+                }
+                
+            } else {
+
+                $party = Party::find($request->id);
+
+                $party->code = $request->code;
+                
+            }
+
+            $party->name = $request->entityType === 'N' ? $request->lastName . ', ' . $request->firstName : $request->name;
+                
+            $party->entityId = $request->entityId;
+            $party->typeId = $request->typeId;
+            $party->firstName = $request->firstName;
+            $party->lastName = $request->lastName;
+            $party->title = $request->title;
+            $party->friendlyName = $request->friendlyName;
+            $party->salutation = $request->salutation;
+            $party->idNumber = $request->idNumber;
+            $party->idType = $request->idType;
+            $party->birthDate = Utils::convertDate($request->birthDate);
+            $party->marriageId = $request->marriageId;
+            $party->physicalLine1 = $request->physicalLine1;
+            $party->physicalLine2 = $request->physicalLine2;
+            $party->physicalLine3 = $request->physicalLine3;
+            $party->physicalCode = $request->physicalCode;
+            $party->physicalProvinceId = $request->physicalProvinceId;
+            $party->physicalCountryId = $request->physicalCountryId;
+            $party->postalLine1 = $request->postalLine1;
+            $party->postalLine2 = $request->postalLine2;
+            $party->postalLine3 = $request->postalLine3;
+            $party->postalCode = $request->postalCode;
+            $party->postalProvinceId = $request->postalProvinceId;
+            $party->postalCountryId = $request->postalCountryId;
+            $party->vatVendor = $request->vatVendor;
+            $party->vatNumber = $request->vatNumber;
+
+            $party->save();
+
+            if ( !isset($request->id)) {
+
+                foreach($request->contactNumbers as $number) {
+
+                    $method = ContactMethod::where('type',$number['method'])->first();
+                    
+                    if ($method) {
+                        $partyNumber = new PartyNumber;
+                        $partyNumber->partyId = $party->id;
+                        $partyNumber->description = $number['description'];
+                        $partyNumber->methodId = $method->id;
+                        $partyNumber->defaultFlag = $number['defaultFlag'];
+                        $partyNumber->save();
+                    } else {
+                        logger('System Error',['Create Party - Adding Contact Numbers','Contact method not found',$number['method']]);
+                    }
+
+                }                
+
+            }
+
+            // This is used in the drop downs
+            $party->party = $party->code . ' - ' . $party->name;
+
+            // Update the Extra Screen data
+            if ( isset($request->extraScreens) ) {
+
+                foreach(json_decode($request->extraScreens) as $extraScreen) {
+
+                    foreach($extraScreen->fields as $field) {
+
+                        PartyExtraScreen::updateOrCreate(
+                            ['partyId' => $party->id, 'extraScreenId' => $extraScreen->id, 'name' => $field->name],
+                            ['value' => $field->value]
+                        );
+
+                    }
+
+                }
+
+            }
+
+
+
+            return json_encode($party);            
+    
+        } catch (\Illuminate\Database\QueryException $e) {
+
+            $validator->errors()->add('general', Utils::MySqlError($e));
+
+            $returnData->errors = $validator->errors();
+            return json_encode($returnData);            
+
+        }
+
+    }
+
+    protected function generatePartyCode($name)
+    {
+
+        $name = preg_replace("/[^a-zA-Z0-9]/", "", $name);
+
+        while ( strlen($name) < 3 ) { $name = $name . '1'; }
+
+        $code = strtoupper(substr($name,0,3));
+
+        $counter = Party::where('code', 'like', $code . '%')->count();
+
+        if ($counter) {
+
+            $counter++;
+            
+            while($counter <= 5000) {
+
+                $existingParty = Party::where('code',$code . $counter)->first();
+
+                if (!$existingParty) break;
+
+                $counter++;
+                
+            }
+
+            return $code . $counter;
+
+        } else {
+
+            return $code . '1';
+
+        }
+        
+    }
+    public function destroy(Request $request)
+    {
+
+        PartyExtraScreen::where('partyId', $request->id)->delete();
+
+        return DataTablesHelper::destroy($request, Party::class);
+    }
+
+
+    public function getTablePosition(Request $request)
+    {
+        return DB::table('parties')
+        ->where('code','<',$request->column)
+        ->orderBy('code')
+        ->count();
+    }
+
+}

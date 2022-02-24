@@ -1,0 +1,219 @@
+<template>
+
+    <div :id="id" class="form-group row">
+        <div class="col-md-4">
+            <label v-html="label"/>
+            <span v-if="popOver">   
+                <pop-over :content="popOver" :container="popOverContainer ? popOverContainer : $parent.modal ? '#' + $parent.id : 'body'"/>
+            </span>
+            <span v-if="clearIcon">
+                <i class="fa fa-times-circle cp text-danger ml-1 clear-icon" style="font-size: large" title="Clear this filter" @click="clearFilter"></i>
+            </span>
+            
+            <select-date-period
+                :id="id + '-select-date-period'"
+                :searchable="false"
+                placeholder=""
+                :options="periods" 
+                v-model="currentPeriod"
+                :tabindex="-1"
+                :allow-empty="true"
+                :show-labels="false"
+                @input="periodChanged"
+            />
+
+            
+        </div>
+
+        <div v-show="currentPeriod === 'Custom'" class="col-md-4">
+            <label>From</label>
+            <date-picker v-model="fromDate" :config="$root.datePickerIsoOptions"/>
+            <div v-if="fromDateError.length" v-html="fromDateError[0]" class="invalid-feedback"></div>
+        </div>
+        <div v-show="currentPeriod === 'Custom'" class="col-md-4">
+            <label>To</label>
+            <date-picker ref="toDatePickerComponent" v-model="toDate" :config="$root.datePickerIsoOptions"/>
+            <div v-if="toDateError.length" v-html="toDateError[0]" class="invalid-feedback"></div>
+        </div>
+
+    </div>
+
+</template>
+
+<script>
+
+import Multiselect from 'vue-multiselect';
+
+export default {
+
+    components: {
+        SelectDatePeriod: Multiselect
+    },
+
+    props: {
+        id: String,
+        label: {
+            type: String,
+            default: 'Date',
+        },
+        popOver: { type: String, default:'' },
+        popOverContainer: { type: String, default:'' },
+    },
+
+    data() {
+        return {
+
+            filterName: null,
+            filterColumn: null,
+
+            clearIconCallback: 'clearDateFilter',
+            clearIcon: false,
+
+            periods: ['Today', 'Yesterday', 'This Week', 'Last Week', 'This Month', 'Last Month', 'This Quarter', 'Last Quarter', 'This Year', 'Last Year', 'Custom' ],
+
+            currentPeriod: null,
+            //currentFromDate: null,
+            //currentToDate: null,
+
+            period: null,
+            fromDate: null,
+            toDate: null,
+
+            fromDateError: [],
+            toDateError: [],
+
+        };
+    },
+
+    watch: {
+
+        fromDate: function (newValue) {
+
+            this.toDateError = [];
+            this.fromDateError = [];
+
+            if ( this.period !== 'Custom' ) return;
+
+            if (!this.toDate) return;
+
+            this.fromDate = newValue;
+
+            if ( moment(this.fromDate).isAfter(this.toDate) ) {
+                this.fromDateError.push('The From Date cannot be after the To Date');
+                return;
+            }
+
+            this.applyFilter();
+
+        },
+
+        toDate: function (newValue) {
+
+            this.toDateError = [];
+            this.fromDateError = [];
+
+            if ( this.period !== 'Custom' ) return;
+
+            if (!this.fromDate) return;
+
+            this.toDate = newValue;
+
+            if ( moment(this.toDate).isBefore(this.fromDate) ) {
+                this.toDateError.push('The To Date cannot be before the From Date');
+                return;
+            }
+
+            this.applyFilter();
+
+        },
+
+    },
+
+    mounted () {
+        this.$parent.selectDatePeriod = this;
+    },    
+
+    methods: {
+
+        primeFilter(filterName, filterColumn) {
+
+            // Set Date Picker to open from the right
+            this.$refs.toDatePickerComponent.elem.data('DateTimePicker').widgetPositioning(
+                { horizontal: 'right', vertical: 'bottom' }
+            );
+
+            this.filterName = filterName;
+            this.filterColumn = filterColumn;
+
+            this.period = null;
+            this.fromDate = null;
+            this.toDate = null;
+
+            this.fromDateError = [];
+            this.toDateError = [];
+
+            // Set the Clear FilterIcon
+            this.existingDateFilter = this.$parent.getFilter(this.filterName) ? true : false;
+            this.clearIcon = this.existingDateFilter;
+        },
+
+
+        periodChanged(newValue) {
+
+            this.period = newValue;
+
+            if ( newValue == 'Custom') {
+
+                if (this.fromDate && this.toDate) {
+                    this.applyFilter();
+                }
+
+            } else {
+                
+                let dateRange = this.$root.getDateRange(this.period);
+                this.fromDate = dateRange.fromDate;
+                this.toDate = dateRange.toDate;
+
+                this.applyFilter();
+            }
+        },
+
+        applyFilter() {
+
+            this.clearIcon = true;
+
+            this.$parent.deleteFilter(this.filterName);
+
+            this.$parent.addFilter(this.filterColumn, this.filterName, this.fromDate, this.toDate, null, this.period);
+
+            this.$parent.table.setUserFilters();
+
+            this.$parent.table.table.ajax.reload();
+
+        },
+
+        clearFilter() {
+
+            this.clearIcon = false;
+
+            this.currentPeriod = null;
+            
+            this.period = null;
+            this.fromDate = null;
+            this.toDate = null;
+
+            this.fromDateError = [];
+            this.toDateError = [];
+
+            this.$parent.deleteFilter(this.filterName);
+
+            this.$parent.table.setUserFilters();
+
+            this.$parent.table.table.ajax.reload();
+
+        },
+
+    },
+
+}  
+</script>

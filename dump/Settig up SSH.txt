@@ -1,0 +1,35 @@
+====================================================================================
+Setting up SSH
+====================================================================================
+
+Note: Use this to generate private and public keys on your PC
+C:\>ssh-keygen -t rsa -b 2048
+
+This creates a private key (id_rsa) and a public key (id_rsa.pub) in C:\users\Rick\.ssh
+
+The public key must be copied to the server (in WHM and CPanel - use "Import key" function)
+
+On the server - disable passwords for SSH (we are using keys instead)
+
+Detailed explanation see: https://www.maketecheasier.com/use-windows10-openssh-client/ 
+
+Use this command to create a Secure Shell into the server and log in as root:
+c:\>ssh root@160.119.253.115 
+
+To SSH into a LightSail instance on AWS (Butnami Wordpress Instance)
+
+C:\>ssh -i c:\users\Rick\.ssh\LightsailDefaultKey-ap-south-1.pem bitnami@13.126.202.113
+
+Then . . .to get the wordpress credentials 
+$>sudo cat /home/bitnami/bitnami_credentials
+
+You should see this:
+
+bitnami@ip-172-26-6-91:~$ sudo cat /home/bitnami/bitnami_credentials
+Welcome to the Bitnami WordPress Stack
+
+******************************************************************************
+The default username and password is 'user' and 'Q53B9X5NNzqn'.
+******************************************************************************
+
+You can also use this password to access the databases and any other component the stack includes.

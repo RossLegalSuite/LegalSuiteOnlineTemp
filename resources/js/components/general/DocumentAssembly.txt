@@ -1,0 +1,898 @@
+<template>
+<div>
+        <select-documents id="document-assembly-select-documents" ref="document-assembly-select-documents" formRef="document-assembly-select-documents"/>
+        <view-assembled id="document-assembly-view-assembled" ref="document-assembly-view-assembled" formRef="document-assembly-view-assembled"/>
+</div>
+
+</template>
+
+<script>
+
+export default {
+
+    components: {
+        SelectDocuments: () => import("@pages/document-templates/SelectDocuments"),
+        ViewAssembled: () => import("@pages/assemble/ViewAssembled"),
+    },
+
+    // These are set by initializeDocumentAssembly() in calling component
+    data() {
+        return {
+            batchId: null,
+            singular: null,
+            plural: null,
+            tablePage: null,
+            whereClause: null,
+            abortMerge: false,
+            selectedRows: [],
+            mergeOptions: {},
+            userData: null,
+            companyData: null,
+            mergeData: {},
+            additionalMergeData: {},
+        }
+    },
+
+    watch: {
+
+        abortMerge: function(newValue) {
+
+            if ( newValue === true ) root.$snotify.clear();
+
+        },        
+
+    },
+
+    methods: {
+
+
+        loadFile(url, callback) {
+            PizZipUtils.getBinaryContent(url, callback);
+        },
+
+        assembleThisDocument() {
+
+            return new Promise(async (resolve, reject) => {
+
+                //console.log('this.mergeOptions',this.mergeOptions);
+
+                if ( !this.userData) this.getBasicMergeData();
+
+                this.mergeData = {...this.userData,...this.companyData, ...this.additionalMergeData}
+
+                console.log('Assembling ' + this.mergeOptions.destinationFileName);
+
+                /* TO SHOW THE DATA IN A TABLE
+                let suffix, mergeFieldsTable = [];
+
+                for (const [key, value] of Object.entries(this.mergeData)) {
+                    suffix = key;
+                    for (const [key, value] of Object.entries(value)) {
+                        mergeFieldsTable.push([suffix + '.' + key, value]);
+                    }
+                }
+
+                console.table(mergeFieldsTable);
+                */
+
+                this.replaceLetterHead()
+
+                .then( ( replacedLetterHeadResponse ) => { 
+
+                    this.loadFile(this.mergeOptions.source, ( error, content ) => {
+
+                        if (error) throw error; //Ajax error is handled in window.onerror in custom.js
+        
+                        var zip = new PizZip(content);
+
+                        var doc = new Docxtemplater(zip, {
+                            nullGetter: root.nullGetter, 
+                            parser: root.angularParser, 
+                            paragraphLoop: true
+                        });
+
+                        doc.setData(this.mergeData);
+
+                        try {
+        
+                            doc.render();
+        
+                        } catch (error) {
+
+                            //Error message is handled in window.onerror in custom.js
+
+                        }
+        
+                        var mergedDocument = doc.getZip().generate({
+                            type: "blob",
+                            mimeType:
+                            "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                        }); 
+
+                        this.saveFile(mergedDocument)
+
+                        .then( (savedResponse) => { 
+
+                            // Delete the temporary file LibreOffice used to combine the template with the letterhead
+                            if ( replacedLetterHeadResponse ) {
+
+                                axios.post('/file/delete', { filePath: replacedLetterHeadResponse.savedAs });
+
+                            }
+
+                            const convertOptions = {
+                                destinationPath: this.mergeOptions.destinationFolder,
+                                docxFileName: this.mergeOptions.destinationFileName,
+                                source: savedResponse.result,
+                                sourceLocation: 'local',
+                                uniqueFileName: true,
+                            };
+
+                            this.convertFile(convertOptions)
+
+                            .then( (convertResponse) => { 
+
+                                console.log('Completed ' + this.mergeOptions.destinationFileName);
+
+                                resolve( convertResponse );
+
+                            }).catch( ( error ) => {
+
+                                this.abortMerge = true;
+
+                                reject(error);
+
+                                showError('Error','<p>An error was encountered converting the document to PDF.</p><p>' + error + '</p>');
+                            });
+
+                        }).catch( ( error ) => {
+
+                            this.abortMerge = true;
+
+                            reject(error);
+
+                            showError('Error','<p>An error was encountered saving the document locally.</p><p>' + error + '</p>');
+                            
+                        });
+                        
+                    });
+                }).catch( ( error ) => {
+
+                    this.abortMerge = true;
+
+                    reject(error);
+
+                    showError('Error','<p>An error was encountered checking if the document has a letterhead tag.</p><p>' + error + '</p>');
+                });
+                
+            });
+
+        },
+
+        replaceLetterHead() {
+
+            return new Promise(async (resolve, reject) => {
+
+                //console.log('root.control.letterHeadFileName',root.control.letterHeadFileName);
+
+                if (root.control.letterHeadFileName == null) resolve(false);
+
+                let letterHeadField = false;
+
+                this.loadFile(this.mergeOptions.source, async ( error, content ) => {
+
+                    if (error) {
+
+                        reject(error);
+
+                    } else {
+
+                        var zip = new PizZip(content);
+
+                        var iModule = InspectModule();
+                        const doc = new Docxtemplater(zip, { modules: [iModule] });
+                        doc.render();
+
+                        const tags = iModule.getAllTags();
+
+                        //https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/entries
+                        for (const [key, value] of Object.entries(tags)) {
+
+                            if ( key.indexOf("company.letterhead") !== -1 ) {
+                                letterHeadField = true;
+                                break;
+                            }
+                        }
+
+                        if ( letterHeadField ) {
+
+                            //Call Libre Office macro to insert the letterhead into the template
+                            //and save the combined document locally and return a url
+                            let response = await axios.post('/libre/replaceLetterHead',{
+                                document: this.mergeOptions.source,
+                                letterhead: root.control.letterHeadFileName,
+                            });
+                            //Testing: letterhead: 'https://ettorney.s3.af-south-1.amazonaws.com/acme/1/letterhead/Acme+Letterhead.docx',
+
+                            if ( response.data.error ) {
+
+                                reject(response.data.error);
+
+                            } else {
+
+                                // Give Libre Office some time to save the file
+                                // 17 Mar 2021 - Doesn't seem to need a timeout
+                                // but must double check this in production
+
+                                //setTimeout(() => {
+
+                                    //Change the source to the locally saved file with the letterhead in it
+                                    this.mergeOptions.source = response.data.url; 
+
+                                    resolve(response.data); 
+
+                                //}, 500);
+
+                            }
+
+                        } else {
+                            resolve(false);
+                        }
+
+                    }
+
+                });
+
+            });
+
+        },
+
+        uploadFile(mergedDocument) {
+
+            return new Promise(async (resolve, reject) => {
+
+                var formData = new FormData();
+
+                formData.append("file", mergedDocument);
+                formData.append("fileName", this.mergeOptions.destinationFileName);
+                formData.append("folder", this.mergeOptions.destinationFolder);
+
+                let response = await axios.post('/file/upload', formData, {
+                    headers: {'Content-Type': 'multipart/form-data'}
+                });
+
+                if (response.data.error) {
+
+                    reject(response.data.error);
+
+                } else {
+
+                    resolve(response.data);
+
+                }
+                
+            });
+
+        },
+
+        saveFile(file) {
+
+            return new Promise(async (resolve, reject) => {
+
+                var formData = new FormData();
+
+                let path = '/' +  root.companyCode + '/' + root.loggedInEmployeeId + '/temp';
+
+                formData.append("file", file);
+                formData.append("path", path);
+
+                let response = await axios.post('/file/save', formData, {
+                    headers: {'Content-Type': 'multipart/form-data'}
+                });
+
+                if (response.data.error) {
+
+                    reject(response.data);
+
+                } else {
+
+                    resolve(response.data);
+                }
+                
+            });
+
+        },
+
+        convertFile( convertOptions ) {
+
+            return new Promise(async (resolve, reject) => {
+
+                try {
+
+                    let response = await axios.post('/file/convertDocxToPdf',convertOptions);
+    
+                    resolve(response.data);
+    
+                } catch(error) {
+    
+                    return reject(error);
+    
+                };
+    
+                
+            });
+
+        },
+
+        getBasicMergeData() {
+
+            this.userData = {
+                user: { 
+                    name: root.templateData.employee.name,
+                    email: root.templateData.employee.email,
+                }
+            };
+
+            this.companyData = {
+                company: { 
+                    name: root.templateData.company.name,
+                    tradingName: root.templateData.company.tradingName,
+                    registrationNumber: root.templateData.company.registrationNumber,
+                    website: root.templateData.company.website,
+                    logo: root.templateData.company.logo,
+                    region: root.templateData.company.region,
+                    letterHeadPdfFile: root.templateData.company.letterHeadPdfFile,
+                    letterHeadPath: root.templateData.company.letterHeadPath,
+                    letterHeadFileName: root.templateData.company.letterHeadFileName,
+                    bankAccountName: root.templateData.company.bankAccountName,
+                    bankAccountNumber: root.templateData.company.bankAccountNumber,
+                    bankAccountBranchName: root.templateData.company.bankAccountBranchName,
+                    bankAccountBranchCode: root.templateData.company.bankAccountBranchCode,
+                    bankAccountType: root.templateData.company.bankAccountType,
+                    physicalLine1: root.templateData.company.physicalLine1,
+                    physicalLine2: root.templateData.company.physicalLine2,
+                    physicalLine3: root.templateData.company.physicalLine3,
+                    physicalCode: root.templateData.company.physicalCode,
+                    postalLine1: root.templateData.company.postalLine1,
+                    postalLine2: root.templateData.company.postalLine2,
+                    postalLine3: root.templateData.company.postalLine3,
+                    postalCode: root.templateData.company.postalCode,
+                    dateFormat: root.templateData.company.dateFormat,
+                    timeZone: root.templateData.company.timeZone,
+                    countryCode: root.templateData.company.countryCode,
+                    currencyCode: root.templateData.company.currencyCode,
+                    currencySymbol: root.templateData.company.currencySymbol,
+                    paperSize: root.templateData.company.paperSize,
+                    yearEndDay: root.templateData.company.yearEndDay,
+                    yearEndMonth: root.templateData.company.yearEndMonth,
+                    
+                    email: root.templateData.company.email,
+                    mobile: root.templateData.company.mobile,
+                    work: root.templateData.company.work,
+                    home: root.templateData.company.home,
+                    twitter: root.templateData.company.twitter,
+                    facebook: root.templateData.company.facebook,
+                    instagram: root.templateData.company.instagram,
+                    google: root.templateData.company.google,
+                    whatsapp: root.templateData.company.whatsapp,
+                    fax: root.templateData.company.fax,
+                    other: root.templateData.company.other,
+
+                }
+            };
+
+        },
+
+
+        /*********************************************************/
+
+        assembleDocuments() {
+
+            if ( !this.selectedRows.length) {
+
+                showError('No ' + this.singular + ' selected', 'Please tag a ' + this.singular + ' (or multiple ' + this.plural + ') first' );
+
+            } else {
+
+                this.selectDocuments.selectDocuments(this.whereClause);
+            }
+            
+        },
+
+        async documentsSelected(selectedRows, table) {
+
+            this.abortMerge = false;
+
+            let params = ( selectedRows.length ) ? 
+            { dataFormat: 'idArray', whereIn: { column: 'document_templates.id', value: selectedRows } } : 
+            { dataFormat: 'idArray', whereIn: this.whereClause, tableFilter: table.tableFilter, tableHaving: table.tableHaving };
+
+            let response = await axios.post('/document_templates/get', params);
+
+            root.$snotify.simple(response.data.data[0].title, 'Assembling', { timeout: 0, icon: 'img/cogs.gif' });
+
+            await root.asyncForEach( response.data, async (document) => {
+
+                if ( this.singular === 'Party' ) {
+
+                    const params = ( this.selectedRows.length ) ? 
+                    { dataFormat: 'idArray', whereIn: { column: 'parties.id', value: this.selectedRows } } : 
+                    { dataFormat: 'idArray' };
+
+                    const response = await axios.post('/party/get', params);
+
+                    await root.asyncForEach( response.data, async (record) => {            
+
+                        if ( !this.abortMerge ) {
+
+                            this.mergeOptions = {
+                                source: document.docxFile,
+                                destinationFileName: document.fileName.split('.')[0] + '-' + makeValidPathString(record.code) + '-' + Date.now() + '.docx',
+                                destinationFolder: 'merged',
+                                dataSource: document.source,
+                                id: record.id,
+                            };
+
+                            $('.snotify-simple .snotifyToast__body').text(document.title + ' with ' + record.name);
+
+                            await this.createPartyDocument( record.id )
+                            .then( async (convertResponse) => {
+                                await this.storeCorrespondence( convertResponse, document, record );
+                            });
+
+                        }
+
+                    });
+
+                } else if ( this.singular === 'Matter' ) {
+
+                    const params = ( this.selectedRows.length ) ? 
+                    { dataFormat: 'idArray', whereIn: { column: 'matters.id', value: this.selectedRows } } : 
+                    { dataFormat: 'idArray' };
+
+                    const response = await axios.post('/matters/get', params);
+
+                    await root.asyncForEach( response.data, async (record) => {            
+
+                        if ( !this.abortMerge ) {
+
+                            this.mergeOptions = {
+                                source: document.docxFile,
+                                destinationFileName: document.fileName.split('.')[0] + '-' + makeValidPathString(record.fileRef) + '-' + Date.now() + '.docx',
+                                destinationFolder: 'merged',
+                                dataSource: document.source,
+                                id: record.id,
+                            };
+
+                            $('.snotify-simple .snotifyToast__body').text(document.title + ' with ' + record.fileRef);
+
+                            await this.createMatterDocument( record.id )
+                            .then( async (convertResponse) => {
+                                await this.storeCorrespondence( convertResponse, document, record );
+                            });
+
+                        }
+
+                    });
+
+                } else if ( this.singular === 'Employee' ) {
+
+                    const params = ( this.selectedRows.length ) ? 
+                    { dataFormat: 'idArray', whereIn: { column: 'employees.id', value: this.selectedRows } } : 
+                    { dataFormat: 'idArray' };
+
+                    const response = await axios.post('/employees/get', params);
+
+                    await root.asyncForEach( response.data, async (record) => {            
+
+                        if ( !this.abortMerge ) {
+
+                            this.mergeOptions = {
+                                source: document.docxFile,
+                                destinationFileName: document.fileName.split('.')[0] + '-' + makeValidPathString(record.name) + '-' + Date.now() + '.docx',
+                                destinationFolder: 'merged',
+                                dataSource: document.source,
+                                id: record.id,
+                            };
+
+                            $('.snotify-simple .snotifyToast__body').text(document.title + ' with ' + record.name);
+
+                            await this.createEmployeeDocument( record.id )
+                            .then( async (convertResponse) => {
+                                await this.storeCorrespondence( convertResponse, document, record );
+                            });
+
+                        }
+
+                    });
+
+                }
+
+            });
+            
+            // Refresh the Documents table 
+            if ( this.tablePage && this.tablePage.table && this.tablePage.table.table ) {
+
+                this.tablePage.table.refresh();
+            }
+
+            this.viewAssembled.load( this.batchId );
+            
+            root.$snotify.clear();
+
+        },
+
+        createPartyDocument(id) {
+
+            return new Promise(async (resolve, reject) => {
+
+                let parties = await axios.post('/party/get', { dataFormat: 'mergeFields', recordid: id })
+
+                let partyPronouns = this.getPartyPronouns(parties.data[0].typeCode);
+
+                let partyData = {
+                    party: {...parties.data[0], ...partyPronouns},
+                    contact: {},
+                    matters: [],
+                };
+
+                //Add the contact as a convenience for the user
+                // let contact = await axios.post('/matter_parties/get', { 
+                //     dataFormat: 'mergeFields', 
+                //     partyId: id, 
+                //     roleCode: 'contact' 
+                // });
+
+                // console.log('contact.data.length',contact.data.length);
+
+                // if ( contact.data.length ) {
+
+                //     let contactPronouns = this.getPartyPronouns(contact.data[0].typeCode);
+                //     partyData.contact = {...contact.data[0], ...contactPronouns};
+
+                // } else {
+
+                //     partyData.contact = partyData.party;
+                // }
+
+                // *********************************
+                // Get the Party's Extra Screen Data
+                // *********************************
+                let extraScreens = await axios.post('/extra_screens/getPartyMergeFields', {
+                    parentId: id,
+                    dataFormat: 'array'
+                });
+
+                extraScreens.data.forEach(extraScreen => {
+                    if ( typeof partyData[extraScreen.prefix] === 'undefined') {
+                        partyData[extraScreen.prefix] = {};
+                    }
+                    partyData[extraScreen.prefix][toCamelCase(extraScreen.label)] = extraScreen.value;
+                });
+
+
+                // *****************************
+                // Get the Party's Matters
+                // *****************************
+                partyData.matters = await this.getPartyMatters(id);
+
+                root.documentAssembly.additionalMergeData = partyData;
+
+                root.documentAssembly.assembleThisDocument()
+                .then( ( convertResponse ) => {             
+                    resolve(convertResponse);
+                });
+
+
+            });
+
+        },
+
+        async getPartyMatters(id) {
+
+            let returnValue = [];
+
+            let matters = await axios.post('/matters/get', { parentId: id })
+
+            let index = 0;
+
+            await root.asyncForEach(matters.data, async (matter) => {
+
+                index++;
+                await this.getMatterMergeData(matter.id, index)
+                .then( matterMergeData => {
+
+                    returnValue.push(matterMergeData);
+
+                });
+
+            });
+
+            return returnValue;
+        },
+
+
+        createMatterDocument(id) {
+
+            return new Promise((resolve, reject) => {
+
+                this.getMatterMergeData(id)
+                .then( async matterMergeData => {
+
+                    // **********************************
+                    // Get the Matter's Extra Screen Data
+                    // **********************************
+                    let extraScreens = await axios.post('/extra_screens/getMatterMergeFields', {
+                        parentId: id,
+                        dataFormat: 'array'
+                    });
+
+                    extraScreens.data.forEach(extraScreen => {
+
+                        if ( typeof matterMergeData[extraScreen.prefix] === 'undefined') {
+                            matterMergeData[extraScreen.prefix] = {};
+                        }
+                        matterMergeData[extraScreen.prefix][toCamelCase(extraScreen.label)] = extraScreen.value;
+                    });
+
+                    root.documentAssembly.additionalMergeData = matterMergeData;
+
+                    root.documentAssembly.assembleThisDocument()
+                    .then( ( convertResponse ) => {             
+                        resolve(convertResponse);
+                    });
+
+                });
+
+
+            });
+
+        },
+
+        createMatterPartyDocument(id) {
+
+            return new Promise((resolve, reject) => {
+
+                axios.post('/matparty/get/' + id)
+                .then(response => {
+
+                    let partyRoleFields = {
+                        roleDescription: response.data.data[0].role,
+                        roleCode: response.data.data[0].roleCode,
+                        roleReference: response.data.data[0].reference,
+                        roleRank: response.data.data[0].rank,
+                    }
+
+                    axios.post('/party/get', { dataFormat: 'mergeFields', recordid: response.data.data[0].partyId })
+                    .then(party => {
+
+                        axios.post('/matter/get', { dataFormat: 'mergeFields', recordid: response.data.data[0].matterId })
+                        .then( async matter => {
+
+                            root.documentAssembly.additionalMergeData = {
+                                party: {...party.data[0],...partyRoleFields},
+                                matter: matter.data[0]
+                            };
+
+
+                            // ************************************
+                            // Get the Matter Party's Extra Screen Data
+                            // ************************************
+                            let extraScreens = await axios.post('/extra_screens/getPartyRoleMergeFields', {
+                                parentId: id,
+                                dataFormat: 'array'
+                            });
+
+                            await root.asyncForEach( extraScreens.data, async (extraScreen) => {  
+
+                                if ( typeof root.documentAssembly.additionalMergeData[extraScreen.prefix] === 'undefined') {
+                                    root.documentAssembly.additionalMergeData[extraScreen.prefix] = {};
+                                }
+                                root.documentAssembly.additionalMergeData[extraScreen.prefix][toCamelCase(extraScreen.label)] = extraScreen.value;
+                            });
+
+                            root.documentAssembly.assembleThisDocument()
+                            .then( ( convertResponse ) => {             
+                                resolve(convertResponse);
+                            });
+
+                        });
+                    });
+                });
+
+            });
+
+        },
+
+
+        getMatterMergeData(id, index = 1) {
+
+            return new Promise( (resolve, reject) => {
+
+                //let matterData = {}, matterPartiesData = {}, matterPartyData = {}, role;
+
+                axios.post('/matters/get', { dataFormat: 'mergeFields', recordid: id })
+                .then(matter => {
+
+                    //Adding an index so user can number looped matters like 1) ABC1/0001 2) ABC1/0002 etc
+                    // Example:
+                    // {#matters}
+                    // {matter.index}) {matter.description}
+                    // Our Ref:{matter.fileRef}
+                    // {/}
+
+                    let matterDataWithIndex = { ...matter.data[0], index: index };
+
+                    let matterData = { 
+                        matter: matterDataWithIndex,
+                        client: {},
+                        contact: {},
+                    };
+
+                    axios.post('/matter_parties/get', { dataFormat: 'mergeFields', matterId: id })
+                    .then( async matterParties => {
+
+                        
+                        await root.asyncForEach( matterParties.data, async (matterParty) => {  
+
+                            //Add these as a convenience for the user
+                            if (matterParty.roleCode === 'client') {
+                                matterData.client = matterParty;  
+                            } else if (matterParty.roleCode === 'contact') {
+                                matterData.contact = matterParty; 
+                            }
+
+                            if ( typeof matterData[matterParty.rolePlural] === 'undefined') {
+                                matterData[matterParty.rolePlural] = [];
+                            }
+
+                            let pronouns = this.getPartyPronouns(matterParty.typeCode);
+
+                            matterData[matterParty.rolePlural].push({...matterParty, ...pronouns});
+
+
+                        });
+
+                        resolve(matterData);
+
+                    });
+
+                });
+
+            });
+
+        },
+
+        getPartyPronouns(partyType) {
+
+            let returnValue = {};
+
+            if (partyType == 'female' || partyType == 'male') {
+                returnValue.heSheIt = (partyType == 'male') ? 'he' : 'she';
+                returnValue.hisHerIts = (partyType == 'male') ? 'his' : 'her';
+                returnValue.himHerThem = (partyType == 'male') ? 'him' : 'her';
+                returnValue.heSheThey = (partyType == 'male') ? 'he' : 'she';
+                returnValue.iWe = 'I';
+                returnValue.iAmWeAre = 'I am';
+                returnValue.myOur = 'my';
+                returnValue.meUs = 'me';
+                returnValue.hasHave = 'has';
+                returnValue.myselfOurselves = 'myself';
+            } else {
+                returnValue.heSheIt = 'it';
+                returnValue.hisHerIts = 'its';
+                returnValue.himHerThem = 'them';
+                returnValue.heSheThey = 'they';
+                returnValue.iWe = 'we';
+                returnValue.iAmWeAre = 'we are';
+                returnValue.myOur = 'our';
+                returnValue.meUs = 'us';
+                returnValue.hasHave = 'have';
+                returnValue.myselfOurselves = 'ourselves';
+            }
+            return returnValue;
+
+        /*  Male     Female   Juristic   Plural      Description
+            He       She      It         They        He/She/They
+            I        I        We         We          I/We
+            I am     I am     We are     We are      I am/We are
+            my       my       our        our         my/our
+            me       me       us         us          me/us
+            has      has      has        have        has/have
+            his      her      its        their       his/her/their
+            him      her      it         them        him/her/them
+            was      was      was        were        was/were
+            am       am       is         are         am/are
+            s        s        s          NULL        s
+            es       es       es         NULL        es
+            ies      ies      ies        y           ies
+            is       is       is         are         is/are
+            myself   myself   ourselves  ourselves   myself/ourselves
+            */
+        },
+
+
+        createEmployeeDocument(id) {
+
+            return new Promise((resolve, reject) => {
+
+                axios.post('/employee/get', { dataFormat: 'mergeFields', recordid: id })
+                .then(response => {
+
+                    root.documentAssembly.additionalMergeData = {
+                        employee: response.data.data[0]
+                    };
+
+                    root.documentAssembly.assembleThisDocument()
+                    .then( ( convertResponse ) => {             
+                        resolve(convertResponse);
+                    });
+
+                });
+
+            });
+
+        },
+
+        async storeCorrespondence( convertResponse, document, record ) {
+
+            let partyId;
+            let parentType = this.singular;
+
+            if ( this.singular === 'Matter Party' ) {
+                partyId = record.partyId;
+                parentType = 'Party';
+            }
+
+            if ( this.singular === 'Party' ) {
+                partyId = record.id;
+                parentType = 'Party';
+            }
+
+            let response = await axios.post('/correspondence/store', {
+                partyId: this.singular === 'Party' || this.singular === 'Matter Party' ? partyId : null,
+                matterId: this.singular === 'Matter' ? record.id : null,
+                employeeId: this.singular === 'Employee' ? record.id : null,
+                batchId: this.batchId,
+                dateTime: moment().format('YYYY-MM-DD HH:mm:ss'),
+                description: document.description,
+                parentType: parentType,
+                type: 'Document',
+                fileType: 'application/pdf',
+                path: convertResponse.path,
+                url: convertResponse.url,
+                fileName: convertResponse.fileName,
+            });
+
+
+            if (response.data.errors) {
+                
+                this.abortMerge = true;
+
+                showError( 'Error', 'An error was encountered storing the Assembled Document.<br><br>' + JSON.stringify(response.data.errors));
+
+            }
+
+        },
+
+        async convertToPdf( options ) {
+
+            try {
+
+                let response = await axios.post('/file/convertDocxToPdf',options);
+
+                return response.data;
+
+            } catch(error) {
+
+                const errorMessage = error.response.data.message.replace(" (this will throw an Error in a future version of PHP)", ""); 
+
+                return {error: errorMessage};
+
+            };
+
+        },
+
+    }   
+}  
+</script>

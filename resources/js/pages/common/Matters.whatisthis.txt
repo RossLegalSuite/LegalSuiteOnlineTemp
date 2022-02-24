@@ -1,0 +1,90 @@
+<template>
+    <div class="card h-100 border-0">
+        <div class="card-header">
+            <div class="d-flex justify-content-between">
+                <h3 class="page-title">Matters: <span v-html="pageTitle()"></span></h3>
+                <page-close-button @closeClicked="closeClicked"/>
+            </div>
+        </div>
+
+        <div class="card-body overflow-auto p-3">
+
+            <common-matter-table 
+                ref="common-matters-table" 
+                formRef="common-matters-form" 
+                tableId="common-matters-table"
+                :lazy-load-flag="true"
+                :taggedDropDown="false"
+            />
+
+            <common-matter-form
+                id="common-matters-form"
+                uniqueId="common-matters-form"
+                ref="common-matters-form"
+                parentTableRef="common-matters-table"
+                :modal="true"
+            />
+
+            
+        </div>
+    </div>
+</template>  
+
+<script>
+
+import { mapGetters } from 'vuex';
+
+export default {
+
+    components: {
+        CommonMatterTable: () => import("@pages/matters/MatterTable"),
+        //CommonMatterForm: () => import("@pages/matters/MatterForm"),
+    },
+
+    props: {
+        parentType: String,
+    },
+
+    computed: {
+
+        ...mapGetters(['currentParty', 'currentEmployee' ]),
+    },
+
+
+    methods: {
+
+        pageTitle() {
+            
+            if ( this.parentType === 'Party') {
+                return (this.currentParty.code) ? this.currentParty.code + ' - ' + this.currentParty.name : '';
+            } else if ( this.parentType === 'Employee') {
+                return (this.currentEmployee.name) ? this.currentEmployee.name : '';
+            }
+        },
+
+        closeClicked() { 
+
+            this.$root.$refs['right-hand-tab-container'].$refs['right-hand-tabs'].clearPages();
+
+        },
+
+        newRecordButtonClicked() {
+
+            this.form = this.$refs['common-matters-form'];
+
+            if ( this.parentType === 'Party') {
+
+                this.form.initNewRecord(this.currentParty.id,this.currentParty.code);
+
+            } else {
+
+                this.form.$refs[this.form.uniqueId + '-select-matter-client'].selectParty( this.form );
+
+            }
+
+
+        },
+
+    },
+}
+</script> 

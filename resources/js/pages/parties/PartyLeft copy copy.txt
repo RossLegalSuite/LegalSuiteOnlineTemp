@@ -1,0 +1,336 @@
+<template>
+    <div class="card h-100 border-0">
+        <div class="card-header parties-bg">
+            <div class="d-flex justify-content-between">
+                <h3><i class="fa fa-user mr-2"></i>Address Book</h3>
+                <page-close-button @closeClicked="closeLeftPage(pageName)"/>
+            </div>
+        </div>
+
+        <div class="card-body overflow-auto pb-1 pt-3 px-3">
+
+            <party-table 
+                ref="parties-table"
+                :lazyLoadFlag="true"
+                :tagging="true" 
+                formRef="party-right-party-form" 
+                tableId="parties-table"
+            />
+            
+        </div>
+
+        <component 
+            v-show="false"
+            :is="partyEmailContentsComponent" 
+            id="party-left-email-component"
+            ref="email-component"
+        />
+
+    </div>
+</template>     
+
+<script>
+
+import { mapGetters } from 'vuex';
+import { mapMutations } from 'vuex';
+import leftTemplate from "../left-template";
+import assembleMethods from "@pages/assemble-methods";
+
+export default {
+
+    extends: leftTemplate,
+
+    mixins: [assembleMethods],
+
+    components: {
+        PartyTable: () => import("./PartyTable"),
+    },
+
+    data() {
+        return {
+            tableMounted: false,
+            partyEmailContentsComponent: null,
+            form: null,
+            pageName: "Parties",
+            selectedRows: [],
+            selectedAllFlag: false,
+            generateDocumentsFlag: true,
+            generateDocumentsSource: 'Party',
+        };
+    },
+
+    computed: {
+        ...mapGetters(['leftTabs','activeLeftTabs']),
+    },
+
+    watch: {
+        tableMounted: function() { this.initializeTable(); },
+    },
+
+    mounted() {
+
+        let thisTab = this.leftTabs.filter(tab => tab.pageName === this.pageName);
+
+        if (thisTab.length)  this.displayLeftTab(thisTab[0]);
+
+    },    
+
+    methods: {
+
+        ...mapMutations(['displayLeftTab','hideLeftTab']),
+
+        initializeTable() {
+            
+            this.table.loadDataTable(() =>{
+
+                // Used to lazy load the Form (and all its sub components) on the right
+                this.$root.partyLeftTableLoaded = true;
+
+            });
+
+        },
+
+        newRecordButtonClicked() {
+
+            this.form = root.$refs['pages'].$refs["right-page"].$refs['party-right-party-form'];
+
+            //Matters - Desktop - File Notes - Update
+            //Browse - Address Book
+            if ( !this.form.permission('Insert') ) return;
+
+            this.form.insertClicked();
+
+            this.loadPage('Form');
+
+        },
+
+        /*deleteTaggedRecords() {
+
+            this.tryDeleteTaggedRecords('parties');
+
+        },*/
+
+        async emailRecords(templateId) {
+            
+            try {
+
+                let emailModal = root.emailModal;
+
+                emailModal.initialize();
+                emailModal.defaultAttachmentFlag = false;
+                emailModal.mailMergeFlag = true;
+                emailModal.mailMergePlural = 'Parties';
+                emailModal.mailMergeComponent = this;
+
+                emailModal.title = 'Email Selected Parties';
+
+                let emailBody = '';
+
+                let template = await axios.post('/lolsystemtemplate/get/' + templateId)
+
+                if ( template.data.errors ) {
+
+                    showError('Error',template.data.errors);
+
+                } else {
+
+                    emailBody = template.data.data[0].contents;
+                    this.templateRecord = template.data.data[0];
+
+                    let params = ( this.selectedRows.length ) ? { whereIn: 'party.recordid,' + this.selectedRows.join()  } :  {tableFilter: this.table.tableFilter, tableHaving: this.table.tableHaving};
+
+                    params = {...params, select: ['Party.RecordId as recordid', 'Email.Number as emailaddress']};
+
+                    axios.post('/party/get', params)
+
+                    .then(response => {
+
+                        if (response.data.errors) { 
+
+                            showError('Error getting Parties', response.data.errors); 
+
+                        } else {
+
+                            emailModal.mailMergeEmails = [];
+
+                            response.data.data.forEach(party => {
+
+                                if ( party.emailaddress ) emailModal.mailMergeEmails.push(party.emailaddress);
+
+                            });
+
+                            if (emailModal.mailMergeEmails.length) {
+
+                                emailModal.mailMergeSelectedDescription = 'Selected Parties (' + emailModal.mailMergeEmails.length + ')';
+                                
+                                emailModal.mailMergeManyFlag = emailModal.mailMergeEmails.length > 15 ? true : false;
+
+                                emailModal.templateContents = emailBody;
+
+                                emailModal.record.source = this.templateRecord.source;
+                                emailModal.record.contents = emailBody;
+
+                                root.createRecordTemplateData(this.generateDocumentsSource.toLowerCase(),this.templateRecord, response.data.data[0].recordid)
+
+                                .then( (templateData) => {
+
+                                    emailModal.templateData = templateData;
+
+                                    emailModal.show();
+
+                                    emailModal.loadContentEditor();
+
+                                    setTimeout(() => {
+
+                                        $('#' + emailModal.id + ' input[name="subject"]').focus();
+
+                                    });
+
+                                }).catch( (error) => {
+
+                                    showError('Emailing Parties Template Data Error',error);
+
+                                });
+
+
+                            } else {
+
+                                showError('No Email Addresses were found','None of the Parties selected have <em>default</em> email addresses');
+                            }
+                        }
+
+                    }).catch(error => {
+                        showError('Data Retrieval Error', error); 
+                    });
+                }
+
+            } catch(error) { 
+
+                showError('Error loading Email in Party Left', error); 
+
+            };
+
+
+        },
+
+
+        generateEmails( emailParams ) {
+
+            root.$snotify.simple('Selected Parties', 'Sending email', { timeout: 0, icon: 'img/cogs.gif' });
+
+            let emailComponentTemplate = emailParams.body;
+
+            let tableParams = ( this.selectedRows.length ) ? { whereIn: 'party.recordid,' + this.selectedRows.join()  } :  {tableFilter: this.table.tableFilter, tableHaving: this.table.tableHaving};
+
+            tableParams = {...tableParams, select: ['Party.RecordId as recordid', 'Party.Name as name', 'Email.Number as emailaddress']};
+
+            axios.post('/party/get', tableParams)
+
+            .then(async response => {
+
+                if (response.data.errors) { 
+
+                    showError('Error getting Party Email Addresses', response.data.errors); 
+
+                } else {
+
+                    let abortProcess = false;
+
+                    await root.asyncForEach( response.data.data, async (party) => { 
+
+                        if ( party.emailaddress && !abortProcess ) {
+
+                            //debugger;
+
+                            // *****************************************************
+                            // Add this back later - when other code is working
+                            // *****************************************************
+                            // let extraScreens = await axios.post('/extra_screens/getPartyMergeFields', {
+                            //     parentId: party.recordid,
+                            //     dataFormat: 'array'
+                            // });
+
+                            // extraScreens.data.forEach(extraScreen => {
+                            //     if ( typeof partyData[extraScreen.prefix] === 'undefined') {
+                            //         party[extraScreen.prefix] = {};
+                            //     }
+                            //     party[extraScreen.prefix][toCamelCase(extraScreen.label)] = extraScreen.value;
+                            // });
+
+                            
+
+                            emailParams.to = [party.emailaddress];
+                            emailParams.body = '';
+
+                            root.createRecordTemplateData(this.generateDocumentsSource.toLowerCase(), party.recordid, this.templateRecord)
+
+                            .then( (templateData) => {
+
+                                root.vueRender( emailComponentTemplate, templateData )
+                    
+                                .then( (renderedContents) => {
+
+                                    setTimeout(() => {
+                                        $('.snotify-simple .snotifyToast__body').text(party.name + ' ' + party.emailaddress);
+                                    });
+
+                                    emailParams.body = renderedContents;
+
+                                    axios.post('/mail/sendEmail',emailParams)
+
+                                    .then(response => {
+
+                                        if (response.data.error) {
+
+                                            root.$snotify.error(response.data.error + ' - Email: ' + emailParams.to,'Error sending Email',
+                                            {
+                                                timeout: 3000,
+                                                position: 'centerCenter',
+                                                showProgressBar: true,
+                                            });
+
+                                        }
+
+                                    });
+
+                                }).catch( () => {
+
+                                    abortProcess = true;
+                                    root.$snotify.clear();
+                                    showError('Emailing Parties Error','Unable to generate template contents');
+
+                                });
+
+                            }).catch( (error) => {
+
+                                showError('Generating Party Documents Template Data Error',error);
+
+                            });
+
+                        }
+
+                    });
+
+
+                    if ( !abortProcess ) {
+
+                        $('.snotify-simple .snotifyToast__body').text('Completed');
+
+                        setTimeout(() => { root.$snotify.clear(); }, 3000);
+
+                    }
+
+                }
+
+            }).catch(error => { 
+
+                console.log('Error getting Parties',error);
+
+            });
+
+
+        },
+
+    },
+}
+</script>

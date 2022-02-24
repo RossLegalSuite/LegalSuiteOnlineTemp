@@ -1,0 +1,92 @@
+<template>
+    <div class="modal" :id="id">
+
+        <div class="modal-dialog modal-dialog-left">
+
+            <div class="modal-content" style="border-color:indianred">
+
+                <div class="modal-header indianred">
+                    <h2 class="modal-title page-title"><i class="fa fa-server mr-2"></i>Select a Fee Sheet</h2>
+                    <i title="Close this window" class="cp top-right fa fa-times-circle fa-2x text-white" data-dismiss="modal"></i>
+                </div>
+
+                <div class="modal-body p-3" style="height: 60vh; overflow-y: auto;">
+                    
+                    <fee-sheet-table
+                    :options-button="false"
+                    :new-record-button="false"
+                    :table-id="id + '-table'"
+                    :lazyLoadFlag="true"
+                    ref="select-feesheet-table"
+                    :formRef="formRef"
+                    />
+
+
+                </div>
+
+                <div class="modal-footer ">
+                    <button class="btn btn-danger form-button" type="button"  v-on:click="hide" title="Cancel selection"><i class="fa fa-times-circle fa-lg mr-2"></i>Cancel</button>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</template>
+
+<script>
+
+import modalTemplate from "@components/modals/modal-template";
+import { debounce } from 'lodash';
+
+export default {
+
+    mixins: [modalTemplate],       
+
+    components: {
+        FeeSheetTable: () => import("./FeeSheetTable"),
+    },
+
+    props: {
+        formRef: String,
+    },
+
+    data() {
+        return {
+            table: null,
+        };
+    },
+
+
+    mounted () {
+        this.$parent.selectSingleFeeSheet = this;
+    },    
+
+    methods: {
+
+        selectFeeSheet() {
+
+            this.show();
+
+            this.table.selectTableFlag = true;
+
+            setTimeout( this.table.loadDataTable );
+
+        },
+
+
+        feeSheetSelected(selectedRecord) {
+
+            if ( typeof this.$parent.feeSheetSelected === 'function') this.$parent.feeSheetSelected(selectedRecord.id, selectedRecord.description);
+
+            this.hide();
+
+        },        
+
+    },
+
+}  
+</script>
+

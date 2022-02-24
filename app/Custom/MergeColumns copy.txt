@@ -1,0 +1,77 @@
+<?php
+
+namespace App\Custom;
+use DB;
+use Illuminate\Support\Str;
+class MergeColumns {
+
+    public static function AddPartyMergeColumns(&$query, $prefix, $table = '')
+    {
+
+        // Party Columns
+        $query->addSelect( "parties.id as {$prefix}" . Str::camel($table . "Id") )
+        ->addSelect( "parties.code as {$prefix}" . Str::camel($table . "Code") )
+        ->addSelect( "parties.name as {$prefix}" . Str::camel($table . "Name") )
+        ->addSelect(DB::raw("CONCAT(parties.code, ' - ', parties.name) as `{$prefix}" . Str::camel($table . "FullDescription") . "`"))
+        ->addSelect("parties.firstName as {$prefix}" . Str::camel($table . "FirstName") )
+        ->addSelect("parties.lastName as {$prefix}" . Str::camel($table . "LastName") )
+        ->addSelect("parties.title as {$prefix}" . Str::camel($table . "Title") )
+        ->addSelect("parties.friendlyName as {$prefix}" . Str::camel($table . "FriendlyName") )
+        ->addSelect("parties.salutation as {$prefix}" . Str::camel($table . "Salutation") )
+        ->addSelect("parties.idNumber as {$prefix}" . Str::camel($table . "IdNumber") )
+        ->addSelect( DB::raw("CASE 
+        WHEN parties.idType = 'I' THEN 'Identity Document'
+        WHEN parties.idType = 'S' THEN 'Social Security'
+        WHEN parties.idType = 'P' THEN 'Passport'
+        WHEN parties.idType = 'D' THEN 'Drivers Licence'
+        WHEN parties.idType = 'B' THEN 'Birth Certificate'
+        WHEN parties.idType = 'T' THEN 'Temporary Residence'
+        WHEN parties.idType = 'X' THEN 'Tax Certificate'
+        WHEN parties.idType = 'A' THEN 'Armed Forces ID'
+        WHEN parties.idType = 'O' THEN 'Other'
+        ELSE parties.idType END as `{$prefix}" . Str::camel($table . "IdTypeDescription") ."`"))
+        ->addSelect( DB::raw("DATE_FORMAT( CONVERT_TZ(parties.birthdate,'+00:00','" . session('timeZone') . "'), '" . Utils::sqlDateFormat() . "') as `{$prefix}" . Str::camel($table . "BirthDate") ."`"))
+        ->addSelect("party_entities.description as {$prefix}" . Str::camel($table . "EntityDescription") )
+        ->addSelect("party_types.description  as {$prefix}" . Str::camel($table . "TypeDescription") )
+        ->addSelect("marriage_types.description as {$prefix}" . Str::camel($table . "MarriageDescription") )
+        ->addSelect("parties.physicalLine1 as {$prefix}" . Str::camel($table . "PhysicalLine1") )
+        ->addSelect("parties.physicalLine2 as {$prefix}" . Str::camel($table . "PhysicalLine2") )
+        ->addSelect("parties.physicalLine3 as {$prefix}" . Str::camel($table . "PhysicalLine3") )
+        ->addSelect("parties.physicalCode as {$prefix}" . Str::camel($table . "PhysicalCode") )
+        ->addSelect("physicalProvince.description as {$prefix}" . Str::camel($table . "PhysicalProvince") )
+        ->addSelect("physicalCountry.description as {$prefix}" . Str::camel($table . "PhysicalCountry") )
+        ->addSelect("parties.postalLine1 as {$prefix}" . Str::camel($table . "PostalLine1") )
+        ->addSelect("parties.postalLine2 as {$prefix}" . Str::camel($table . "PostalLine2") )
+        ->addSelect("parties.postalLine3 as {$prefix}" . Str::camel($table . "PostalLine3") )
+        ->addSelect("parties.postalCode as {$prefix}" . Str::camel($table . "PostalCode") )
+        ->addSelect("postalProvince.description as {$prefix}" . Str::camel($table . "PostalProvince") )
+        ->addSelect("postalCountry.description as {$prefix}" . Str::camel($table . "PostalCountry") )
+        ->addSelect( DB::raw("CASE WHEN emailAddress.description IS NOT NULL THEN emailAddress.description ELSE '' END as `{$prefix}" . Str::camel($table . "Email") ."`"))
+        ->addSelect( DB::raw("CASE WHEN mobileNumber.description IS NOT NULL THEN mobileNumber.description ELSE '' END as `{$prefix}" . Str::camel($table . "Mobile") ."`"));
+
+    }
+
+    public static function AddMatterMergeColumns(&$query, $prefix, $table = '')
+    {
+
+        //        $query->addSelect( "parties.id as {$prefix}" . Str::camel($table . "Id") )
+
+        $query->addSelect("matters.id as {$prefix}" . Str::camel($table . "Id") )
+        ->addSelect("matters.fileRef as {$prefix}" . Str::camel($table . "FileRef") )
+        ->addSelect("matters.description as {$prefix}" . Str::camel($table . "Description") )
+        ->addSelect(DB::raw("CONCAT(matters.fileRef, ' - ', matters.description) as `{$prefix}" . Str::camel($table . "FullDescription") . "`"))
+        ->addSelect( DB::raw("DATE_FORMAT( CONVERT_TZ(matters.instructed,'+00:00','" . session('timeZone') . "'), '" . Utils::sqlDateFormat() . "') as `{$prefix}" . Str::camel($table . "Instructed") . "`") )
+        ->addSelect( "client.code as {$prefix}" . Str::camel($table . "ClientCode") )
+        ->addSelect( "client.name as {$prefix}" . Str::camel($table . "ClientName") )
+        ->addSelect( "client.salutation as {$prefix}" . Str::camel($table . "ClientSalutation") )
+        ->addSelect(DB::raw("CONCAT(client.code, ' - ', client.name) as `{$prefix}" . Str::camel($table . "Client") . "`"))
+        ->addSelect("owner.name as {$prefix}" . Str::camel($table . "EmployeeName") )
+        ->addSelect("branches.description as {$prefix}" . Str::camel($table . "BranchDescription") )
+        ->addSelect("document_sets.description as {$prefix}" . Str::camel($table . "DocumentSetDescription") )
+        ->addSelect("document_sets.code as {$prefix}" . Str::camel($table . "DocumentSetCode") )
+        ->addSelect("matter_types.description as {$prefix}" . Str::camel($table . "MatterTypeDescription") )
+        ->addSelect("matter_types.code as {$prefix}" . Str::camel($table . "MatterTypeCode") );
+
+    }
+
+}

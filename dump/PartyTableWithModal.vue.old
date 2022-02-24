@@ -1,0 +1,208 @@
+<template>
+<div>
+
+    <div class="d-flex justify-content-between">
+        <column-search :table-id="tableId"></column-search>
+        <div>
+            <new-record-button title="New Party" @newRecordButtonClicked="newRecordButtonClicked"></new-record-button>
+            <table-options @print="print" @columnsChanged="columnsChanged" @layoutChanged="layoutChanged" :table-id="tableId" :table-style="tableStyle"></table-options>
+        </div>
+    </div>
+
+    <table :id="tableId" class="table table-bordered" style="width:100%"></table>
+
+    <edit-party-modal ref="edit-party-modal" @refreshDataTable="refreshDataTable"></edit-party-modal>
+   
+</div>
+</template>
+
+<script>
+
+import tableTemplate from "../tables/table-template";
+import customTemplate from "../parties/party-template";
+
+export default {
+
+    mixins: [tableTemplate, customTemplate],
+
+    data() {
+        return {
+            partyModal: null,
+            selectEntity: null,
+            selectType: null,
+            selectMarriage: null,
+            selectPostalProvince: null,
+            selectPhysicalProvince: null,
+            selectPostalCountry: null,
+            selectPhysicalCountry: null,
+            partyNumberTable: null,
+        };
+    },
+
+    mounted() {
+
+        this.partyModal = this.$refs['edit-party-modal'];
+        this.selectEntity = this.partyModal.$refs['select-party-entity'];
+        this.selectType = this.partyModal.$refs['select-party-type'];
+        this.selectMarriage = this.partyModal.$refs['select-party-marriage'];
+        this.selectPostalProvince = this.partyModal.$refs['select-postal-province'];
+        this.selectPhysicalProvince = this.partyModal.$refs['select-physical-province'];
+        this.selectPostalCountry = this.partyModal.$refs['select-postal-country'];
+        this.selectPhysicalCountry = this.partyModal.$refs['select-physical-country'];
+        this.partyNumberTable = this.partyModal.$refs['party-number-table'];
+
+    },
+
+
+    methods: {
+
+        editRecord: function (id) {
+            
+            let _this = this;
+
+            this.partyModal.editing = true;
+
+
+            axios.get('/parties/' + id)
+
+            .then(function (response) {
+
+                _this.partyModal.record = response.data[0];
+
+                console.log('_this.partyModal.record',_this.partyModal.record);
+
+                _this.initModal();
+
+                _this.partyNumberTable.tableOptions = {
+                    parentId: _this.partyModal.record.id,
+                    scrollY: '40vh'
+                };
+                
+                _this.partyNumberTable.loadDataTable(); 
+
+            })
+
+            .catch(function (error) {
+                showError('System Error',error);
+            })            
+           
+        },
+
+        newRecordButtonClicked: function () {
+
+            this.partyModal.editing = false;
+
+            this.partyModal.record = {
+                title: 'Mr',
+                salutation: 'Dear Sir',
+                entityId: 1,
+                typeId: 1,
+                idType: 'P',
+                marriageId: 1,
+                postalProvinceId: 1,
+                physicalProvinceId: 1,
+                postalCountryId: 1,
+                physicalCountryId: 1,
+                entity_type: 'N',
+                postalCountryCode: 'ZA',
+                physicalCountryCode: 'ZA',
+            };
+
+            this.initModal();
+
+            
+            
+        },
+
+        initModal: function () {
+
+            this.selectEntity.entityId = this.partyModal.record.entityId; 
+            this.selectEntity.loadComponent(); 
+
+            this.selectType.loadComponent(this.partyModal.record.entity_type); 
+
+            this.selectMarriage.loadComponent(); 
+
+            this.selectPostalCountry.loadComponent(); 
+            this.selectPostalProvince.loadComponent(this.partyModal.record.postalCountryCode); 
+
+            this.selectPhysicalCountry.loadComponent(); 
+            this.selectPhysicalProvince.loadComponent(this.partyModal.record.physicalCountryCode); 
+
+
+            $('#select-party-entity').off('changed.bs.select').on('changed.bs.select', function (e, clickedIndex, isSelected, previousValue) {
+
+                if (previousValue) {
+
+                    axios.post("/get-party_entities",{
+                        whereClause: "id='" + $(this).val() + "'"
+                    })  
+                    
+                    .then(response => {
+                        
+                        if ( partyModal.record.entity_type !== response.data[0].type ) {
+
+                            this.partyModal.record.entity_type = response.data[0].type;
+
+                            this.selectType.reLoadComponent(partyModal.record.entity_type);           
+                        }
+
+                    });
+                }
+
+            });
+
+
+            $('#select-postal-country').off('changed.bs.select').on('changed.bs.select', function (e, clickedIndex, isSelected, previousValue) {
+
+                if (previousValue) {
+
+                    axios.post("/get-countries",{
+                        whereClause: "id='" + $(this).val() + "'"
+                    })  
+                    
+                    .then(response => {
+                        
+                        this.selectPostalProvince.reLoadComponent(response.data[0].code);
+
+                    });
+                }
+
+            });
+
+            $('#select-physical-country').off('changed.bs.select').on('changed.bs.select', function (e, clickedIndex, isSelected, previousValue) {
+
+                if (previousValue) {
+
+                    axios.post("/get-countries",{
+                        whereClause: "id='" + $(this).val() + "'"
+                    })  
+                    
+                    .then(response => {
+                        
+                        this.selectPhysicalProvince.reLoadComponent(response.data[0].code);
+
+                    });
+                }
+
+            });
+
+
+            $('#edit-party-modal').modal();
+
+
+            $(".modal .popover-icon").popover(); // Initialize any popovers
+
+        },
+        
+        refreshDataTable: function () {
+
+            this.table.ajax.reload();
+            $('#edit-party-modal').modal('hide');
+
+        },
+    },
+
+
+}  
+</script>

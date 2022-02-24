@@ -1,0 +1,6 @@
+    //     //https://stackoverflow.com/questions/42133894/vue-js-how-to-properly-watch-for-nested-data
+    //     receiptAmount() {
+
+    //         return this.record.amount;
+
+    //     }

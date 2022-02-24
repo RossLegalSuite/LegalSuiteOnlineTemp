@@ -1,0 +1,19 @@
+                        let classColor = (data.type === 'Discount') ? 'text-red' : '';
+
+                        if ( data.type === 'Receipt' ) {
+
+                            return '';
+
+                        } else {
+
+                            if (data.type === 'Discount') {
+
+                                return '<span class="' + classColor + '">-' + formatMoney(data.amount) + '</span>';
+
+                            } else {
+
+                                return '<span class="' + classColor + '">' + formatMoney(data.amount) + '</span>';
+
+                            }
+                        }
+

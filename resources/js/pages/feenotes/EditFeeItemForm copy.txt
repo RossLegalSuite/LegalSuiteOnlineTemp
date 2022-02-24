@@ -1,0 +1,343 @@
+<template>
+
+<div :id="id" :class="modal ? 'modal': ''">
+    
+    <div :class="modal ? 'modal-dialog modal-dialog-centered modal-lg' : ''">
+
+        <div :class="modal ? 'modal-content steelblue-border':'card h-100 border-0'">
+
+            <div :class="modal ? '':'card-header'">
+
+                <div :class="modal ? 'modal-header steelblue' : 'd-flex justify-content-between'">
+
+                    <div class="page-title">
+                        <h3>Fee Note will be Changed</h3>
+                        <i v-if="modal" title="Close this window" class="cp top-right fa fa-times-circle fa-2x text-white" data-dismiss="modal"></i>
+                    </div>
+
+                    <page-close-button v-if="!modal" @closeClicked="closeForm"/>
+
+                </div>
+
+            </div>
+
+            <div class="card-body overflow-auto p-3" :style="modal ? 'min-height:65vh' : ''">
+
+                <div class="form-group row">
+
+                    <div class="col-md-4">
+
+                        <label>Date</label>
+                        <date-picker 
+                            ref="datePickerComponent" 
+                            v-model="record.date" 
+                            :config="$root.datePickerOptions"
+                        />
+                        <div v-if="errors.dateTime" v-html="errors.date[0]" class="invalid-feedback"></div>
+
+                    </div>
+
+
+                    <select-employee
+                        :_class="record.feesheettype == 'F' ? 'col-md-4' : 'd-none'"
+                        :id="id + '-select-employee'"
+                        label="Allocated To"
+                        popOver="<h4>Allocate To</h4>
+                        <p>Choose the Employee the Fee Note will be allocated to.</p>
+                        <p>If you are debiting a Fee on behalf of another Employee, select that Employee here.</p>
+                        <p>The Fee Note will then be allocated to this Employee (for reporting and budgeting purposes).</p>"
+                        :popOverContainer="'#' + id"
+                        title="The Employee the Fee Note will be allocated to"
+                        :ref="id + '-select-employee'" 
+                        :formRef="id + '-select-employee'"
+                    />
+
+
+                </div>
+
+                <div class="form-group row">
+                    <text-input 
+                        _class="col-md-12"
+                        popOver="<h4>Description</h4><p>Modify the description of the FeeNote.</p>"
+                        v-model="record.description"
+                        name="description"
+                        label="Description"
+                        :error="errors.description"
+                    />
+
+                </div>
+
+                <div class="form-group row">
+
+                    <text-input 
+                        popOver="<h4>Amount</h4><p>Specify the amount of the FeeNote.</p>"
+                        @input="setAmount" 
+                        _class="col-md-4" 
+                        input-class="form-input-number" 
+                        v-model="amountString" 
+                        name="amount" 
+                        label="Amount" 
+                        :error="errors.amount"
+                    />
+
+                </div>
+
+                <fieldset v-show="record.unitsflag == 1" class="mt-1" style="background: lightgrey;"><legend>Units</legend>
+
+                    <div class="form-group row">
+
+                        <text-input 
+                            _class="col-md-3" 
+                            popOver="<h4>Units</h4><p>Specify how many units apply to this Fee Note.</p>"
+                            label="Units"
+                            type="number" 
+                            input-class="form-input-number" 
+                            name="unitsAmount" 
+                            v-model="customUnitsAmount" 
+                            @input="recalculateAmount" 
+                            :error="errors.customUnitsAmount"
+                            :numberSpinnerFlag="true" 
+                            :numberSpinnerUpCallback="unitsIncreased"
+                            :numberSpinnerDownCallback="unitsDecreased"
+                            ref="unitsAmountLabel"
+                        />
+
+                        <text-input 
+                            _class="col-md-3" 
+                            popOver="<h4>Factor</h4><p>Specify the ratio between the number of units and the cost per unit.</p>"
+                            label="Factor" 
+                            type="number" 
+                            input-class="form-input-number" 
+                            name="customUnitsFactor" 
+                            v-model="customUnitsFactor" 
+                            @input="recalculateAmount" 
+                            :error="errors.customUnitsFactor"
+                        />
+
+                        <text-input 
+                            _class="col-md-6"
+                            popOver="<h4>Amount Per Unit</h4><p>Specify the cost per unit.</p>"
+                            label="Amount"
+                            input-class="form-input-number w-50" 
+                            v-model="customAmountPerUnit"
+                            @input="recalculateAmount"
+                            :error="errors.customAmountPerUnit"
+                            ref="amountLabel"
+                        />
+
+                    </div>
+
+                </fieldset>
+
+            </div>
+
+            <form-buttons saveText="Update" :editing="true" :viewing="false" record="Fee Item" @ok-clicked="okClicked" @cancel-clicked="closeForm" @delete-clicked="deleteClicked"/>
+
+        </div>
+    </div>
+
+
+</div>
+
+</template>    
+
+<script>
+
+import FormTemplate from "@pages/form-template";
+import modalTemplate from "@components/modals/modal-template";
+
+export default {
+    
+    mixins: [FormTemplate, modalTemplate],
+
+    components: {
+        SelectEmployee: () => import("@pages/employees/SelectEmployee"),
+    },
+
+    props: {
+        resource: {type: String, default: 'Fee Items' },
+    },
+
+    data() {
+        return {
+            customUnitsAmount: null,
+            customAmountPerUnit: null,
+            customUnitsFactor: null,
+            amount: 0,
+            amountString: '',
+            unitsDescription: '',
+        }
+    },
+
+    methods: {
+        
+
+
+        editRecord( record ) {
+            
+            this.editing = true;
+
+            // Note: The record is passed by address, not value
+            // So we are actually directly manipulating the row in the data table
+
+            this.record = record;
+
+            this.amount = parseMoney(this.record.amount);
+            this.amountString = formatMoney(this.amount, false).toString();
+
+            this.customUnitsAmount = this.record.customUnitsAmount || record.unitsAmount;
+            this.customUnitsFactor = this.record.customUnitsFactor || record.factor;
+
+            this.customAmountPerUnit = this.record.customAmountPerUnit || record.amount;
+            this.customAmountPerUnit = formatMoney(this.customAmountPerUnit, false).toString();
+
+            this.selectEmployee.record  = {
+                recordid: this.record.allocatedToId,
+                name: this.record.allocatedEmployeeName,
+            };
+
+            this.setUnitsLabel();
+
+            this.setAmountLabel();
+
+            this.displayForm();
+
+            setTimeout(() => $('#' + this.id + ' input[name="description"]').focus() );
+
+        },
+
+
+        setUnitsLabel() {
+
+            if (this.record.unitsflag == 1) {
+
+                this.$refs.unitsAmountLabel.setLabel = this.record.unitplural.capitalize();
+
+            }
+
+        },
+
+        setAmountLabel() {
+
+            if (this.record.unitsflag == 1) {
+                
+                this.$refs.amountLabel.setLabel = this.getAmountLabel();
+
+            }
+
+        },
+
+        getAmountLabel() {
+
+            let returnValue = '';
+
+            if (!this.record.unitsingular) return returnValue;
+
+
+            if (!this.customUnitsAmount || !this.customAmountPerUnit || !this.customUnitsFactor) return;
+
+            // In case they change it to zero
+            if ( this.customUnitsFactor == 0 ) {
+
+                returnValue = 'Amount per ' + this.record.unitsingular;
+
+            } else {
+                
+                if ( parseFloat(this.customUnitsFactor) !== 1 ) {
+                    
+                    returnValue = 'Amount for every ' + this.customUnitsFactor + ' ' + this.record.unitplural;
+
+                } else {
+                    
+                    returnValue = 'Amount per ' + this.record.unitsingular;
+                }
+
+            }
+
+            return returnValue;
+        },
+
+
+        employeeSelected(selectedRecord) {
+
+            this.record.allocatedToId = selectedRecord.recordid;
+            this.record.allocatedEmployeeName = selectedRecord.name;
+
+        },          
+
+
+        setAmount() {
+
+            this.amount = this.amountString ? parseFloat(stripCommas(this.amountString)) : 0;
+
+        },
+        
+
+        unitsIncreased() {
+            this.customUnitsAmount = '' + (parseFloat(this.customUnitsAmount) + 1);
+            
+            this.recalculateAmount();
+        },
+
+        unitsDecreased() {
+            this.customUnitsAmount = '' + (parseFloat(this.customUnitsAmount) - 1);
+
+            if ( parseFloat(this.customUnitsAmount) < 0 ) {
+                this.customUnitsAmount = '0';
+            }
+
+            this.recalculateAmount();
+
+        },
+
+        recalculateAmount() {
+
+            // In case they backspace so input is empty
+            if (!this.customUnitsAmount || !this.customAmountPerUnit || !this.customUnitsFactor) return;
+
+            // In case they change any to zero
+            if (this.customUnitsAmount == 0 || this.customAmountPerUnit == 0 || this.customUnitsFactor == 0) {
+
+                this.amountString = '0';
+
+            } else {
+
+                let calculatedAmount = formatDecimal(this.customAmountPerUnit * parseFloat(this.customUnitsAmount) / parseFloat(this.customUnitsFactor));
+    
+                this.amountString = '' + calculatedAmount;
+
+                this.setAmount();
+
+            }
+
+        },
+
+        deleteRecord(id) {
+
+            this.hide();
+
+            this.$parent.deleteFeeItem(id);
+
+        },
+
+
+        okClicked() {
+
+            this.record.amount = root.formatDecimal(this.amount).toString();
+            this.record.unitsAmount = this.customUnitsAmount;
+
+            this.record.customUnitsAmount = this.customUnitsAmount;
+            this.record.customAmountPerUnit = root.formatDecimal(this.customAmountPerUnit).toString();
+            this.record.customUnitsFactor = this.customUnitsFactor;
+
+            this.$parent.feeItemEdited(this.record);
+
+            this.hide();
+
+        },
+
+
+    },
+}
+
+</script>

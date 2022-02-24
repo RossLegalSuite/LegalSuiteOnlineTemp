@@ -1,0 +1,90 @@
+<template>
+<div>
+    <div class="d-flex justify-content-between table-functions-row">
+        <global-search/>
+        <div>
+            <tagged-drop-down v-if="taggedDropDown" :table-id="tableId"/>
+            <table-options/>
+        </div>
+
+    </div>
+
+    <table :id="tableId" class="table bordered" style="width:100%"></table>
+
+</div>
+</template>
+
+<script>
+
+import tableTemplate from "@components/tables/table-template";
+
+export default {
+
+    mixins: [tableTemplate],
+
+    created() {
+        this.url = "/document_templates/get";
+        this.route = "document_templates";
+        this.title = 'Templates';
+        this.plural = 'Templates';
+        this.singular = 'Template';
+    },
+
+    methods: {
+
+        defineTableColDefs: function () {
+
+            let tableColumnDefs = [
+
+                {
+                    title: "Document",
+                    name: "document_templates.title",
+                    data: null,
+                    width: "20%",
+                    targets: 2,
+                    render: function (data) {
+                        return htmlDecode(data.title);
+                    }
+                },
+                {
+                    title: "Description",
+                    name: "document_templates.description",
+                    data: null,
+                    width: "30%",
+                    targets: 3,
+                    render: function (data) {
+                        return htmlDecode(data.description);
+                    }
+                },
+                {
+                    title: "Type",
+                    name: "document_templates.type",
+                    data: null,
+                    width: "20%",
+                    targets: 4,
+                    render: function (data) {
+                        return data.type;
+                    }
+                },
+
+                {
+                    title: "Source",
+                    name: "document_templates.sourceDescription",
+                    data: null,
+                    width: "20%",
+                    targets: 5,
+                    render: function (data) {
+                        return data.sourceDescription;
+                    }
+                },
+
+
+            ];
+
+            return tableColumnDefs;
+        }
+
+    },    
+
+}  
+</script>

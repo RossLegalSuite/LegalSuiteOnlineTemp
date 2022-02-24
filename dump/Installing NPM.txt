@@ -1,0 +1,25 @@
+====================================================================================
+To Update npm
+====================================================================================
+npm install npm@latest -g
+
+
+====================================================================================
+To Install npm
+Using the EPEL (Extra Packages for Enterprise Linux) repository that is available for CentOS
+====================================================================================
+
+c:\>ssh root@160.119.253.115 
+
+Change to the home directory
+> cd ~
+
+To gain access to the EPEL repo, you must modify the repo-list of your installation by installing a package available in our current repos called epel-release.
+>sudo yum install epel-release
+
+Now that you have access to the EPEL repository, you can install Node.js using your regular yum commands:
+>sudo yum install nodejs
+
+Check that the installation was successful by asking Node to return its version number:
+>node --version
+

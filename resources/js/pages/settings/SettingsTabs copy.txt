@@ -1,0 +1,118 @@
+<template>
+
+    <right-hand-tabs ref="right-hand-tabs" :tabs="tabs"/>
+
+</template>
+
+<script>
+
+export default {
+
+    data() {
+
+        return {
+            tabs: [
+                {
+                    pageName: "Company",
+                    title: "Company",
+                    iconClass: 'fa-building',
+                    visible: false,
+                    active: false,
+                },
+                // {
+                //     pageName: "CompanyLetterHead",
+                //     title: "Letterhead",
+                //     iconClass: 'fa-file-word-o',
+                //     visible: false,
+                //     active: false,
+                // },
+                {
+                    pageName: "Accounts",
+                    title: "Chart of Accounts",
+                    iconClass: 'fa-server',
+                    visible: false,
+                    active: false,
+                },
+                {
+                    pageName: "TaxRates",
+                    title:  root.control.salesTaxType + " Rates",
+                    iconClass: 'fa-calculator',
+                    visible: false,
+                    active: false,
+                },
+                {
+                    pageName: "PartyRoles",
+                    title: "Party Roles",
+                    iconClass: 'fa-wrench',
+                    visible: false,
+                    active: false,
+                },
+                {
+                    pageName: "PartyEntities",
+                    title: "Party Entities",
+                    iconClass: 'fa-user',
+                    visible: false,
+                    active: false,
+                },
+                {
+                    pageName: "PartyTypes",
+                    title: "Party Types",
+                    iconClass: 'fa-male',
+                    visible: false,
+                    active: false,
+                },
+                {
+                    pageName: "MatterTypes",
+                    title: "Matter Types",
+                    iconClass: 'fa-briefcase',
+                    visible: false,
+                    active: false,
+                },
+                {
+                    pageName: "MarriageTypes",
+                    title: "Marriage Types",
+                    iconClass: 'fa-bookmark',
+                    visible: false,
+                    active: false,
+                },
+                {
+                    pageName: "FeeSheets",
+                    title: "Fee Sheets",
+                    iconClass: 'fa-server',
+                    visible: false,
+                    active: false,
+                },
+                {
+                    pageName: "Branches",
+                    title: "Branches",
+                    iconClass: 'fa-building',
+                    visible: false,
+                    active: false,
+                },
+                {
+                    pageName: "DocumentSets",
+                    title: "Document Sets",
+                    iconClass: 'fa-clone',
+                    visible: false,
+                    active: false,
+                },
+                {
+                    pageName: "EmployeeRoles",
+                    title: "Employee Roles",
+                    iconClass: 'fa-address-book',
+                    visible: false,
+                    active: false,
+                },
+                {
+                    pageName: "EmployeeGroups",
+                    title: "Employee Groups",
+                    iconClass: 'fa-lock',
+                    visible: false,
+                    active: false,
+                },
+            ],
+        }
+    },
+
+}  
+</script>

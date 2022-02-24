@@ -1,0 +1,65 @@
+Connecting to an EC2 instance via ssh
+-------------------------------------
+
+1) Make sure you create the EC2 instance with a key pair name (e.g. rick)
+Note: When you create a key pair name AWS downloads it as rick.pem
+
+2) C:\>ssh -i c:\users\Rick\.ssh\rick.pem ec2-user@13.244.146.240
+
+To upload a file from your laptop to Amazon instance:
+-----------------------------------------------------
+You can either use scp 
+
+$scp -i c:\users\Rick\.ssh\rick.pem c:\users\Rick\example.txt  ec2-user@13.244.146.240:~/data/
+
+Or FileZilla
+
+See: https://angus.readthedocs.io/en/2014/amazon/transfer-files-between-instance.html
+
+
+====================================================================================
+To install AWS CLI:
+====================================================================================
+Download the AWS CLI MSI installer for Windows (64-bit) at https://awscli.amazonaws.com/AWSCLIV2.msi
+
+Check if it is working:
+
+c:\>aws --version
+
+====================================================================================
+To install composer:
+====================================================================================
+
+$ cd ~
+$ sudo curl -sS https://getcomposer.org/installer | sudo php
+$ sudo mv composer.phar /usr/local/bin/composer
+$ sudo ln -s /usr/local/bin/composer /usr/bin/composer
+
+then you can run 
+$ sudo composer install
+
+
+====================================================================================
+To Update npm
+====================================================================================
+npm install npm@latest -g
+
+
+====================================================================================
+To Install npm
+Using the EPEL (Extra Packages for Enterprise Linux) repository that is available for CentOS
+====================================================================================
+
+c:\>ssh root@160.119.253.115 
+
+Change to the home directory
+> cd ~
+
+To gain access to the EPEL repo, you must modify the repo-list of your installation by installing a package available in our current repos called epel-release.
+>sudo yum install epel-release
+
+Now that you have access to the EPEL repository, you can install Node.js using your regular yum commands:
+>sudo yum install nodejs
+
+Check that the installation was successful by asking Node to return its version number:
+>node --version

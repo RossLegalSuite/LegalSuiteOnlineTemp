@@ -1,0 +1,112 @@
+<template>
+    <div class="filofax-page p-2">
+
+        <!-- <div v-if="this.$root.company.logo" class="text-center">
+            <img :src="this.$root.company.logo" class="img-fluid my-2" style="max-height:10vh;" alt="Company Logo">
+        </div>
+
+        <h3 v-else>{{this.$root.company.name}}</h3> -->
+
+        <div class="text-center">
+            <img src="/img/ettorney-banner.gif" alt="Logo" class="img-fluid mt-2" style="width: 27%;">
+        </div>
+        <div class="d-flex">
+            <div class="flex-fill">
+                {{ companyName }} &bull; {{ loggedInEmployeeName }}
+            </div>
+            <div class="flex-fill text-right">
+                Ver: {{ versionNumber }}
+            </div>
+        </div>
+
+        <div style="border-top: 2px solid rgba(0, 0, 0, 0.1);"></div>
+
+
+
+
+
+
+        <!-- <img class="text-center" src="/img/legalsuite-logo.gif" alt="logo" style="width:30%;position:absolute; bottom: 200px; left:40%">
+        <img class="text-center" src="/img/logo.svg" alt="logo" style="width:30%;position:absolute; bottom: 10px; left:40%">  -->
+
+        
+        <!-- <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M12 18c1.657 0 3 1.343 3 3s-1.343 3-3 3-3-1.343-3-3 1.343-3 3-3zm0-9c1.657 0 3 1.343 3 3s-1.343 3-3 3-3-1.343-3-3 1.343-3 3-3zm0-9c1.657 0 3 1.343 3 3s-1.343 3-3 3-3-1.343-3-3 1.343-3 3-3z"/></svg>
+
+        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBkPSJNMTkgMGgtMTRjLTIuNzYxIDAtNSAyLjIzOS01IDV2MTRjMCAyLjc2MSAyLjIzOSA1IDUgNWgxNGMyLjc2MiAwIDUtMi4yMzkgNS01di0xNGMwLTIuNzYxLTIuMjM4LTUtNS01em0tMTcgNWMwLTEuNjU0IDEuMzQ2LTMgMy0zaDZ2OWgtOXYtNnptMCAxNHYtNmg5djloLTZjLTEuNjU0IDAtMy0xLjM0Ni0zLTN6bTIwIDBjMCAxLjY1NC0xLjM0NiAzLTMgM2gtNnYtOWg5djZ6bTAtOGgtOXYtOWg2YzEuNjU0IDAgMyAxLjM0NiAzIDN2NnptLTIgNmgtNXYtMWg1djF6bS01LTExaDV2MWgtNXYtMXptMCAxM3YtMWg1djFoLTV6bS02LTJ2MWgtMnYyaC0xdi0yaC0ydi0xaDJ2LTJoMXYyaDJ6bS0xLjc5My0xMC41bDEuNDE0IDEuNDE0LS43MDcuNzA3LTEuNDE0LTEuNDE0LTEuNDE0IDEuNDE0LS43MDgtLjcwNyAxLjQxNC0xLjQxNC0xLjQxNC0xLjQxNC43MDctLjcwNyAxLjQxNSAxLjQxNCAxLjQxNS0xLjQxNS43MDguNzA4LTEuNDE2IDEuNDE0em05Ljc5My0yYzAtLjI3Ni4yMjQtLjUuNS0uNXMuNS4yMjQuNS41LS4yMjQuNS0uNS41LS41LS4yMjQtLjUtLjV6bTEgNGMwIC4yNzYtLjIyNC41LS41LjVzLS41LS4yMjQtLjUtLjUuMjI0LS41LjUtLjUuNS4yMjQuNS41eiIvPjwvc3ZnPg=="> -->
+
+
+<!--        
+            <div class="mb-5 d-none">
+                <span class="m-2 p-2 home-bg" >home-bg</span>
+                <span class="m-2 p-2 matters-bg" >matters-bg</span>
+                <span class="m-2 p-2 parties-bg" >parties-bg</span>
+                <span class="m-2 p-2 accounting-bg" >accounting-bg</span>
+                <span class="m-2 p-2 invoices-bg" >invoices-bg</span>
+                <span class="m-2 p-2 reports-bg" >reports-bg</span>
+                <span class="m-2 p-2 receipts-bg" >receipts-bg</span>
+                <span class="m-2 p-2 statements-bg" >statements-bg</span>
+                <span class="m-2 p-2 employees-bg" >employees-bg</span>
+                <span class="m-2 p-2 settings-bg" >settings-bg</span>
+                <span class="m-2 p-2 templates-bg" >templates-bg</span>
+                <span class="m-2 p-2 components-bg" >components-bg</span>
+                <span class="m-2 p-2 journals-bg" >journals-bg</span>
+            </div>
+
+            <div class="mb-5 d-none">
+                <span class="m-2 p-2 specialteal" >specialteal</span>
+                <span class="m-2 p-2 specialgreen" >specialgreen</span>
+                <span class="m-2 p-2 burlywood" >burlywood</span>
+                <span class="m-2 p-2 coral" >coral</span>
+                <span class="m-2 p-2 cornflowerblue" >cornflowerblue</span>
+                <span class="m-2 p-2 darkcyan" >darkcyan</span>
+                <span class="m-2 p-2 darkkhaki" >darkkhaki</span>
+                <span class="m-2 p-2 darkorange" >darkorange</span>
+                <span class="m-2 p-2 darkseagreen" >darkseagreen</span>
+                <span class="m-2 p-2 darkturquoise" >darkturquoise</span>
+                <span class="m-2 p-2 deepskyblue" >deepskyblue</span>
+                <span class="m-2 p-2 gold" >gold</span>
+                <span class="m-2 p-2 lavender" >lavender</span>
+                <span class="m-2 p-2 lightcoral" >lightcoral</span>
+                <span class="m-2 p-2 lightpink" >lightpink</span>
+                <span class="m-2 p-2 lightsalmon" >lightsalmon</span>
+                <span class="m-2 p-2 lightseagreen" >lightseagreen</span>
+                <span class="m-2 p-2 lightsteelblue" >lightsteelblue</span>
+                <span class="m-2 p-2 lightskyblue" >lightskyblue</span>
+                <span class="m-2 p-2 lightslategrey" >lightslategrey</span>
+                <span class="m-2 p-2 mediumpurple" >mediumpurple</span>
+                <span class="m-2 p-2 mediumaquamarine" >mediumaquamarine</span>
+                <span class="m-2 p-2 mediumseagreen" >mediumseagreen</span>
+                <span class="m-2 p-2 tomato" >tomato</span>
+                <span class="m-2 p-2 palevioletred" >palevioletred</span>
+                <span class="m-2 p-2 peachpuff" >peachpuff</span>
+                <span class="m-2 p-2 peru" >peru</span>
+                <span class="m-2 p-2 plum" >plum</span>
+                <span class="m-2 p-2 powderblue" >powderblue</span>
+                <span class="m-2 p-2 royalblue" >royalblue</span>
+                <span class="m-2 p-2 sandybrown" >sandybrown</span>
+                <span class="m-2 p-2 seagreen" >seagreen</span>
+                <span class="m-2 p-2 specialorange" >specialorange</span>
+            </div>
+-->
+    </div>
+
+</template>
+
+<script>
+
+export default {
+
+    computed: {
+        companyName() {
+            return companyName;
+        },
+        loggedInEmployeeName() {
+            return loggedInEmployeeName;
+        },
+        versionNumber() {
+            return versionNumber;
+        },
+    },
+
+}
+</script>

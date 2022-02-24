@@ -1,0 +1,175 @@
+Migration - Creating a calculated column (Allows DataTables to search by this column!!)
+---------------------------------------------------------------------------------------
+
+//https://www.mysqltutorial.org/mysql-generated-columns/
+$table->string('receiptNumber')->storedAs('CASE WHEN receiptId < 10000 THEN LPAD(receiptId,5,"0") ELSE receiptId  END');
+$table->double('total_eur')->storedAs('price_eur * amount');
+
+
+Using first(), find() or findOrFail()
+-------------------------------------
+
+find($id) takes an id and returns a single model. If no matching model exist, it returns null.
+
+findOrFail($id) takes an id and returns a single model. If no matching model exist, it throws an error1.
+
+first() returns the first record found in the database. If no matching model exist, it returns null.
+
+firstOrFail() returns the first record found in the database. If no matching model exist, it throws an error1.
+
+get() returns a collection of models matching the query.
+
+pluck($column) returns a collection of just the values in the given column. In previous versions of Laravel this method was called lists.
+
+toArray() converts the model/collection into a simple PHP array.
+
+
+ Make a model with a migration and resource controller
+ -----------------------------------------------------
+ php artisan make:model Company -mr
+
+
+Artisan commands to run User migrations
+---------------------------------------
+
+php artisan make:migration --path=database/migrations_user CreateEmployeesTable --create=Employee
+
+Call Artisan migrate command from code
+--------------------------------------
+
+Artisan::call('migrate', ["--database" => "company", "--path" => "database/migrations_user" ]);
+ 
+
+To create new laravel project
+=============================
+
+In the PARENT directory:
+>composer create-project --prefer-dist laravel/laravel <name of project>
+
+>php artisan make:auth
+(To add login and register pages)
+
+Edit the .env file to point at your MySql table
+
+>php artisan config:cache
+(Refresh the config settings made in .env file)
+
+>php artisan migrate
+(Create the users and password_resets tables)
+
+>npm install
+(Install javascript dependencies)
+
+
+To install Datatables
+=====================
+
+>composer require yajra/laravel-datatables-oracle:"~9.0"
+
+>npm install --save jszip 
+(Required for the Excel HTML5 export button)
+>npm install --save datatables.net-bs4
+>npm install --save datatables.net-buttons-bs4
+>npm install --save datatables.net-scroller-bs4
+>npm install --save datatables.net-select-bs4
+
+Put the following in \resources\js\app.js
+=========================================
+
+window.JSZip = require("jszip");
+
+window.$ = window.jQuery = require("jquery");
+var dt = require("datatables.net-bs4");
+
+
+require("datatables.net-buttons/js/buttons.html5.js");
+require("datatables.net-buttons/js/buttons.print.js");
+require("datatables.net-scroller-bs4");
+require("datatables.net-select-bs4");
+
+----------------------------------------------
+
+Get help on artisan
+>php artisan -help make:model
+
+--------------------------------------------------------------------------------------------------
+
+To make a model with a migration and a resourceful controller
+=============================================================
+>php artisan make:model -mcr Matter
+
+... edit the migration to add columns to the table
+
+Create the table in MySQL:
+-----------------------
+
+>php artisan migrate
+
+----------------------------------------------
+To seed a database (e.g. add users and make an Company for each one )
+
+1. Make a factory
+>php artisan make:factory -model=Company CompanyFactory
+
+2. Make a seeder
+php artisan make:seeder CompanyTableSeeder
+
+3. Use a function like this in the Seeder:
+
+public function run()
+{
+    factory(App\User::class, 50)->create()->each(function ($u) {
+        $u->companies()->save(factory(App\Company::class)->make());
+    });
+}
+
+4. Run the seeder:
+
+>php artisan db:seed (run DatabaseSeeder)
+>php artisan db:seed --class="CompanyTableSeeder"
+
+NOTE: To rollback and re-run all of your migrations. This command is useful for completely re-building your database:
+
+>php artisan migrate:refresh --seed
+
+OR . . . for ETTORNEY
+
+>php artisan migrate --path=database/migrations_company --database=ettorney --seed
+
+
+TO ROLLBACK LAST (BATCH OF) MIGRATIONS
+
+php artisan migrate:rollback --path=database/migrations_company --database=ettorney
+
+Note: You have to add the DROP rights to the user in SQL for this... temporariliy
+
+THEN . . . TO RUN IT AGAIN 
+
+Just logout and re-login!!!
+
+
+
+----------------------------------------------
+
+To make a REST API controller for a model:
+>php artisan make:controller OrderController --resource --model=Order
+
+
+----------------------------------------------
+
+To compile components:
+
+>npm run dev
+
+or...
+
+>npm run watch (Or.. >npm run watch-poll)
+
+----------------------------------------------
+
+If you receive a "class not found" error when running migrations, try running  
+>composer dump-autoload
+command and re-issuing the migrate command.
+
+To clear the cache:
+>php artisan cache:clear

@@ -1,0 +1,293 @@
+<?php
+
+namespace App\Custom;
+use DB;
+class DataTablesHelper {
+
+    public static function AddPartyMergeColumns(&$query, $prefix)
+    {
+
+        // Party Columns
+        $query->addSelect( "parties.id as {$prefix}partyId")
+        ->addSelect( "parties.code as {$prefix}partyCode")
+        ->addSelect( "parties.name as {$prefix}partyName")
+        ->addSelect("parties.firstName as {$prefix}partyFirstName")
+        ->addSelect("parties.lastName as {$prefix}partyLastName")
+        ->addSelect("parties.title as {$prefix}partyTitle")
+        ->addSelect("parties.friendlyName as {$prefix}partyFriendlyName")
+        ->addSelect("parties.salutation as {$prefix}partySalutation")
+        ->addSelect("parties.idNumber as {$prefix}partyIdNumber")
+        ->addSelect( DB::raw("CASE 
+        WHEN parties.idType = 'I' THEN 'Identity Document'
+        WHEN parties.idType = 'S' THEN 'Social Security'
+        WHEN parties.idType = 'P' THEN 'Passport'
+        WHEN parties.idType = 'D' THEN 'Drivers Licence'
+        WHEN parties.idType = 'B' THEN 'Birth Certificate'
+        WHEN parties.idType = 'T' THEN 'Temporary Residence'
+        WHEN parties.idType = 'X' THEN 'Tax Certificate'
+        WHEN parties.idType = 'A' THEN 'Armed Forces ID'
+        WHEN parties.idType = 'O' THEN 'Other'
+        ELSE parties.idType END as `{$prefix}partyIdTypeDescription`"))
+        ->addSelect( DB::raw("DATE_FORMAT( CONVERT_TZ(parties.birthdate,'+00:00','" . session('timeZone') . "'), '" . Utils::sqlDateFormat() . "') as `{$prefix}partyBirthDate`"))
+        ->addSelect("party_entities.description as {$prefix}partyEntityDescription")
+        ->addSelect("party_types.description  as {$prefix}partyTypeDescription")
+        ->addSelect("marriage_types.description as {$prefix}partyMarriageDescription")
+        ->addSelect("parties.physicalLine1 as {$prefix}partyPhysicalLine1")
+        ->addSelect("parties.physicalLine2 as {$prefix}partyPhysicalLine2")
+        ->addSelect("parties.physicalLine3 as {$prefix}partyPhysicalLine3")
+        ->addSelect("parties.physicalCode as {$prefix}partyPhysicalCode")
+        ->addSelect("physicalProvince.description as {$prefix}partyPhysicalProvince")
+        ->addSelect("physicalCountry.description as {$prefix}partyPhysicalCountry")
+        ->addSelect("parties.postalLine1 as {$prefix}partyPostalLine1")
+        ->addSelect("parties.postalLine2 as {$prefix}partyPostalLine2")
+        ->addSelect("parties.postalLine3 as {$prefix}partyPostalLine3")
+        ->addSelect("parties.postalCode as {$prefix}partyPostalCode")
+        ->addSelect("postalProvince.description as {$prefix}partyPostalProvince")
+        ->addSelect("postalCountry.description as {$prefix}partyPostalCountry")
+        ->addSelect( DB::raw("CASE WHEN emailAddress.description IS NOT NULL THEN emailAddress.description ELSE '' END as `{$prefix}partyEmail`"))
+        ->addSelect( DB::raw("CASE WHEN mobileNumber.description IS NOT NULL THEN mobileNumber.description ELSE '' END as `{$prefix}partyMobile`"));
+
+    }
+
+    public static function AddPartyJoins(&$query)
+    {
+
+        $query
+        ->leftJoin('marriage_types', 'parties.marriageId', '=', 'marriage_types.id')
+        ->leftJoin('party_entities', 'parties.entityId', '=', 'party_entities.id')
+        ->leftJoin('party_types', 'parties.typeId', '=', 'party_types.id')
+        ->leftJoin('provinces as physicalProvince', 'parties.physicalProvinceId', '=', 'physicalProvince.id')
+        ->leftJoin('provinces as postalProvince', 'parties.postalProvinceId', '=', 'postalProvince.id')
+        ->leftJoin('countries as physicalCountry', 'parties.physicalCountryId', '=', 'physicalCountry.id')
+        ->leftJoin('countries as postalCountry', 'parties.postalCountryId', '=', 'postalCountry.id')
+
+        ->leftJoin('party_numbers as emailAddress', function ($join)  {
+            $join->on('parties.id', '=', 'emailAddress.partyId')
+                ->whereRaw('emailAddress.id IN (select max(id) from party_numbers WHERE methodId = ' . session('emailMethodId') . ' AND partyId = parties.id AND defaultFlag = 1 group by methodId)');
+            })
+        ->leftJoin('party_numbers as mobileNumber', function ($join)  {
+            $join->on('parties.id', '=', 'mobileNumber.partyId')
+                ->whereRaw('mobileNumber.id IN (select max(id) from party_numbers WHERE methodId = ' . session('mobileMethodId') . ' AND partyId = parties.id AND defaultFlag = 1 group by methodId)');
+        });
+
+
+
+    }
+
+    public static function AddMatterMergeColumns(&$query, $prefix)
+    {
+        $query->addSelect("matters.id as {$prefix}matterId")
+        ->addSelect("matters.fileRef as {$prefix}matterFileRef")
+        ->addSelect("matters.description as {$prefix}matterDescription")
+        ->addSelect(DB::raw("CONCAT(matters.fileRef, ' - ', matters.description) as `{$prefix}matter`"))
+        ->addSelect( DB::raw("DATE_FORMAT( CONVERT_TZ(matters.instructed,'+00:00','" . session('timeZone') . "'), '" . Utils::sqlDateFormat() . "') as `{$prefix}matterInstructed`") )
+        ->addSelect( "client.code as {$prefix}matterClientCode")
+        ->addSelect( "client.name as {$prefix}matterClientName")
+        ->addSelect( "client.salutation as {$prefix}matterClientSalutation")
+        ->addSelect(DB::raw("CONCAT(client.code, ' - ', client.name) as `{$prefix}matterClient`"))
+        ->addSelect("owner.name as {$prefix}matterEmployeeName")
+        ->addSelect("branches.description as {$prefix}matterBranchDescription")
+        ->addSelect("document_sets.description as {$prefix}matterDocumentSetDescription")
+        ->addSelect("matter_types.description as {$prefix}matterMatterTypeDescription");
+
+    }
+
+    public static function AddMatterJoins(&$query)
+    {
+
+        $query
+        ->leftJoin('branches', 'matters.branchId', '=', 'branches.id')
+        ->leftJoin('document_sets', 'matters.documentSetId', '=', 'document_sets.id')
+        ->leftJoin('matter_types', 'matters.matterTypeId', '=', 'matter_types.id')
+
+        ->leftJoin('accounts as incomeAccount', 'matters.incomeAccountId', '=', 'incomeAccount.id')
+        ->leftJoin('accounts as trustBankAccount', 'matters.trustBankAccountId', '=', 'trustBankAccount.id')
+
+        ->leftJoin('matter_parties as clientParty', function ($join) {
+            $join->on('matters.id', '=', 'clientParty.matterId')
+                ->where('clientParty.roleId', session('clientRoleId') )
+                ->where('clientParty.rank', 1);
+            })
+        ->leftJoin('parties as client', 'clientParty.partyId', '=', 'client.id')
+
+        ->leftJoin('matter_employees as ownerEmployee', function ($join) {
+            $join->on('matters.id', '=', 'ownerEmployee.matterId')
+                ->where('ownerEmployee.roleId', session('ownerRoleId') )
+                ->where('ownerEmployee.rank', 1);
+            })
+        ->leftJoin('employees as owner', 'ownerEmployee.employeeId', '=', 'owner.id');
+
+    }
+
+    public static function AddCommonWhereClauses(&$query, $request, $orderBy = true)
+    {
+
+        if ($request->where) $query->where( $request->where['column'], $request->where['value'] );
+        
+        if ($request->where2) $query->where( $request->where2['column'], $request->where2['value'] );
+
+        if ($request->whereIn) $query->whereIn( $request->whereIn['column'], $request->whereIn['value'] );
+
+        if ($request->whereNull) $query->whereNull( $request->whereNull );
+
+        if ($request->whereRaw) $query->whereRaw($request->whereRaw);
+
+        if ($request->tableFilter) $query->whereRaw($request->tableFilter);
+
+        if ($request->tableHaving) $query->havingRaw($request->tableHaving);
+
+        if ($request->whereClause) $query->whereRaw($request->whereClause);
+
+        // Optional - e.g. AccountsController forces the order
+        
+        if ( $orderBy ) {
+
+            if ( isset($request->orderBy) ) {
+
+                if (is_array($request->orderBy) ) {
+
+                    $query->orderBy($request->orderBy['column'], $request->orderBy['direction']);
+
+                } else {
+
+                    $query->orderBy($request->orderBy);
+
+                }
+            }
+        }
+
+    }
+    public static function ReturnData(&$query, $request)
+    {
+
+        if ($request->dataFormat === "dataTables") {
+
+            return datatables()->of($query)->toJson();
+
+        } else if ($request->dataFormat === "get") {
+
+            return $query->get();
+
+        } else if ( $request->dataFormat === 'mergeArray' || $request->dataFormat === 'idArray') {
+
+            return $query->get()->toArray();
+
+        } else if ( $request->dataFormat === 'export' ) {
+
+            return $query;
+    
+        } else {
+
+            return $query->get()->toJson();
+        }
+    }
+
+
+
+    public static function destroy($request, $model)
+    {
+
+        $returnData = new \stdClass();
+
+        if (is_array($request->id)) {
+
+            foreach ($request->id as $id) {
+
+                try {
+
+                    $model::destroy($id);
+                    //$model::findOrFail($id)->delete();
+
+                } catch(\Exception $e)  {
+    
+                    $returnData->errors[] = $id;
+        
+                }        
+    
+            }
+
+            return json_encode($returnData);            
+
+        } else {        
+
+            try {
+
+                $model::destroy($request->id);
+                //$model::findOrFail($request->id)->delete();
+
+            } catch (\Illuminate\Database\QueryException $e) {
+
+                $returnData->error = Utils::MySqlError($e);
+                return json_encode($returnData);            
+
+            } catch(\Exception $e)  {
+
+                $returnData->error = $e->getMessage();
+                return json_encode($returnData);
+
+            }        
+    
+        }
+
+    }
+
+
+
+    // public static function AddMaunualSearchFilter(&$query, $request)
+    // {
+    //     if ( $searchFor = $request->input('searchFor') ) {
+
+    //         $helperClass = new \Yajra\DataTables\Utilities\Request;
+
+    //         // Must you use a sub query function here so it puts brackets around this where clause
+    //         $query->where(function ($query) use ($helperClass, $searchFor) {
+
+    //             $searchableColumns = $helperClass->searchableColumnIndex();
+    //             $counter = 0;
+    //             foreach ($searchableColumns as $column) {
+    //                 if (!$counter) {
+    //                     $query->where($helperClass->columnName($column), 'like', "%" . $searchFor . "%");
+    //                 } else {
+    //                     $query->orWhere($helperClass->columnName($column), 'like', "%" . $searchFor . "%");
+    //                 }
+    //                 $counter++;
+    //             }
+    //         });
+    //     }
+    // }
+
+/*
+    public static function ColumnFilter(&$query, $request)
+    {
+
+        //$searchBy = $request->input('searchBy');
+        $searchFor = $request->input('searchFor');
+
+        if (!$searchFor || !$searchBy) return;
+
+        $helperClass = new \Yajra\DataTables\Utilities\Request;
+
+        // if ($searchBy === 'All' || $searchBy === 'Mobile') {
+
+        //     // Must you use a sub query function here so it puts brackets around this where clause
+        //     $query->where(function ($query) use ($helperClass, $searchFor) {
+
+        //         $searchableColumns = $helperClass->searchableColumnIndex();
+        //         $counter = 0;
+        //         foreach ($searchableColumns as $column) {
+
+        //             if (!$counter) {
+        //                 $query->where($helperClass->columnName($column), 'like', "%" . $searchFor . "%");
+        //             } else {
+        //                 $query->orWhere($helperClass->columnName($column), 'like', "%" . $searchFor . "%");
+        //             }
+        //             $counter++;
+        //         }
+        //     });
+        // } else {
+
+            $query->where($helperClass->columnName((int)$searchBy), 'like', "%" . $searchFor . "%");
+        //}
+    }
+*/
+}

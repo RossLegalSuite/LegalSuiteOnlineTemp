@@ -1,0 +1,442 @@
+<template>
+
+<div :id="id" :class="!modal ? 'card h-100 border-0' : ''">
+    
+    <div v-show="!modal" class="card-header">
+
+        <div class="d-flex justify-content-between">
+
+            <div class="page-title">
+                <h3><i class="fa mr-2 fa-file-word-o"></i>
+                    <span>Assembled Documents</span>
+                </h3>
+            </div>
+
+            <page-close-button @closeClicked="hide"/>
+
+        </div>
+    </div>
+
+    <div :class="!modal ? 'card-body overflow-auto p-3':''">
+
+        <h3>AssembledTable Here</h3>
+
+    </div>
+
+    <div v-show="!modal" class="modal-footer justify-content-between">
+        <div>
+
+            <!-- <button v-show="editing" class="btn btn-primary form-button mr-2" type="button" @click="showPreview">
+                <span title="Generate a document from the template"><i class="fa fa-file-word-o fa-lg mr-2"></i>Test</span>
+            </button>
+
+            <button v-show="editing" class="btn btn-danger form-button mr-2" type="button" @click="deleteClicked" title="Delete this Document">
+                <i class="fa fa-times-circle fa-lg mr-2"></i>Delete
+            </button> -->
+
+
+        </div>
+
+        <div>
+
+            <!-- <button class="btn btn-success form-button mr-3" @click="okClicked" type="button" title="Save the Document"><i class="fa fa-check-circle fa-lg mr-2"></i>Save</button>
+
+            <button v-if="editing" class="btn btn-danger form-button" @click="hide" type="button" title="Exit without saving"><i class="fa fa-times-circle fa-lg mr-2"></i>Cancel</button>
+
+            <button v-else class="btn btn-danger form-button" @click="hide" type="button" title="Close this screen"><i class="fa fa-times-circle fa-lg mr-2"></i>Close</button> -->
+
+        </div>
+    </div>
+
+    <preview-document :id="id + '-preview-document'"/>
+
+    <select-matters :id="id + '-select-matters'" :ref="id + '-select-matters'" :formRef="id + '-select-matters'"/>
+
+    <select-parties :id="id + '-select-parties'" :ref="id + '-select-parties'" :formRef="id + '-select-parties'"/>
+
+
+</div>
+
+</template>
+
+<script>
+
+
+let download = require('../../download');
+
+export default {
+
+
+    components: {
+        SelectMatters: () => import("../matters/SelectMatters"),
+        SelectParties: () => import("../parties/SelectParties"),
+        PreviewDocument: () => import("../../components/modals/PreviewDocument"),
+        vueDropzone: vueDropzone,
+    },
+
+    props: {
+        id: String,
+        modal: {
+            type: Boolean,
+            default: false
+        },
+    },
+
+    
+    data() {
+        return {
+            table: null,
+            mergeOptions: {},
+
+        };
+    },
+
+    methods: {
+        
+
+        showPreview() {
+
+            
+            if ( this.record.source === 'Parties' ) {
+                
+                this.selectParties.selectParties();
+
+            } else if ( this.record.source === 'Matters' ) {
+
+                this.selectMatters.selectMatters();
+
+            } else  {
+
+                this.setOptions();
+                root.mergeDocument(this.mergeOptions);
+
+            }
+
+        },
+
+        setOptions(id = null) {
+
+            this.mergeOptions = {
+                sourceFileName: this.record.fileName,
+                sourceFolder: 'documents',
+                destinationFileName: this.record.fileName,
+                destinationFolder: 'merged',
+                dataSource: this.record.source,
+                id: id,
+            };
+
+        },
+
+        async mattersSelected(selectedRows) {
+
+            // Returns empty array if all are selected
+
+            let params = ( selectedRows.length ) ? { dataFormat: 'idArray', whereIn: { column: 'matters.id', value: selectedRows } } : {dataFormat: 'idArray'};
+
+            let response = await axios.post('/matters/get', params);
+
+            await root.asyncForEach( response.data, async (matter) => {            
+
+                this.setOptions(matter.id);
+
+                this.mergeOptions.destinationFileName = this.record.fileName.split('.')[0] + ' (' + makeValidPathString(matter.fileRef) + ').docx';
+
+                //console.log('About to merge and save as ',this.mergeOptions.destinationFileName);
+
+                await root.mergeDocument(this.mergeOptions);
+
+            });
+
+        },
+
+        editRecord(id) {
+            
+            this.table = root.$refs["pages"].$refs["left-page"].$refs["documents-table"];
+
+            this.table.highlightRow(id);
+
+            axios.post('/document_templates/get',{id: id})
+
+            .then(response => {
+                
+                this.record = response.data[0];
+
+                this.editing = true;
+
+                this.initFormData();
+
+                root.$refs['pages'].$refs["left-page"].loadPages('Form');
+
+                setTimeout(function(){
+                    $('input[name="title"]').focus();
+                });
+
+            });
+
+        },
+
+        initNewRecord() {
+
+            this.table = root.$refs["pages"].$refs["left-page"].$refs["documents-table"];
+
+            root.$refs['pages'].$refs["left-page"].clearPages();
+
+            this.table.unHighlightAllRows();
+
+            this.record = {
+                title: null,
+                description: null,
+                dataSource: 'Company',
+                path: null,
+                fileName: null,
+                employeeId: loggedInEmployeeId,
+            };
+
+            this.editing = false;
+
+            this.initFormData();
+
+            setTimeout(function(){
+                $('input[name="title"]').focus();
+            });
+
+        },
+
+        initFormData() {
+
+            this.errors = {}; 
+
+            this.rightPage = root.$refs['pages'].$refs["right-page"];
+
+            this.$nextTick(() => {
+
+                $('#' + this.id + " .popover-icon").popover();
+
+            });
+
+            //https://rowanwins.github.io/vue-dropzone/docs/dist/#/methods
+
+            this.$refs['drop-zone-component'].removeAllFiles(true);
+
+
+        },
+
+        showPreviewDocument() {
+
+            this.previewDocument.title = this.record.title + ' (' + this.record.fileName + ')';
+
+            //this.previewDocument.documentUrl = this.record.url;
+
+            //localhost doesn't work
+            //this.previewDocument.documentUrl = "https://view.officeapps.live.com/op/embed.aspx?src=https://localhost/uploads/acme/documents/Letter.docx";
+
+            // Google doc viewer doesn't seem to work?
+            //this.previewDocument.documentUrl = "https://docs.google.com/gview?url=https://ettorney-uploads.s3.af-south-1.amazonaws.com/Letter.docx&embedded=true";
+
+            //Hard coding a remote url for now:
+            this.previewDocument.documentUrl = "https://view.officeapps.live.com/op/embed.aspx?src=https://ettorney-uploads.s3.af-south-1.amazonaws.com/Letter.docx";
+
+            this.previewDocument.show();
+
+
+        },
+
+        downloadDocument() {
+
+            //https://stackoverflow.com/questions/32545632/how-can-i-download-a-file-using-window-fetch
+
+            return fetch(this.record.path, {
+                method: 'GET',
+            })
+
+            .then((resp) => {
+                return resp.blob();
+            })
+
+            .then((blob) => {
+                
+                download(blob, this.record.fileName, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+
+            });
+
+        },
+
+        documentUploaded(file) {
+
+            var formData = new FormData();
+
+            formData.append("file", file);
+            formData.append("fileName", file.name);
+            formData.append("folder", 'documents');
+
+            axios.post('/file/upload', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            })
+
+            .then(response => {
+
+                if (response.data.error) {
+
+                    showError('Error uploading document',response.data.error);
+
+                } else {
+
+                    this.record.path = response.data.path;
+                    this.record.fileName = file.name;
+
+                    if (!this.record.title) this.record.title = this.record.fileName.split('.')[0];
+                    if (!this.record.description) this.record.description = this.record.fileName.split('.')[0];
+
+                }
+
+            });
+
+        },
+
+        replaceDocument() {
+
+            this.deleteDocument();
+
+            $('#drop-zone-component').click();
+
+        },
+
+        deleteDocument() {
+
+            this.$refs['drop-zone-component'].removeAllFiles();
+
+            this.record.path = null;
+            this.record.fileName = null;
+
+        },
+
+        documentUploadError(file, message, xhr)  {
+
+            showError('Error uploading document', message);
+
+            this.$refs['drop-zone-component'].removeAllFiles();
+
+        },
+
+
+        okClicked() {
+
+            axios.post('/document_templates/store', this.record)
+            
+            .then(response => {
+
+                if (response.data.errors) {
+
+                    if (response.data.errors.general) {
+
+                        showError( 'Error', response.data.errors.general[0]);
+
+                    } else {
+
+                        this.errors = response.data.errors;
+
+                    }
+
+                } else {
+
+                    if ( this.editing ) {
+                    
+                        root.$snotify.success('The template was updated successfully');
+
+                        axios.post('/document_templates/get', {id: this.record.id} )
+            
+                        .then(record => {
+
+                            this.table.table.row('#' + this.record.id).data(record.data[0]).invalidate();
+                            this.table.table.columns.adjust();
+
+                        });
+
+
+
+                    } else {
+
+                        this.editing = true;
+    
+                        this.record.id = response.data.id;
+
+                        this.jumpToInserted(response.data.id, response.data.title);
+
+                        root.$refs['pages'].$refs["left-page"].loadPages('Form');
+
+                    }
+
+                    
+                }
+
+            });
+
+
+        },
+
+        jumpToInserted( newRecordId, title) {
+
+            axios.post('/document_templates/getTablePosition', {
+                title: title,
+            })
+
+            .then(response => {
+
+                this.table.jumpToRow(newRecordId, response.data);
+
+            });
+
+        },     
+
+        pageTitle() {
+
+            return this.record.title;
+
+        },
+
+        hide() { 
+
+            this.$root.$refs['right-hand-tab-container'].$refs['right-hand-tabs'].clearPages();
+
+        },
+
+
+        async deleteClicked() {
+
+
+            this.$refs['delete-document-modal'].description = 'this document';
+            this.$refs['delete-document-modal'].show();
+
+        },
+
+        deleteRecord() {
+
+            axios.post('/document_templates/delete', {id: this.record.id})
+            
+            .then(response => {
+
+                // Remove from DataTable
+                this.table.table.row( "#" + this.record.id ).remove();
+
+                // Remove from HTML table
+                $('#' + this.table.tableId + ' tbody tr#' + this.record.id).remove();
+
+                this.hide();
+
+            });
+            
+        },
+        
+    },
+
+}
+
+</script>
+
+<style scoped>
+
+    @import "../../../../node_modules/vue2-dropzone/dist/vue2Dropzone.min.css";
+
+</style>

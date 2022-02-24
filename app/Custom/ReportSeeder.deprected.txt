@@ -1,0 +1,45 @@
+<?php
+
+namespace App\Custom;
+
+use App\Models\Report;
+
+class ReportSeeder
+{
+
+    public function createReports()
+    {
+
+        /* 9 Apr 2021 - Moved these reports to the General Ledger page
+        Report::create([
+            'title' => 'Trial Balance',
+            'description' => 'A list of the general ledger accounts showing the debit and credit balances',
+            'component' => 'report-trial-balance',
+            'heading' => 'Trial Balance',
+            'period' => 'All',
+            'templateId' => 2,
+        ]);
+
+        Report::create([
+            'title' => 'Income Statement',
+            'description' => 'The company\'s profitability during a specific period of time',
+            'component' => 'report-income-statement',
+            'heading' => 'Income Statement',
+            'period' => 'All',
+            'templateId' => 3,
+        ]);
+
+        Report::create([
+            'title' => 'Balance Sheet',
+            'description' => 'The company\'s assets, liabilities and shareholders\' equity at a specific point in time',
+            'component' => 'report-balance-sheet',
+            'heading' => 'Balance Sheet',
+            'period' => 'All',
+            'templateId' => 4,
+        ]);
+        */
+
+    }
+
+}
+

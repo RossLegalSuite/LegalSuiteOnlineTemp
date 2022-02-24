@@ -1,0 +1,177 @@
+<template>
+<span>
+
+    <b-dropdown v-if="$parent.$parent.selectedRows && $parent.$parent.selectedRows.length" 
+    :id="this.tableId + '-actions-dropdown-menu'" size="sm" right variant="red" class="mr-2" :title="'Perform tasks on the tagged ' + $parent.plural">
+        <template v-slot:button-content>
+            <i class="fa fa-cog mr-2" ></i>Tagged
+        </template>
+
+        <div class="text-center mb-2" style="font-size:larger">
+            <i class="fa fa-cog mr-2"></i>Tagged Records
+        </div>
+
+        <div class="px-3 py-3 mt-1 mx-3" style="min-width: 12rem; background: rgba(0, 0, 0, 0.09); border: 1px solid; border-radius: 5px;">
+
+            <div style="display: flex; flex-direction: column; gap: 20px 0px;">
+
+                <div v-show="$parent.$parent.emailRecords" class="mx-3">
+                    <button type="button" class="btn btn-success no-wrap w-100" 
+                        :title="'Send an email to the ' + $parent.plural"
+                        @click="emailRecords">
+                        <i class="fa fa-envelope-o fa-lg mr-2"></i>Email {{$parent.plural}}</button>
+                </div>
+
+                <div v-show="$parent.$parent.assembleDocumentsFlag" class="mx-3">
+                    <button type="button" class="btn btn-primary no-wrap w-100" 
+                        :title="'Assemble documents for the tagged ' + $parent.plural" 
+                        @click="assembleDocuments"
+                    ><i class="fa fa-file-word-o fa-lg mr-2"></i>Assemble Documents</button>
+                </div>
+
+                <div v-show="$parent.$parent.completeTaggedRecords" class="mx-3">
+                    <button type="button" class="btn btn-primary no-wrap w-100" 
+                        :title="'Mark the tagged ' + $parent.plural + 'as Completed'" 
+                        @click="completeTaggedRecords">
+                        <i class="fa fa-edit fa-lg mr-2"></i>Complete Tagged {{$parent.plural}}</button>
+                </div>
+
+                <div v-show="$parent.$parent.searchAndReplace" class="mx-3">
+                    <button type="button" class="btn btn-primary no-wrap w-100" 
+                        :title="'Search and replace text for the tagged ' + $parent.plural"
+                        @click="searchAndReplace">
+                        <i class="fa fa-refresh fa-lg mr-2"></i>Search And Replace</button>
+                </div>
+
+                <div v-show="$parent.$parent.deleteTaggedRecords" class="mx-3">
+                    <button type="button" class="btn btn-danger no-wrap w-100" 
+                        :title="'Delete the tagged ' + $parent.plural"
+                        @click="deleteTaggedRecords">
+                        
+                        <i class="fa fa-times-circle fa-lg mr-2"></i>Delete Tagged {{$parent.plural}}</button>
+                </div>
+
+                <div v-show="$parent.$parent.transferAvailable" class="mx-3">
+                    <button type="button" class="btn btn-primary no-wrap w-100" 
+                        :title="'Transfer the available funds for the tagged ' + $parent.plural"
+                        @click="transferAvailable">
+                        <i class="fa fa-times-circle fa-lg mr-2"></i>Transfer Available</button>
+                </div>
+
+                <div v-show="$parent.$parent.transferReserved" class="mx-3">
+                    <button type="button" class="btn btn-danger no-wrap w-100" 
+                        :title="'Transfer the avaiable funds for the tagged ' + $parent.plural"
+                        @click="transferReserved">
+                        <i class="fa fa-times-circle fa-lg mr-2"></i>Transfer Reserved</button>
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="mt-3 mb-2 px-3 d-flex justify-content-between">
+            <div></div>
+            <div>
+                <button type="button" class="btn btn-danger btn-sm" 
+                    title="Close Tagged Records"
+                    @click="closeDropdown">
+                    <i class="fa fa-times-circle mr-2"></i>Close
+                </button>
+            </div>
+        </div>
+
+    </b-dropdown>
+
+</span>
+</template>
+
+<script>
+
+export default {
+
+    props: {
+        tableId: String,
+    },
+
+    mounted() {
+
+        this.$parent.actionsDropDown = this;
+
+    },    
+
+    methods: {
+
+        transferAvailable() {
+            if ( typeof this.$parent.$parent.transferAvailable === 'function') {
+                this.$parent.$parent.transferAvailable();
+            } else {
+                console.error('transferAvailable() Not found in parent');
+            }
+        },
+
+        transferReserved() {
+            if ( typeof this.$parent.$parent.transferReserved === 'function') {
+                this.$parent.$parent.transferReserved();
+            } else {
+                console.error('transferReserved() Not found in parent');
+            }
+        },
+
+        deleteTaggedRecords() {
+            if ( typeof this.$parent.$parent.deleteTaggedRecords === 'function') {
+                this.$parent.$parent.deleteTaggedRecords();
+            } else {
+                console.error('deleteTaggedRecords() Not found in parent');
+            }
+        },
+        
+        searchAndReplace() {
+            if ( typeof this.$parent.$parent.searchAndReplace === 'function') {
+                this.$parent.$parent.searchAndReplace(true);
+            } else {
+                console.error('searchAndReplace() Not found in parent');
+            }
+        },
+        
+        emailRecords() {
+            if ( typeof this.$parent.$parent.emailRecords === 'function') {
+                this.$parent.$parent.emailRecords();
+            } else {
+                console.error('emailRecords() Not found in parent');
+            }
+        },
+
+        completeTaggedRecords() {
+            if ( typeof this.$parent.$parent.completeTaggedRecords === 'function') {
+                this.$parent.$parent.completeTaggedRecords();
+            } else {
+                console.error('completeTaggedRecords() Not found in parent');
+            }
+        },
+
+        assembleDocuments() {
+
+            if ( typeof this.$parent.$parent.initializeDocumentAssembly === 'function') {
+
+                // This is for PartyLeft.vue, MatterLeft.vue and EmployeeLeft.vue
+                this.$parent.$parent.initializeDocumentAssembly();
+
+                this.$root.documentAssembly.assembleDocuments();
+
+            } else if ( typeof this.$parent.$parent.assembleDocuments === 'function') {
+
+                // This is for AssembleLeft.vue
+                this.$parent.$parent.assembleDocuments();
+
+            }
+
+
+        },
+
+        closeDropdown() {
+            $('body').click();
+        }
+
+    }
+}  
+</script>

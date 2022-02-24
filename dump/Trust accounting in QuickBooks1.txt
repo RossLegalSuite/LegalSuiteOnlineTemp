@@ -1,0 +1,90 @@
+
+
+1. Set up the trust/retainer account
+Begin by creating a liability account to track the amount of the retainer you received from your client. You must first decide whether you are using a seperate account for each client matter or whether one trust account will be used for multiple clients. This is a legal matter, not an accounting matter so this is not discussed here.
+
+Choose the Gear Icon > Chart of Accounts.
+At the top of the screen, click New.
+Select Other Current Liabilities* under Category Type.
+Select Trust Accounts – Liabilities** under Detail Type.
+Type in the name you want; for example: Trust Liabilities.
+Click Save.
+
+Next, create a retainer item you can use to receive the deposit or retainer from your customer:Choose the Gear Icon > Products and Services.
+Click the New button.
+If prompted to select a type of item, choose Service.
+In the name box, enter a name for the product or service item (for example, Retainer).
+Click the Income Account drop-down arrow and select the Trust Liability Account.
+Click Save.
+
+2. Set up a trust liability bank account in QuickBooks.
+If you need to create a trust liability bank account:Choose the Gear Icon  > Chart of Accounts.
+At the top of the screen, click New.
+Select Bank Account* under Category Type.
+Select Trust account** under Detail Type.
+Enter the name you want (for example: Trust Liability Bank Account) or leave the account name as is.
+
+3. Receive a retainer or deposit from your customer
+Most businesses would receive the retainer through a sales receipt:Click on the “+” icon.
+Select Sales Receipt.
+Select your client.
+Add the retainer or deposit item you set up earlier to your Sales Receipt and set its Rate or Amount to equal the amount of money you’re receiving for this retainer or deposit.
+Use the Deposit To dropdown to select a bank account.If you created a separate trust liability bank account, select that account now.
+Otherwise, select your general trust account.
+Save the Sales Receipt.
+In addition to adding this money to the chosen bank account, this also increases the amount in your liability account. This shows that the money isn’t truly yours yet and avoids treating it as income until later.
+
+If your business prefers to invoice the customer for their deposit rather than receiving it then and there, you can do that as well. The steps are the same as above except that you’ll make an invoice instead, and you won’t select a  Deposit To account right away. Instead, you’ll make that choice when you receive payment against this invoice.
+
+4. Use the deposit or retainer to pay for a customer’s invoice
+When it comes time to charge the client for services you perform for them, you’ll turn the retainer you received into credit on an invoice and receive it like a payment:Create an invoice for your customer that lists the services or goods provided.
+On the last line, enter the Retainer Item in the Product/Service field.
+Enter the retainer amount as a negative, which subtracts it from the invoice.  You cannot enter a retainer amount greater than the invoice total as an invoice can have a zero total, but not a negative one.
+Click Save and Close.
+This decreases the amount in your liability account and applies the credit to your customer’s invoice, which turns it into income. The money is now yours.
+
+If you created a separate trust liability bank account to hold the retainer, you now need to transfer that money to your operating bank account:Click the “+” icon at the top of the screen and, under other Other, select Transfer.
+In Transfer Funds From, select your trust liability bank account.
+In Transfer Funds To, select your operating bank account.
+Enter the amount that you just received as payment for the invoice.
+Click Save and Close.
+This shows that the money has been moved out of the special trust account and into your business’s own account.
+
+5. Run a report to see the retainer amounts remaining for each customer
+It is important to check how much retainer or deposit you’re holding for each customer, you can use this report:
+
+Run a Balance Sheet report, changing the report period to All Dates.
+In the Liabilities section, locate your trust liability account.
+Click on the amount shown next to it to drill into that account.
+Click Customize > Rows/Columns.
+Set Group By to Customer.
+Click Run Report.
+You can now see each client’s retainer or deposit balance, as well as a record of transactions that have affected this balance. If you don’t need to see as many transactions, you can change the report period to a more recent date range, or click the small triangle next to the customer’s name to hide them.
+
+You might wish to use the  Save customization button so that you can access it in the future from the  My Custom Reports page.
+
+6. Pay client expenses using the retainer
+In some cases, a business might need to pay for customer expenses using the money held in the liability account. For example, a law firm might receive a settlement from a court, pay for a customer’s medical expenses, and then pass the remainder on to the customer.
+
+Because these expenses shouldn’t show on the Profit and Loss, you’ll have to create a special item to track them:Choose the Gear Icon > Products and Services.
+Click the New button.
+If prompted to select a type of item, choose either Non-Inventory or Service.
+Give it a name that describes what the retainer is being used for (e.g. Medical expense, Net settlement, etc).
+Uncheck the box next to I sell this product/service to my customers.
+Set the Expense Account dropdown to your trust liability account.
+Save your item.
+
+You’ll also need to check that you have Track Expenses and Items by Customer enabled:Click the Gear Menu.
+Select Account and Settings (or Company Settings).
+Select the Expenses tab.
+If Track expenses and items by customer is not checked, click on it and then place a check mark in the box next to it. This will allow you to track this transaction and its effect on your client’s retainer.
+
+When you pay the expense:Click the “+” icon and select Expense.
+Choose your payee. This could be one of your vendors- like another company or business. If you are creating this expense so that you can give all or part of the retainer to your client (for example, when the law firm needs to pass the net settlement on to their client), then you should select them as the payee.
+Select a bank account to pay from. If you have a separate trust bank account, select that. Otherwise, use your main operating account.
+Expand the Item details section and select the item you created earlier.
+Set the Client drop down next to that item to your client’s name.
+Enter the amount of the expense in the Amount column for that item.
+Save the Expense.
+
+This reduces your liability account and your chosen bank account- without affecting any of your business’s expense accounts since these are not expenses of your business.

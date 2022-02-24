@@ -1,0 +1,123 @@
+/**********************************************
+Modal - Start
+**********************************************/  
+
+.modal-dialog-left, .modal-dialog-5 {
+    margin-left: 5vw !important;
+}
+.modal-dialog-10 {
+    margin-left: 10vw !important;
+}
+.modal-dialog-20 {
+    margin-left: 20vw !important;
+}
+.modal-dialog-30 {
+    margin-left: 30vw !important;
+}
+.modal-dialog-40 {
+    margin-left: 40vw !important;
+}
+.modal-dialog-50 {
+    margin-left: 50vw !important;
+}
+.modal-dialog-right, .modal-dialog-60 {
+    margin-left: 60vw !important;
+}
+
+/*.modal-dialog-left, .modal-dialog-right {
+    margin: 2rem !important;
+}
+
+@media (min-width: 992px) {
+
+    .modal-dialog-left {
+        margin: 2rem 2rem 2rem 4rem !important;
+    }
+
+    .modal-dialog-right {
+        margin: 2rem 4rem 2rem 2rem !important;
+    }
+
+} */   
+
+.modal-backdrop.show {
+    opacity: 0.3;
+}
+
+.modal-header {
+    padding: 0.75rem 0.75rem;
+}
+
+.modal-header .close {
+    font-size: 30px;
+}
+
+
+.modal-body {
+    max-height: 75vh;
+    /* min-height: 35vh; */
+    overflow-y: scroll;
+}
+
+.modal-footer {
+    background-color: #EEE;
+    border-top: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.modal-content {
+    border: 2px solid slategray;
+    box-shadow: 4px 4px 3px rgba(0, 0, 0, 0.25);
+    border-radius: 0.5rem !important;
+}
+
+.modal-content.steelblue-border {
+    border-color: steelblue;
+}
+.modal-content.indianred-border {
+    border-color: indianred;
+}
+.modal-content.forestgreen-border {
+    border-color: forestgreen;
+}
+
+
+.modal-close-button {
+    cursor: pointer;
+    position: absolute;
+    top: 0.25em;
+    right: 0.25em;
+}
+
+
+.modal-md {
+    max-width: 600px;
+}
+
+@media (min-width: 1200px) {
+    .modal-lgr {
+        max-width: 700px;
+    }
+    .modal-xl {
+        max-width: 800px;
+    }
+    .modal-xxl {
+        max-width: 900px;
+    }
+}
+
+@media (min-width: 1800px) {
+    .modal-lgr {
+        max-width: 1000px;
+    }
+    .modal-xl {
+        max-width: 1150px;
+    }
+    .modal-xxl {
+        max-width: 1300px;
+    }
+}
+
+
+/**********************************************
+           Modal - End
+**********************************************/

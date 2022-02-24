@@ -1,0 +1,22 @@
+
+
+1) Edit the Apache Document Root in these files
+
+vi /var/cpanel/userdata/admin/legalsuiteonline.co.za
+vi /var/cpanel/userdata/admin/legalsuiteonline.co.za_SSL
+
+2) Clear the cache
+rm /var/cpanel/userdata/admin/legalsuiteonline.co.za.cache
+rm /var/cpanel/userdata/admin/legalsuiteonline.co.za_SSL.cache
+
+3) Rebuild httpdconf file
+/scripts/updateuserdatacache
+/scripts/rebuildhttpdconf
+
+4) Rebuild PHP-FPM
+/scripts/php_fpm_config --rebuild
+/scripts/restartsrv_apache_php_fpm
+
+5) Restart Apache
+/scripts/restartsrv_httpd
+

@@ -1,0 +1,60 @@
+const mix = require('laravel-mix');
+
+mix
+
+//    .sass("resources/sass/app.scss", "public/css");
+
+
+    //.sourceMaps()
+
+    
+    .disableNotifications()
+
+    .options({
+        postCss: [
+          require('autoprefixer'),
+        ],
+      })    
+    
+    .js("resources/js/app.js", "public/js")
+    .js("resources/js/guest.js", "public/js/guest.js")
+
+    //.babel(
+    .scripts(
+        [
+            //"resources/js/custom.js",
+            //"resources/js/sidebar-nav.js",
+            //"resources/js/table-functions.js",
+            //"resources/js/html2pdf.bundle.js",
+
+            "resources/js/dataTables.select.js",
+            "resources/js/dataTables.treegrid.js",
+            "resources/js/jquery.highlight.js",
+            "resources/js/printThis.js",
+            "resources/js/tab-guard.js",
+
+        ],
+        "public/js/program.js"
+    )
+    .scripts(
+        ["public/js/app.js", "public/js/program.js"],
+        "public/js/dashboard.js"
+    )
+
+    //.sass("resources/sass/app.scss", "public/css") // !!** Doing this manually once because it doesn't change (and app.css was blank once)
+    .styles(
+        [
+            "public/css/app.css",
+            "resources/css/custom.css",
+            "resources/css/form.css",
+            "resources/css/modal.css",
+            "resources/css/filofax.css",
+            "resources/css/colors.css",
+            "resources/css/datatables.css",
+            "resources/css/datatables-select.css",
+            "resources/css/datatables-custom.css",
+        ],
+        "public/css/dashboard.css"
+    )
+    //.webpackConfig({devtool: 'inline-source-map'})
+    //.version();

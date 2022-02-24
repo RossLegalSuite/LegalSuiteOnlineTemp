@@ -1,0 +1,346 @@
+async function primeGenerateDocumentPreviewer( callingComponent, selectedTemplates, table = null) {
+
+    let firstTemplate = null;
+
+    root.$snotify.simple('Please wait...', 'Generating Preview', { timeout: 0, icon: 'img/cogs.gif' });
+
+    root.previewDocuments.initialize( callingComponent );
+
+    root.previewDocuments.multipleTemplatesFlag = ( selectedTemplates.length > 1 ) ? true : false;
+
+    await root.asyncForEach(selectedTemplates, async (templateId) => {
+
+        let response = await axios.post('/lolsystemtemplate/get/' + templateId);
+
+        if ( response.data.errors ) {
+
+            showError('Error',response.data.errors);
+
+        } else {
+
+            root.previewDocuments.multipleTemplates.push({
+                value: response.data.data[0].recordid,
+                label: response.data.data[0].title,
+            });
+
+            if ( !firstTemplate ) firstTemplate = response.data.data[0];
+
+            if ( !root.previewDocuments.selectedTemplate ) {
+
+                root.previewDocuments.selectedTemplate = {
+                    value: response.data.data[0].recordid,
+                    label: response.data.data[0].title,
+                };
+
+            }
+        }
+
+    });
+
+    loadGenerateDocumentPreviewer( callingComponent, firstTemplate );
+
+}
+
+
+function loadGenerateDocumentPreviewer( callingComponent, firstTemplate ) {
+
+    let abortProcess = false;
+    let params = {};
+    let matPartySorter = null;
+    let matPartyRoleId = null;
+
+    if ( callingComponent.generateDocumentsSource == 'Party') {
+
+        params = { 
+            whereIn: 'party.recordid,' + callingComponent.selectedRows.join(),
+            select: ['Party.RecordId as recordid', 'Party.MatterPrefix as code', 'Party.Name as description'],
+            orderBy: 'Party.MatterPrefix'
+        } 
+
+    } else if ( callingComponent.generateDocumentsSource == 'Matter') {
+
+        params = { 
+            whereIn: 'matter.recordid,' + callingComponent.selectedRows.join(),
+            select: ['Matter.RecordId as recordid', 'Matter.FileRef as code', 'Matter.Description as description'],
+            orderBy: 'Matter.FileRef'
+        }
+    }
+
+    axios.post('/' +  callingComponent.generateDocumentsSource.toLowerCase() + '/get', params)
+
+    .then(async response => {
+
+        if (response.data.errors) { 
+
+            showError('Error getting Records', response.data.errors); 
+
+        } else {
+
+            await root.asyncForEach(response.data.data, async (record) => {                
+
+                if ( callingComponent.generateDocumentsSource == 'Matter' && firstTemplate.roleid) {
+
+                    let matPartyResponse = await axios.post('/matparty/get', {
+                        whereRaw: 'MatterId = ' + record.recordid + ' AND RoleId = ' + firstTemplate.roleid,
+                        orderBy: 'MatParty.Sorter'
+                    });
+    
+                    await root.asyncForEach(matPartyResponse.data.data, async (matParty) => {
+
+                        root.previewDocuments.multipleRoles.push({
+                            matterId: record.recordid,
+                            roleId: matParty.roleid,
+                            sorter: matParty.sorter,
+                            value: matParty.recordid,
+                            label: record.code + ' (' + matParty.partymatterprefix + ' - ' + matParty.partyname + ')',
+                        });
+
+                        if ( !root.previewDocuments.selectedRole ) {
+
+                            matPartySorter = matParty.sorter;
+                            matPartyRoleId = matParty.roleid;
+
+                            root.previewDocuments.selectedRole = {
+                                matterId: record.recordid,
+                                roleId: matParty.roleid,
+                                sorter: matParty.sorter,
+                                value: matParty.recordid,
+                                label: record.code + ' (' + matParty.partymatterprefix + ' - ' + matParty.partyname + ')',
+                            };
+
+
+                        }
+
+                    });
+
+                    if ( root.previewDocuments.multipleRoles.length ) {
+                        root.previewDocuments.multipleRolesLabel = firstTemplate.roledescription;
+                        root.previewDocuments.multipleRolesFlag = true;
+                    }    
+
+                    //     if ( response.data.data.length > 1 ) {
+                    //         showError('Error','No ' + root.previewDocuments.multipleRolesLabel + 's were found in the selected ' + callingComponent.generateDocumentsPlural);
+                    //     } else {
+                    //         showError('Error','No ' + root.previewDocuments.multipleRolesLabel + 's were found for this ' + callingComponent.generateDocumentsSource);
+                    //     }
+
+                    //     abortProcess = true;
+                    // }
+
+                } 
+                //} else {
+
+                    root.previewDocuments.multipleRecords.push({
+                        value: record.recordid,
+                        label: record.code + ' (' + record.description + ')',
+                    });
+
+                //}
+
+            });
+
+            if ( !abortProcess ) {
+
+                let firstRecord = response.data.data[0];
+
+                if ( callingComponent.selectedRows.length > 1 ) {
+        
+                    root.previewDocuments.multipleRecordsFlag = true;
+                    root.previewDocuments.multipleRecordsLabel = callingComponent.generateDocumentsSource;
+
+                }
+
+                let documentCounter = root.previewDocuments.multipleTemplates.length * root.previewDocuments.multipleRecords.length;
+                if ( root.previewDocuments.multipleRoles.length ) {
+                    documentCounter = documentCounter * root.previewDocuments.multipleRoles.length;
+                }
+
+                root.previewDocuments.title = 'Preview Documents (' + documentCounter + ')';
+
+
+                /*if (root.previewDocuments.multipleRolesFlag) {
+
+                    if ( root.previewDocuments.multipleRoles.length > 1) {
+
+                        root.previewDocuments.title = 'Preview Documents (' + (root.previewDocuments.multipleTemplates.length * root.previewDocuments.multipleRoles.length) + ')';
+
+                    } else {
+
+                        root.previewDocuments.title = 'Preview Document (' + root.previewDocuments.selectedRole.label + ')';
+                    }
+
+
+                } else {
+
+                    root.previewDocuments.selectedRecord = root.previewDocuments.multipleRecords[0];
+        
+                    if ( callingComponent.selectedRows.length > 1 ) {
+        
+                        root.previewDocuments.multipleRecordsFlag = true;
+                        root.previewDocuments.multipleRecordsLabel = callingComponent.generateDocumentsSource;
+        
+                        root.previewDocuments.title = 'Preview Documents (' + (root.previewDocuments.multipleTemplates.length * root.previewDocuments.multipleRecords.length) + ')';
+        
+                    } else {
+        
+                        root.previewDocuments.title = 'Preview Document (' + firstRecord.description + ')';
+        
+                    }
+
+                }*/
+
+                console.log("Flags",root.previewDocuments.multipleTemplatesFlag,root.previewDocuments.multipleRecordsFlag,root.previewDocuments.multipleRolesFlag);
+                console.log("Arrays",root.previewDocuments.multipleTemplates,root.previewDocuments.multipleRecords,root.previewDocuments.multipleRoles);
+
+                root.previewDocuments.templateContents = firstTemplate.contents;
+
+                root.createRecordTemplateData(callingComponent.generateDocumentsSource,firstTemplate, firstRecord.recordid, matPartyRoleId, matPartySorter)
+
+                .then( (templateData) => {
+
+                    root.previewDocuments.templateData = templateData;
+
+                    root.$snotify.clear();
+
+                    root.previewDocuments.show();
+
+                    root.previewDocuments.generateDocumentContents();
+
+                }).catch( (error) => {
+
+                    showError('Error',error);
+
+                });
+
+            }
+        }
+
+    }).catch(error => {
+        showError('Error', error); 
+    });
+
+}
+
+function emailThisParty(id) {
+
+    axios.post('/party/get/' + id)
+
+    .then(partyResponse => {
+
+        let party = partyResponse.data.data[0];
+
+        if ( !party.emailaddress ) {
+
+            showError('No Email Address', 'Please add this Party\'s email address in the <strong>Contact Details</strong> tab.');
+
+        } else {
+
+            root.emailModal.initialize();
+            root.emailModal.defaultAttachmentFlag = false;
+
+            root.emailModal.title = 'Email ' + party.name;
+            root.emailModal.toAddress = party.emailaddress;
+
+            axios.post('/lolsystemtemplate/get/' + root.lolSettings.partiesemailtemplateid)
+
+            .then(response => {
+
+                if ( response.data.errors ) {
+
+                    showError('Error',response.data.errors);
+
+                } else {
+
+                    let templateRecord = response.data.data[0];
+
+                    root.emailModal.templateContents = templateRecord.contents;
+
+                    root.createRecordTemplateData('party',templateRecord, party.recordid)
+
+                    .then( (templateData) => {
+
+                        root.emailModal.templateData = templateData;
+
+                        root.emailModal.show();
+
+                        root.emailModal.generateEmailBody();
+
+                        setTimeout(() => {
+
+                            $('#' + root.emailModal.id + ' input[name="subject"]').focus();
+
+                        });
+
+                    }).catch( (error) => {
+
+                        showError('Error',error);
+
+                    });
+
+
+                }
+
+            }).catch( (error) => {
+
+                showError('Error',error);
+
+            });
+
+        }
+
+
+    }).catch( (error) => {
+
+        showError('Error',error);
+
+    });
+
+}
+
+function clearTagged( tableName ) {
+
+    axios.post( '/utils/clearTagged', {
+        tableName: tableName,
+        employeeId: root.loggedInEmployeeId
+    })
+        
+    .then(response => {
+
+        if (response.data.errors) {
+            showError('Error', response.data.errors); 
+        }
+        
+    }).catch( (error) => {
+        showError('Error clearing Tags', error); 
+    });
+
+}
+
+function printHtml( body ) {
+
+    try {
+        
+        let html = `
+        <!DOCTYPE html>
+        <html lang="en" class="no-js">
+            <head>
+                <meta charset="utf-8">
+                <link href="https://d22oktazhmwkct.cloudfront.net/program.css" rel="stylesheet">
+            </head>
+            <body onload="window.print()">
+                ${body}
+            </body>
+        </html>`;
+
+        const newWin = window.frames["global-print-table"];
+        newWin.document.write(html);
+        newWin.document.close();
+
+    } catch (error) {
+        showError('Error printing Html', error);
+    }
+
+}
+
+
+

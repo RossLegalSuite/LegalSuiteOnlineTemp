@@ -1,0 +1,1044 @@
+<?php
+
+namespace App\Http\Controllers\App;
+
+use App\Models\Account;
+use App\Models\Matter;
+use App\Models\MatterParty;
+use App\Models\MatterEmployee;
+use App\Models\MatterExtraScreen;
+use App\Models\Party;
+use App\Models\Company;
+use App\Models\AccountTransaction;
+use App\Models\Batch;
+use App\Custom\DataTablesHelper;
+use Illuminate\Http\Request;
+use App\Custom\Utils;
+use DB;
+use Datatables;
+use Validator;
+use Illuminate\Validation\Rule;
+use App\Rules\ValidDate;
+
+use Maatwebsite\Excel\Facades\Excel;
+use Maatwebsite\Excel\Concerns\{FromQuery, Exportable, WithHeadings, WithEvents, RegistersEventListeners, ShouldAutoSize};
+use Maatwebsite\Excel\Events\{BeforeExport, AfterSheet};
+use PhpOffice\PhpSpreadsheet\Style\{NumberFormat, Alignment};
+
+
+class MatterController extends Controller {
+
+    use Exportable, RegistersEventListeners;
+
+    private function addParentJoins(&$query)
+    {
+        $query
+        ->leftJoin('branches', 'matters.branchId', '=', 'branches.id')
+        ->leftJoin('document_sets', 'matters.documentSetId', '=', 'document_sets.id')
+        ->leftJoin('matter_types', 'matters.matterTypeId', '=', 'matter_types.id')
+        ->leftJoin('accounts as incomeAccount', 'matters.incomeAccountId', '=', 'incomeAccount.id')
+        ->leftJoin('accounts as trustBankAccount', 'matters.trustBankAccountId', '=', 'trustBankAccount.id');
+
+    }
+
+    private function addClientJoin(&$query)
+    {
+
+        $query
+        ->leftJoin('matter_parties as clientParty', function ($join) {
+            $join->on('matters.id', '=', 'clientParty.matterId')
+                ->where('clientParty.roleId', session('clientRoleId') )
+                ->where('clientParty.rank', 1);
+            });
+
+        $query->leftJoin('parties as client', 'clientParty.partyId', '=', 'client.id');
+
+    }
+
+    private function addOwnerJoin(&$query)
+    {
+
+        $query
+        ->leftJoin('matter_employees as ownerEmployee', function ($join) {
+            $join->on('matters.id', '=', 'ownerEmployee.matterId')
+                ->where('ownerEmployee.roleId', session('ownerRoleId') )
+                ->where('ownerEmployee.rank', 1);
+            });
+
+        $query->leftJoin('employees as owner', 'ownerEmployee.employeeId', '=', 'owner.id');
+
+    }
+
+    private function basicColumns(&$query, $prefix)
+    {
+
+        $query->addSelect("matters.id as {$prefix}id");
+        $query->addSelect("matters.fileRef as {$prefix}fileRef");
+        $query->addSelect("matters.description as {$prefix}description");
+        $query->addSelect(DB::raw("CONCAT(matters.fileRef, ' - ', matters.description) as matter"));
+
+    }
+
+    private function tableColumns(&$query, $request, $prefix)
+    {
+
+        $query->addSelect("matters.id as {$prefix}id");
+        $query->addSelect("matters.fileRef as {$prefix}fileRef");
+        $query->addSelect("matters.description as {$prefix}description");
+
+        $query->addSelect( "client.name as {$prefix}clientName");
+
+        $query->addSelect( DB::raw("DATE_FORMAT( CONVERT_TZ(matters.instructed,'+00:00','" . session('timeZone') . "'), '" . Utils::sqlDateFormat() . "') as `{$prefix}instructed`") ); 
+
+        $query->addSelect("owner.name as {$prefix}employeeName");
+
+        $query->addSelect("branches.description as {$prefix}branchDescription");
+        $query->addSelect("document_sets.description as {$prefix}documentSetDescription");
+        $query->addSelect("matter_types.description as {$prefix}matterTypeDescription");
+        $query->addSelect("incomeAccount.description as {$prefix}incomeAccountDescription");
+        $query->addSelect("trustBankAccount.description as {$prefix}trustBankAccountDescription");
+
+
+        if ( $request->dataFormat !== 'export' ) {
+
+            $query->addSelect("matters.matterTypeId as {$prefix}matterTypeId");
+            $query->addSelect("matters.documentSetId as {$prefix}documentSetId");
+            $query->addSelect("matters.branchId as {$prefix}branchId");
+            $query->addSelect("matters.incomeAccountId as {$prefix}incomeAccountId");
+            $query->addSelect("matters.trustBankAccountId as {$prefix}trustBankAccountId");
+
+            $query->addSelect(DB::raw("CONCAT(matters.fileRef, ' - ', matters.description) as `{$prefix}matter`"));
+
+            $query->addSelect( "client.id as {$prefix}clientId");
+            $query->addSelect( "client.code as {$prefix}clientCode");
+            $query->addSelect(DB::raw("CONCAT(client.code, ' - ', client.name) as `{$prefix}client`"));
+
+            $query->addSelect("matter_types.textColor as {$prefix}textColor");
+            $query->addSelect("matter_types.backgroundColor as {$prefix}backgroundColor");
+
+            // $query->addSelect(DB::raw("IFNULL( 
+            //     (SELECT FORMAT( SUM(debits-credits), 2, 'en_" . session('countryCode')  . "') FROM matter_business_balances WHERE matterId = matters.id 
+            //     GROUP BY matterId), 0.00) as `{$prefix}balance`") );
+    
+            // $query->addSelect(DB::raw("IFNULL( 
+            //     (SELECT SUM(debits-credits) FROM matter_business_balances WHERE matterId = matters.id 
+            //     GROUP BY matterId), 0.00) as totalBalance") );
+    
+        }
+    }
+
+    private function allColumns(&$query, $prefix)
+    {
+
+        $query->addSelect("matters.id as {$prefix}id")
+        ->addSelect("matters.fileRef as {$prefix}fileRef")
+        ->addSelect("matters.description as {$prefix}description")
+        ->addSelect( DB::raw("DATE_FORMAT( CONVERT_TZ(matters.instructed,'+00:00','" . session('timeZone') . "'), '" . Utils::sqlDateFormat() . "') as `{$prefix}instructed`") )
+        ->addSelect("matters.matterTypeId as {$prefix}matterTypeId")
+        ->addSelect("matters.documentSetId as {$prefix}documentSetId")
+        ->addSelect("matters.branchId as {$prefix}branchId")
+        ->addSelect("matters.incomeAccountId as {$prefix}incomeAccountId")
+        ->addSelect("matters.trustBankAccountId as {$prefix}trustBankAccountId")
+        ->addSelect(DB::raw("CONCAT(matters.fileRef, ' - ', matters.description) as `{$prefix}matter`"))
+        ->addSelect( "client.id as {$prefix}clientId")
+        ->addSelect( "client.code as {$prefix}clientCode")
+        ->addSelect( "client.name as {$prefix}clientName")
+        ->addSelect( "client.salutation as {$prefix}clientSalutation")
+        ->addSelect(DB::raw("CONCAT(client.code, ' - ', client.name) as `{$prefix}client`"))
+        ->addSelect("owner.name as {$prefix}employeeName")
+        ->addSelect("branches.description as {$prefix}branchDescription")
+        ->addSelect("document_sets.description as {$prefix}documentSetDescription")
+        ->addSelect("matter_types.description as {$prefix}matterTypeDescription")
+        ->addSelect("incomeAccount.description as {$prefix}incomeAccountDescription")
+        ->addSelect("trustBankAccount.description as {$prefix}trustBankAccountDescription");
+
+
+    }
+
+    private function addFinancialColumns(&$query, $prefix, $format = true)
+    {
+
+        $formatBegin = $format ? 'FORMAT(' : '';
+        $formatEnd = $format ? ", 2, 'en_" . session('countryCode')  . "')" : '';
+    
+        $query->addSelect(DB::raw("transferAvailable(matters.id) as `{$prefix}transferAvailable`"));
+
+        $query->addSelect(DB::raw("IFNULL( 
+            (SELECT {$formatBegin} SUM(debits) {$formatEnd} FROM matter_business_balances WHERE matter_business_balances.matterId = matters.id 
+            GROUP BY matter_business_balances.matterId), 0.00) as `{$prefix}debits`") );
+
+        $query->addSelect(DB::raw("IFNULL( 
+            (SELECT {$formatBegin} SUM(credits) {$formatEnd} FROM matter_business_balances WHERE matter_business_balances.matterId = matters.id 
+            GROUP BY matter_business_balances.matterId), 0.00) as `{$prefix}credits`") );
+
+        $query->addSelect(DB::raw("IFNULL( 
+            (SELECT {$formatBegin} SUM(debits-credits) {$formatEnd} FROM matter_business_balances WHERE matter_business_balances.matterId = matters.id 
+            GROUP BY matter_business_balances.matterId), 0.00) as `{$prefix}businessBalance`") );
+
+        // $query->addSelect(DB::raw("IFNULL( 
+        //     (SELECT {$formatBegin} SUM(amount) {$formatEnd} FROM receipt_transactions
+        //     LEFT JOIN receipts ON receipt_transactions.receiptId = receipts.id
+        //     WHERE receipt_transactions.matterId = matters.id AND receipts.type = 'Trust'
+        //     GROUP BY receipt_transactions.matterId), 0.00) as `{$prefix}trustCredits`") );
+            
+        // $query->addSelect(DB::raw("IFNULL( 
+        //     (SELECT {$formatBegin} SUM(amount) {$formatEnd} FROM receipt_transactions
+        //     LEFT JOIN receipts ON receipt_transactions.receiptId = receipts.id
+        //     WHERE receipt_transactions.matterId = matters.id AND receipts.type = 'Trust' AND receipt_transactions.invoiceId IS NULL
+        //     GROUP BY receipt_transactions.matterId), 0.00) as `{$prefix}reservedTrustCredits`") );
+            
+        // $query->addSelect(DB::raw("IFNULL( 
+        //     (SELECT {$formatBegin} SUM(amount) {$formatEnd} FROM receipt_transactions
+        //     LEFT JOIN receipts ON receipt_transactions.receiptId = receipts.id
+        //     WHERE receipt_transactions.matterId = matters.id AND receipts.type = 'Trust' AND receipt_transactions.invoiceId IS NOT NULL
+        //     GROUP BY receipt_transactions.matterId), 0.00) as `{$prefix}unreservedTrustCredits`") );
+
+        
+        $query->addSelect(DB::raw("IFNULL((SELECT unreservedBalance FROM matter_trust_balances WHERE matterId = matters.id), 0.00) as `{$prefix}unreservedTrustBalance`") );
+        $query->addSelect(DB::raw("IFNULL((SELECT reservedBalance FROM matter_trust_balances WHERE matterId = matters.id), 0.00) as `{$prefix}reservedTrustBalance`") );
+        $query->addSelect(DB::raw("IFNULL((SELECT balance FROM matter_trust_balances WHERE matterId = matters.id), 0.00) as `{$prefix}trustBalance`") );
+
+
+        $query->addSelect(DB::raw("IFNULL( 
+            (SELECT {$formatBegin} SUM(amount) {$formatEnd} FROM receipt_transactions
+            LEFT JOIN receipts ON receipt_transactions.receiptId = receipts.id
+            WHERE receipt_transactions.matterId = matters.id AND receipts.type = 'Business'
+            GROUP BY receipt_transactions.matterId), 0.00) as `{$prefix}businessCredits`") );
+    
+        $query->addSelect(DB::raw("IFNULL( 
+            (SELECT {$formatBegin} SUM(matter_debits.amount) {$formatEnd} FROM matter_debits
+            LEFT JOIN invoices ON matter_debits.invoiceId = invoices.id
+            WHERE matter_debits.matterId = matters.id AND matter_debits.type = 'Fee' AND (invoices.posted = 0 OR invoices.id IS NULL)
+            GROUP BY matter_debits.matterId), 0.00) as `{$prefix}unpostedFees`") );
+
+        $query->addSelect(DB::raw("IFNULL( 
+            (SELECT {$formatBegin} SUM(matter_debits.amount) {$formatEnd} FROM matter_debits
+            LEFT JOIN invoices ON matter_debits.invoiceId = invoices.id
+            WHERE matter_debits.matterId = matters.id AND matter_debits.type = 'Disbursement' AND (invoices.posted = 0 OR invoices.id IS NULL)
+            GROUP BY matter_debits.matterId), 0.00) as `{$prefix}unpostedDisbursements`") );
+
+        $query->addSelect(DB::raw("IFNULL( 
+            (SELECT {$formatBegin} SUM(matter_debits.taxAmount) {$formatEnd} FROM matter_debits
+            LEFT JOIN invoices ON matter_debits.invoiceId = invoices.id
+            WHERE matter_debits.matterId = matters.id AND (invoices.posted = 0 OR invoices.id IS NULL) 
+            GROUP BY matter_debits.matterId), 0.00) as `{$prefix}unpostedTax`") );
+
+        $query->addSelect(DB::raw("IFNULL( 
+            (SELECT {$formatBegin} SUM(matter_debits.amount + matter_debits.taxAmount) {$formatEnd} FROM matter_debits
+            LEFT JOIN invoices ON matter_debits.invoiceId = invoices.id
+            WHERE matter_debits.matterId = matters.id AND (invoices.posted = 0 OR invoices.id IS NULL) 
+            GROUP BY matter_debits.matterId), 0.00) as `{$prefix}unpostedTotal`") );
+
+        $query->addSelect(DB::raw("IFNULL( 
+            (SELECT {$formatBegin} SUM(matter_debits.amount) {$formatEnd} FROM matter_debits
+            LEFT JOIN invoices ON matter_debits.invoiceId = invoices.id
+            WHERE matter_debits.matterId = matters.id AND matter_debits.type = 'Fee' AND invoices.posted = 1
+            GROUP BY matter_debits.matterId), 0.00) as `{$prefix}postedFees`") );
+
+        $query->addSelect(DB::raw("IFNULL( 
+            (SELECT {$formatBegin} SUM(matter_debits.amount) {$formatEnd} FROM matter_debits
+            LEFT JOIN invoices ON matter_debits.invoiceId = invoices.id
+            WHERE matter_debits.matterId = matters.id AND matter_debits.type = 'Disbursement' AND invoices.posted = 1
+            GROUP BY matter_debits.matterId), 0.00) as `{$prefix}postedDisbursements`") );
+
+        $query->addSelect(DB::raw("IFNULL( 
+            (SELECT {$formatBegin} SUM(matter_debits.taxAmount) {$formatEnd} FROM matter_debits
+            LEFT JOIN invoices ON matter_debits.invoiceId = invoices.id
+            WHERE matter_debits.matterId = matters.id AND invoices.posted = 1 
+            GROUP BY matter_debits.matterId), 0.00) as `{$prefix}postedTax`") );
+
+        $query->addSelect(DB::raw("IFNULL( 
+            (SELECT {$formatBegin} SUM(matter_debits.amount + matter_debits.taxAmount) {$formatEnd} FROM matter_debits
+            LEFT JOIN invoices ON matter_debits.invoiceId = invoices.id
+            WHERE matter_debits.matterId = matters.id AND invoices.posted = 1
+            GROUP BY matter_debits.matterId), 0.00) as `{$prefix}postedTotal`") );
+    
+    }
+
+    public function get(Request $request)
+    {
+
+        $prefix = ( $request->dataFormat === 'mergeArray' ) ? 'matter-&gt;' : '';
+
+        $query = DB::table('matters');
+
+        if ( $request->dataFormat === 'mergeArray') {
+
+            $query->orderBy('matters.fileRef');
+
+            $this->allColumns($query, $prefix);
+
+            $this->addParentJoins($query);
+            
+            $this->addClientJoin($query);
+            $this->addOwnerJoin($query);
+
+            $this->addFinancialColumns($query, $prefix);
+
+        } else if ( $request->dataFormat === 'idArray') {
+
+            $query->orderBy('matters.fileRef');
+
+            $query->addSelect("matters.id");
+            $query->addSelect("matters.fileRef");
+
+        } else if ($request->basicColumns ) {
+
+            $this->basicColumns($query, $prefix);
+
+        } else if ($request->tableColumns ) {
+
+            $this->tableColumns($query, $request, $prefix);
+
+            $this->addParentJoins($query);
+
+            $this->addClientJoin($query);
+            $this->addOwnerJoin($query);
+
+            $this->addFinancialColumns($query,'');
+
+        } else if ( $request->dataFormat === 'export' ) {
+
+            $query->orderBy('matters.fileRef');
+    
+            $this->tableColumns($query, $request, $prefix);
+
+            $this->addParentJoins($query);
+
+            $this->addClientJoin($query);
+            $this->addOwnerJoin($query);
+
+            $this->addFinancialColumns($query,'',false);
+
+        } else {
+            
+            $this->allColumns($query, $prefix);
+
+            $this->addParentJoins($query);
+            
+            $this->addClientJoin($query);
+            $this->addOwnerJoin($query);
+
+            $this->addFinancialColumns($query, $prefix);
+
+        }
+
+        if ($request->id) $query->where('matters.id',$request->id);
+        
+        if ($request->fileRef) $query->where('matters.fileRef',$request->fileRef);
+
+        if ($request->parentId) $query->where('client.id',$request->parentId);
+
+        if ($request->employeeId) $query->where('owner.id',$request->employeeId);
+
+        DataTablesHelper::AddCommonWhereClauses($query, $request);
+
+        //Utils::LogSqlQuery($query);
+
+        if ($request->dataFormat === "dataTables") {
+
+            $datatables = Datatables::of($query);
+
+            if ($keyword = $request->get('search')['value'] ) {
+
+                $datatables->filterColumn('instructed', function($query, $keyword) {
+                    $sql = "DATE_FORMAT( CONVERT_TZ(matters.instructed,'+00:00','" . session('timeZone') . "'), '" . Utils::sqlDateFormat() . "') like ?";
+                    $query->whereRaw($sql, ["%{$keyword}%"]);
+                });        
+                
+
+            } else if ( $request->tableFilter ) {
+
+                $datatables->filterColumn('rawBusinessBalance', function($query, $keyword) {
+                    $sql = "IFNULL( 
+                        (SELECT SUM(debits-credits) FROM matter_business_balances WHERE matterId = matters.id 
+                        GROUP BY matterId), 0.00) like ?";
+                    $query->whereRaw($sql, ["%{$keyword}%"]);
+                })
+
+                ->filterColumn('rawUnreservedTrustBalance', function($query, $keyword) {
+                    $sql = "IFNULL((SELECT unreservedBalance FROM matter_trust_balances WHERE matterId = matters.id), 0.00) like ?";
+                    $query->whereRaw($sql, ["%{$keyword}%"]);
+                })
+                ->filterColumn('rawReservedTrustBalance', function($query, $keyword) {
+                    $sql = "IFNULL((SELECT reservedBalance FROM matter_trust_balances WHERE matterId = matters.id), 0.00) like ?";
+                    $query->whereRaw($sql, ["%{$keyword}%"]);
+                })
+                ->filterColumn('rawTrustBalance', function($query, $keyword) {
+                    $sql = "IFNULL((SELECT balance FROM matter_trust_balances WHERE matterId = matters.id), 0.00) like ?";
+                    $query->whereRaw($sql, ["%{$keyword}%"]);
+                })
+
+                // ->filterColumn('totalTrustCredits', function($query, $keyword) {
+                //     $sql = "IFNULL( 
+                //     (SELECT SUM(amount) FROM receipt_transactions
+                //     LEFT JOIN receipts ON receipt_transactions.receiptId = receipts.id
+                //     WHERE receipt_transactions.matterId = matters.id AND receipts.type = 'Trust'
+                //     GROUP BY receipt_transactions.matterId), 0.00) like ?";
+                //     $query->whereRaw($sql, ["%{$keyword}%"]);
+                // })    
+                // ->filterColumn('totalReservedTrustCredits', function($query, $keyword) {
+                //     $sql = "IFNULL( 
+                //     (SELECT SUM(amount) FROM receipt_transactions
+                //     LEFT JOIN receipts ON receipt_transactions.receiptId = receipts.id
+                //     WHERE receipt_transactions.matterId = matters.id AND receipts.type = 'Trust' AND receipt_transactions.invoiceId IS NULL
+                //     GROUP BY receipt_transactions.matterId), 0.00) like ?";
+                //     $query->whereRaw($sql, ["%{$keyword}%"]);
+                // })    
+                // ->filterColumn('totalUnreservedTrustCredits', function($query, $keyword) {
+                //     $sql = "IFNULL( 
+                //     (SELECT SUM(amount) FROM receipt_transactions
+                //     LEFT JOIN receipts ON receipt_transactions.receiptId = receipts.id
+                //     WHERE receipt_transactions.matterId = matters.id AND receipts.type = 'Trust' AND receipt_transactions.invoiceId IS NOT NULL
+                //     GROUP BY receipt_transactions.matterId), 0.00) like ?";
+                //     $query->whereRaw($sql, ["%{$keyword}%"]);
+                // })    
+                ->filterColumn('totalBusinessCredits', function($query, $keyword) {
+                    $sql = "IFNULL( 
+                    (SELECT SUM(amount) FROM receipt_transactions
+                    LEFT JOIN receipts ON receipt_transactions.receiptId = receipts.id
+                    WHERE receipt_transactions.matterId = matters.id AND receipts.type = 'Business'
+                    GROUP BY receipt_transactions.matterId), 0.00) like ?";
+                    $query->whereRaw($sql, ["%{$keyword}%"]);
+                });                
+
+            }
+
+            return $datatables->make(true);
+
+        } else  {
+
+            return DataTablesHelper::ReturnData($query, $request);
+        }
+
+    }
+
+    public function getDebits(Request $request)
+    {
+        
+        $query = DB::table('matter_debits');
+
+        if ($request->invoiceId) $query->where('invoiceId', $request->invoiceId);
+
+        $query->addSelect('matter_debits.id');
+        $query->addSelect('matter_debits.uniqueId');
+
+        $query->addSelect( DB::raw("DATE_FORMAT( CONVERT_TZ(matter_debits.date,'+00:00','" . session('timeZone') . "'), '" . Utils::sqlDateFormat() . "') as date") ); 
+        $query->addSelect('matter_debits.description');
+        $query->addSelect('matter_debits.type');
+
+        $query->addSelect(DB::raw( "FORMAT(matter_debits.taxAmount, 2, 'en_" . session('countryCode')  . "') as taxAmount") );
+        $query->addSelect(DB::raw( "FORMAT(matter_debits.amount, 2, 'en_" . session('countryCode')  . "') as amount") );
+        $query->addSelect(DB::raw( "FORMAT(matter_debits.totalAmount, 2, 'en_" . session('countryCode')  . "') as totalAmount") );
+
+        if ($request->dataFormat === "dataTables") {
+
+            $datatables = Datatables::of($query);
+
+            if ($keyword = $request->get('search')['value'] ) {
+
+                $datatables->filterColumn('date', function($query, $keyword) {
+                    $sql = "DATE_FORMAT( CONVERT_TZ(date,'+00:00','" . session('timeZone') . "'), '" . Utils::sqlDateFormat() . "') like ?";
+                    $query->whereRaw($sql, ["%{$keyword}%"]);
+                });
+
+            }
+
+            return $datatables->make(true);
+            
+        } else  {
+
+            return DataTablesHelper::ReturnData($query, $request);
+
+        }
+
+    }     
+
+    public function getBusinessTransactions(Request $request)
+    {
+        
+        $query = DB::table('matter_business_transactions');
+
+        if ($request->parentId) $query->where('matterId', $request->parentId);
+
+        $query->addSelect( DB::raw("DATE_FORMAT( CONVERT_TZ(date,'+00:00','" . session('timeZone') . "'), '" . Utils::sqlDateFormat() . "') as date") ); 
+        $query->addSelect( DB::raw("DATE_FORMAT( CONVERT_TZ(date,'+00:00','" . session('timeZone') . "'), '" . Utils::sqlDateTimeFormat() . "') as dateTime") ); 
+        $query->addSelect('documentId');
+        $query->addSelect('documentNumber');
+        $query->addSelect('description');
+        $query->addSelect('documentType');
+        $query->addSelect('amount as rawAmount');
+        $query->addSelect(DB::raw( "FORMAT(amount, 2, 'en_" . session('countryCode')  . "') as amount") );
+
+
+
+        if ($request->dataFormat === "dataTables") {
+
+            $datatables = Datatables::of($query);
+
+            if ($keyword = $request->get('search')['value'] ) {
+
+                $datatables->filterColumn('date', function($query, $keyword) {
+                    $sql = "DATE_FORMAT( CONVERT_TZ(date,'+00:00','" . session('timeZone') . "'), '" . Utils::sqlDateFormat() . "') like ?";
+                    $query->whereRaw($sql, ["%{$keyword}%"]);
+                })
+                ->filterColumn('documentNumber', function($query, $keyword) {
+                    $sql = "CASE WHEN documentId < 10000 THEN LPAD(documentId,5,'0') ELSE documentId END like ?";
+                    $query->whereRaw($sql, ["%{$keyword}%"]);
+                });
+
+            }
+
+            return $datatables->make(true);
+            
+        } else  {
+
+            return DataTablesHelper::ReturnData($query, $request);
+
+        }
+
+    }     
+
+    public function getTrustTransactions(Request $request)
+    {
+        
+        $query = DB::table('matter_trust_transactions');
+
+        if ($request->parentId) $query->where('matterId', $request->parentId);
+
+        $query->addSelect( DB::raw("DATE_FORMAT( CONVERT_TZ(date,'+00:00','" . session('timeZone') . "'), '" . Utils::sqlDateFormat() . "') as date") ); 
+        $query->addSelect( DB::raw("DATE_FORMAT( CONVERT_TZ(date,'+00:00','" . session('timeZone') . "'), '" . Utils::sqlDateTimeFormat() . "') as dateTime") ); 
+        $query->addSelect('reference');
+        $query->addSelect('batchId');
+        $query->addSelect('receiptId');
+        $query->addSelect('invoiceId');
+        $query->addSelect('account');
+        // $query->addSelect('receiptNumber');
+        // $query->addSelect('reservedFlag');
+        // $query->addSelect('type');
+        
+        $query->addSelect('amount as amountRaw');
+        $query->addSelect('debit as rawDebit');
+        $query->addSelect(DB::raw( "FORMAT(debit, 2, 'en_" . session('countryCode')  . "') as debit") );
+
+        $query->addSelect('credit as rawCredit');
+        $query->addSelect(DB::raw( "FORMAT(credit, 2, 'en_" . session('countryCode')  . "') as credit") );
+
+        if ($request->dataFormat === "dataTables") {
+
+            $datatables = Datatables::of($query);
+
+            if ($keyword = $request->get('search')['value'] ) {
+
+                $datatables->filterColumn('date', function($query, $keyword) {
+                    $sql = "DATE_FORMAT( CONVERT_TZ(date,'+00:00','" . session('timeZone') . "'), '" . Utils::sqlDateFormat() . "') like ?";
+                    $query->whereRaw($sql, ["%{$keyword}%"]);
+                })
+                ->filterColumn('receiptNumber', function($query, $keyword) {
+                    $sql = "CASE WHEN receiptId < 10000 THEN LPAD(receiptId,5,'0') ELSE receiptId END like ?";
+                    $query->whereRaw($sql, ["%{$keyword}%"]);
+                })
+                ->filterColumn('debit', function($query, $keyword) {
+                    $sql = "amount like ?";
+                    $query->whereRaw($sql, ["%{$keyword}%"]);
+                })
+                ->filterColumn('credit', function($query, $keyword) {
+                    $sql = "amount like ?";
+                    $query->whereRaw($sql, ["%{$keyword}%"]);
+                });
+
+
+            }
+
+            //Utils::LogSqlQuery($query);
+
+            return $datatables->make(true);
+            
+        } else  {
+
+            return DataTablesHelper::ReturnData($query, $request);
+
+        }
+
+    }     
+
+
+
+    public function export(Request $request)
+    {
+
+        $newRequest = new Request;
+        $newRequest->dataFormat = 'export';
+        $query = $this->get($newRequest);
+
+        Utils::SetExcelMacros();
+
+        return Excel::download(new class($query) implements FromQuery, WithHeadings, WithEvents, ShouldAutoSize {
+        
+            public function __construct($query)
+            {
+                $this->query = $query;
+            }
+
+            public function headings(): array
+            {
+                return [
+                    "Id",
+                    "File Ref",
+                    "Description",
+                    "Client",
+                    "Instructed",
+                    "Owner",
+                    "Branch",
+                    "Document Set",
+                    "Matter Type",
+                    "Revenue Account",
+                    "Trust Bank Account",
+                    "transferAvailable",
+                    "Debits",
+                    "Credits",
+                    "Balance",
+                    "Trust Credits",
+                    "Reserved Trust Credits",
+                    "Unreserved Trust Credits",
+                    "Business Credits",
+                    "Unposted Fees",
+                    "Unposted Disbursements",
+                    "Unposted Tax",
+                    "Total Unposted",
+                    "Posted Fees",
+                    "Posted Disbursements",
+                    "Posted Tax",
+                    "Total Posted",
+                ];
+        
+            }
+
+            //https://docs.laravel-excel.com/3.1/exports/column-formatting.html
+            public function registerEvents(): array
+            {
+                return [
+
+                    BeforeExport::class => function(BeforeExport $event) {
+
+                        $event->writer->getProperties()->setTitle('Matters');
+                        $event->writer->getProperties()->setCreator(session('employeeName'));
+                        $event->writer->getProperties()->setCompany(session('companyName'));
+                    },
+
+                ];
+            }
+
+            public function query()
+            {
+                return $this->query;
+            }
+
+        },'matters.xlsx');
+
+    }
+
+    public function transfer(Request $request)
+    {
+
+        $returnData = new \stdClass();
+
+        $company = Company::first();
+
+        try {
+
+            return DB::transaction( function() use ($request, $company)
+            {
+
+                $batch = Batch::create([
+                    'date' => date("Y-m-d H:i:s"),
+                    'employeeId' => session('employeeId'),
+                    'type' => 'Trust Transfer',
+                    'reference' => 'Transfer from Trust',
+                ]);
+
+
+                // **********************************************
+                // Debit Business Bank Account (Type = Asset)
+                // **********************************************
+                AccountTransaction::create([
+                    'batchId' => $batch->id,
+                    'type' => 'Debit',
+                    'accountId' => $company->businessBankAccountId,
+                    'amount' => $request->amount,
+                ]);
+
+                // **********************************************
+                // Credit Trust Bank Account (Type = Liability)
+                // **********************************************
+                AccountTransaction::create([
+                    'batchId' => $batch->id,
+                    'type' => 'Credit',
+                    'accountId' => $company->trustBankAccountId,
+                    'amount' => $request->amount,
+                ]);
+
+                // ***********************************************
+                // Debit Matter Trust Account ( Type = Liability)
+                // ***********************************************
+                $mattertrustAccount = Account::where('matterId',$request->id)->where('parentId',$company->trustControlAccountId)->first();
+
+                if (!$mattertrustAccount) {
+                    throw new \Exception('Matter trust account not found');
+                }
+
+                AccountTransaction::create([
+                    'batchId' => $batch->id,
+                    'type' => 'Debit',
+                    'accountId' => $mattertrustAccount->id,
+                    'amount' => $request->amount,
+                ]);
+
+                // **********************************************
+                // Credit Debtors Control Account (Type = Asset)
+                // **********************************************
+                AccountTransaction::create([
+                    'batchId' => $batch->id,
+                    'type' => 'Credit',
+                    'accountId' => $company->debtorsControlAccountId,
+                    'amount' => $request->amount,
+                ]);
+            });
+        
+        } catch (\Illuminate\Database\QueryException $e) {
+
+            $returnData->errors = Utils::MySqlError($e);
+            return json_encode($returnData);            
+
+        } catch(\Exception $e)  {
+
+            $returnData->errors = $e->getMessage();
+            return json_encode($returnData);            
+        }
+
+    }     
+
+    public function getIncomeAccountId(Request $request)
+    {
+        return Matter::where('id', $request->id )->pluck('incomeAccountId');
+    }
+
+    public function getTrustBankAccountId(Request $request)
+    {
+        return Matter::where('id', $request->id )->pluck('trustBankAccountId');
+    }
+
+    public function getNextFileRef(Request $request) {
+
+        $returnData = new \stdClass();
+
+        try {
+
+            $result = DB::select( DB::raw( "call getNextFileRef('" . $request->code . "')") );
+
+            $returnData = $result;
+            return json_encode($returnData);            
+
+        } catch (\Illuminate\Database\QueryException $e) {
+
+            $returnData->error = Utils::MySqlError($e);
+            return json_encode($returnData);            
+
+        }
+
+
+    }
+    public function getNextFileRef_Deprecated(Request $request)
+    {
+
+        $result = DB::table('matters')
+        
+        ->leftJoin('matter_parties as clientParty', function ($join)  {
+            $join->on('matters.id', '=', 'clientParty.matterId')
+                ->where('clientParty.roleId', session('clientRoleId') )
+                ->where('clientParty.rank', 1);
+            })
+
+        ->leftJoin('parties as client', 'clientParty.partyId', '=', 'client.id')
+
+        ->where('client.id',$request->clientId)
+
+
+        ->orderBy('fileRef','desc')
+        ->count();
+        
+
+        $returnData = new \stdClass();
+        $returnData->counter = $result;
+        return json_encode($returnData); 
+
+
+    }
+
+    public function checkUniqueFileRef_Deprecated(Request $request)
+    {
+
+        $result = DB::table('matters')
+        ->where('fileRef',$request->fileRef)
+        ->count();
+
+        $returnData = new \stdClass();
+        $returnData->result = $result;
+        return json_encode($returnData);            
+
+    }
+
+    public function store(Request $request)
+    {
+
+        $returnData = new \stdClass();
+
+        $rules = [
+            'instructed' => new ValidDate,
+            'description' => 'bail|required',
+            'branchId' => 'bail|required',
+            'matterTypeId' => 'bail|required',
+            'documentSetId' => 'bail|required',
+            'incomeAccountId' => 'bail|required',
+            'trustBankAccountId' => 'bail|required',
+        ];
+
+        $rules['fileRef'] = isset($request->id) ? ['required',Rule::unique('matters')->ignore($request->id)] : ['required',Rule::unique('matters')];
+
+        $validator = Validator::make($request->all(), $rules); 
+        
+        if ($validator->fails()) {
+
+            $returnData->errors = $validator->errors();
+            return json_encode($returnData);            
+
+        }
+
+        // *******************************************
+        // Check if there is a Client Party Role
+        // *******************************************
+
+        $existingClientRole = true;
+        
+        // $clientRole = DB::table('party_roles')->where('code', 'CLI')->first();
+
+        // if ( !$clientRole ) {
+
+        //     $validator->errors()->add('noClient', 
+        //     "<p>The Client Party Role could not be found.</p>
+        //     <br>
+        //     <p>Please add a Party Role which has 'CLI' as its code or contact support for assistance.</p>"
+        //     );
+
+        //     $returnData->errors = $validator->errors();
+        //     return json_encode($returnData);            
+
+        // }
+
+        // *******************************************
+        // Check if there is a Owner Employee Role
+        // *******************************************
+
+        $existingOwnerRole = true;
+
+        // $ownerRole = DB::table('employee_roles')->where('code', 'OWNER')->first();
+
+        // if ( !$ownerRole ) {
+
+        //     $validator->errors()->add('noOwner', 
+        //     "<p>The Owner Employee Role could not be found.</p>
+        //     <br>
+        //     <p>Please add an Employee Role which has 'OWNER' as its code or contact support for assistance.</p>"
+        //     );
+
+        //     $returnData->errors = $validator->errors();
+        //     return json_encode($returnData);            
+
+        // }
+
+        // *******************************************
+        // Check if there is a Client 
+        // *******************************************
+
+        if ( isset($request->id)) {
+
+            $existingClientRole = false;
+
+            $query = MatterParty::where('matterId',$request->id)->where('roleId', session('clientRoleId'));
+            
+            $existingClientRole = $query->first();
+            
+        }
+
+        if ( !$existingClientRole ) {
+
+            $validator->errors()->add('noClient', 
+            '<p>This Matter does not have a Client assigned to it.</p>
+            <p>A Matter must have a Client as a Party to the Matter.</p>
+            <br>
+            <p>Please add a Party with the Role of Client.</p>'
+            );
+
+            $returnData->errors = $validator->errors();
+            return json_encode($returnData);            
+
+        }
+
+        // *******************************************
+        // Check if there is an Owner 
+        // *******************************************
+
+        if ( isset($request->id)) {
+
+            $existingOwnerRole = false;
+
+            $query = MatterEmployee::where('matterId',$request->id)->where('roleId',session('ownerRoleId'));
+            
+            $existingOwnerRole = $query->first();
+            
+        }
+
+        if ( !$existingOwnerRole ) {
+
+            $validator->errors()->add('noOwner', 
+            '<p>This Matter does not have an Owner assigned to it.</p>
+            <p>A Matter must have an Employee who "owns" the Matter.</p>
+            <br>
+            <p>Please add an Employee with the Role of Owner.</p>'
+            );
+
+            $returnData->errors = $validator->errors();
+            return json_encode($returnData);            
+
+        }
+
+
+        try {
+
+            // Inserting a new record
+            if ( !isset($request->id) ) {
+                
+                $matter = new Matter;
+
+            } else {
+
+                $matter = Matter::find($request->id);
+
+            }
+
+            $matter->fileRef = $request->fileRef;
+            $matter->description = $request->description;
+
+            $matter->instructed = Utils::convertDate($request->instructed);
+
+            $matter->matterTypeId = $request->matterTypeId;
+            $matter->documentSetId = $request->documentSetId;
+            $matter->branchId = $request->branchId;
+            $matter->incomeAccountId = $request->incomeAccountId;
+            $matter->trustBankAccountId = $request->trustBankAccountId;
+
+            $matter->save();
+
+            if ( !isset($request->id) ) $this->saveMatterEmployees($matter->id);
+
+            if ( !isset($request->id) ) {
+
+                $matterParty = new MatterParty;
+                $matterParty->partyId = $request->clientId;
+                $matterParty->matterId = $matter->id;
+                $matterParty->roleId = session('clientRoleId');
+                $matterParty->reference = '';
+                $matterParty->rank = 1;
+                $matterParty->save();
+
+            }
+
+            if ( isset($request->extraScreens) ) {
+
+                foreach(json_decode($request->extraScreens) as $extraScreen) {
+
+                    foreach($extraScreen->fields as $field) {
+
+                        MatterExtraScreen::updateOrCreate(
+                            ['matterId' => $matter->id, 'extraScreenId' => $extraScreen->id, 'name' => $field->name],
+                            ['value' => $field->value]
+                        );
+
+                    }
+
+                }
+
+            }
+
+            return json_encode($matter);
+    
+        } catch (\Illuminate\Database\QueryException $e) {
+
+            $validator->errors()->add('general', Utils::MySqlError($e));
+
+            $returnData->errors = $validator->errors();
+            return json_encode($returnData);            
+
+        }
+
+    }
+
+
+    protected function saveMatterEmployees($matterId)
+    {
+
+        if (session()->has('matterEmployees')) {
+
+            foreach(session('matterEmployees') as $employee) {
+
+                $matterEmployee = new MatterEmployee;
+                $matterEmployee->employeeId = $employee['employeeId'];
+                $matterEmployee->matterId = $matterId;
+                $matterEmployee->roleId = $employee['roleId'];
+                $matterEmployee->rank = $employee['rank'];
+                $matterEmployee->save();
+
+            }                
+
+            session()->forget('matterEmployees');
+
+        }
+
+    }
+    public function destroy(Request $request)
+    {
+
+        MatterExtraScreen::where('matterId', $request->id)->delete();
+
+        return DataTablesHelper::destroy($request, Matter::class);
+    }
+
+    public function getTablePosition(Request $request)
+    {
+        
+        return DB::table('matters')
+        ->where('fileRef', '<' , $request->column)
+        ->orderBy('fileRef')
+        ->count();
+        
+    }    
+
+    public function count(Request $request)
+    {
+        
+        $query = DB::table('matters');
+
+        if ($request->whereClause) {
+
+            $this->addClientJoin($query);
+
+            $query->whereRaw($request->whereClause);
+
+        }
+
+        return $query->count();
+        
+    }    
+    
+
+}

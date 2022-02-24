@@ -1,0 +1,256 @@
+<template>
+
+<div :id="id" :class="modal ? 'modal': ''">
+    
+    <div :class="modal ? 'modal-dialog modal-dialog-centered' : ''">
+
+        <div :class="modal ? 'modal-content steelblue-border':'card h-100 border-0'">
+
+            <div :class="modal ? '':'card-header'">
+
+                <div :class="modal ? 'modal-header steelblue' : 'd-flex justify-content-between'">
+
+                    <div class="page-title">
+                        <h3>
+                            <span v-if="record.readOnly ? true : false">{{record.description}} [View Only]</span>                            
+                            <span v-else-if="!editing">Document Set will be Added</span>
+                            <span v-else-if="viewing">Document Set</span>
+                            <span v-else>Document Set will be Changed</span>
+                        </h3>
+                        <i v-if="modal" title="Close this window" class="cp top-right fa fa-times-circle fa-2x text-white" data-dismiss="modal"></i>
+                    </div>
+
+                    <page-close-button v-if="!modal" @closeClicked="closeForm"/>
+
+                </div>
+
+            </div>
+
+            <div class="card-body form-tab-body overflow-auto p-3" :style="modal ? 'min-height:45vh' : ''">
+
+                <form-tabs :tabs="tabs"/>
+
+                <div v-show="activeTab === 'General'" class="form-tab-content">
+                
+                    <div v-if="editing" class="form-group row">
+                        <text-input _class="col-md-4" v-model="record.code" name="code" label="Code" :error="errors.code"
+                        :popOverContainer="'#' + this.$parent.id"
+                        pop-over="<h4>Code</h4>
+                            <p>The code is used to uniquely identify this Document Set.</p>
+                            <p>This can be used in Document Assembly, for example, to construct sections of a Document based on the set of Documents used by a Matter.</p>"
+                        />
+                    </div>
+
+                    <div class="form-group row">
+                        <text-input :_class="modal && !editing ? 'col-md-12' : 'col-md-8'" v-model="record.description" name="description" label="Description" :error="errors.description"/>
+                    </div>
+
+                </div>
+
+                <div v-show="activeTab === 'Templates'" class="form-tab-content">
+
+                    <document-set-templates-table 
+                        :ref="_uid + '-document-set-templates-table'" 
+                        :tableId="_uid + '-document-set-templates-table'"
+                        :formRef="_uid + '-document-set-templates-form'" 
+                        :lazyLoadFlag="true"
+                    />
+
+                </div>
+
+            </div>
+
+            <form-buttons :editing="editing" :viewing="viewing" :readOnly="record.readOnly ? true: false" record="Document Set" @ok-clicked="okClicked" @cancel-clicked="closeForm" @delete-clicked="deleteClicked"/>
+
+        </div>
+    </div>
+
+    <document-set-templates-form 
+        :ref="_uid + '-document-set-templates-form'" 
+        :id="_uid + '-document-set-templates-form'"
+        :parentTableRef="_uid + '-document-set-templates-table'"
+        :modal="true"
+    />
+
+
+</div>
+
+</template>    
+
+<script>
+
+import FormTemplate from "@pages/form-template";
+import modalTemplate from "@components/modals/modal-template";
+
+export default {
+    
+    mixins: [FormTemplate, modalTemplate],
+
+    components: {
+        DocumentSetTemplatesTable: () => import("./DocumentSetTemplatesTable"),
+        DocumentSetTemplatesForm: () => import("./DocumentSetTemplatesForm"),
+    },
+
+    props: {
+        resource: {type: String, default: 'Document Sets' },
+    },
+
+    watch: {
+
+        activeTab(newValue) {
+
+            if ( newValue === "Templates" ) {
+                setTimeout(this.templatesTable.table.columns.adjust);
+            }
+        },
+    },
+
+    data() {
+        return {
+            templatesTable: null,
+            activeTab: 'General',
+            tabs: [
+                {
+                    pageName: "General",
+                    title: "Details",
+                    iconClass: '',
+                    visible: true,
+                    active: true,
+                },
+                {
+                    pageName: "Templates",
+                    title: "Templates",
+                    iconClass: '',
+                    visible: true,
+                    active: false,
+                },
+            ],
+        };
+    },
+
+
+    methods: {
+
+        newRecordButtonClicked() {
+
+            this.$refs[this._uid + '-document-set-templates-form'].insertClicked( this.record.id );
+
+        },
+
+        editRecord(id) {
+
+            this.tabs[1].visible = true;
+
+            axios.post('/document_sets/get',{id: id})
+
+            .then(response => {
+
+                this.record = response.data[0];
+
+                this.initFormData();
+
+                setTimeout(() => {
+
+                    this.templatesTable = this.$refs[this._uid + '-document-set-templates-table'];
+
+                    //Set the table Height manually
+                    let $thisForm = $('#' + this.id);
+                    let $formBody = $thisForm.find('.form-tab-body');
+
+                    this.templatesTable.tableOptions = {
+                        
+                        scrollY: (Math.round( $formBody.outerHeight() ) - 180)  + 'px',
+
+                    };
+
+                    this.templatesTable.documentSetId = id;
+                    this.templatesTable.subTitle = this.record.description;
+                    
+                    this.templatesTable.loadDataTable();
+                });
+
+            });
+
+        },
+
+        initNewRecord() {
+
+            this.activeTab = 'General';
+            this.tabs[0].active = true;
+            
+            this.tabs[1].visible = false;
+            this.tabs[1].active = false;
+
+            this.record = {
+                code: null,
+                description: null,
+            };
+
+            this.initFormData();
+
+            setTimeout(() => $('#' + this.id + ' textarea[name="description"]').focus() );
+
+        },
+
+        initFormData() {
+                
+            this.displayForm();
+
+            setTimeout(() => $('#' + this.id + ' input[name="description"]').focus() );
+
+        },
+
+
+        selectRecord(id) {
+
+            //if ( typeof this.$parent._inactive !== 'boolean' || this.$parent._inactive !== false ) return;
+
+            axios.post('/document_sets/get',{id: id}).then(response => {
+
+                if ( typeof this.$parent.documentSetSelected === 'function') this.$parent.documentSetSelected(response.data[0]);
+
+            });
+
+        },
+
+
+        okClicked() {
+
+            axios.post('/document_sets/store', this.record)
+            
+            .then(response => {
+
+                if (response.data.errors) {
+
+                    if (response.data.errors.general) { showError( 'Error', response.data.errors.general[0]);} else { this.errors = response.data.errors; }
+
+                } else {
+
+                    this.errors = {};
+
+                    this.highlightTableRow(response.data.id, response.data.code);
+
+                }
+
+            }).catch(error => { showError('Error saving ' + this.table.singular, error); });
+
+        },
+
+        highlightTableRow( id, code ) {
+
+            axios.post('/document_sets/getTablePosition', { code: code })
+
+            .then(response => {
+
+                this.table.jumpToRow(id, response.data);
+                
+                this.closeForm();
+
+            });
+
+        },     
+
+    },
+}
+
+</script>

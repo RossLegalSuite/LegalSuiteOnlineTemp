@@ -1,0 +1,91 @@
+<template>
+
+    <div :class="_class">
+
+        <label v-if="label">{{label}}</label>
+
+        <pop-over v-show="popOver" :content="popOver"/>
+
+        <span v-if="clearIcon">
+            <i class="fa fa-times-circle cp text-danger ml-1" style="font-size: large" title="Clear the existing filter" @click="clearIconClicked"></i>
+        </span>
+
+        <select class="form-control" 
+        :id="id" 
+        name="option" 
+        model="option" 
+        title="Select an option"/> 
+    </div>
+</template>
+
+<script>
+export default {
+
+    props: {
+        id: String,
+        _class: {
+            type: String,
+            default: 'col-md-6',
+        },
+        popOver: {
+            type: String,
+            default:'',
+        },
+        label: {
+            type: String,
+            default: '',
+        },
+        parentRecord: {
+            type: String,
+            default:'record',
+        },
+
+    },
+
+    data() {
+        return {
+            clearIconCallback: 'clearDropDownFilter',
+            clearIcon: false,
+            selectedOption: null,
+            options: [],
+        }  
+    },
+
+    methods: {
+
+        clearIconClicked() {
+            if ( typeof this.$parent[this.clearIconCallback] === 'function') this.$parent[this.clearIconCallback]();
+        },
+
+
+        loadComponent() {
+
+            let _this = this;
+
+            var $select = $('#' + this.id);
+
+            $select.empty();
+
+            $.each(this.options, function(index, value) {
+                $select.append('<option value="' + value + '">' + value + '</option>');
+            });
+
+            $select.selectpicker();
+
+            $select.selectpicker('refresh');
+            
+            $select.selectpicker('val',  this.selectedOption);
+
+            $select.off('changed.bs.select').on('changed.bs.select', function () {
+
+                //_this.$parent.record.value = $(this).val();
+                _this.$parent[_this.parentRecord].value = $(this).val();
+
+            });
+
+
+        },
+
+    },
+};
+</script>

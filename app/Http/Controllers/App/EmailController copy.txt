@@ -1,0 +1,764 @@
+<?php
+
+namespace App\Http\Controllers\App;
+
+use Illuminate\Http\Request;
+use Mail;
+use App\Mail\EmailMessage;
+use Laminas\Mail\Storage\Imap;
+use Laminas\Mail\Storage\Pop3;
+use RecursiveIteratorIterator;
+use Laminas\Mail\Exception;
+
+class EmailController extends Controller {
+
+    private function getConnection($request)
+    {
+
+        // To Do!!!!!!
+        //Some servers might use self-signed certificates, in which you would include “novalidate-cert”.
+        //$imap = imap_open("{localhost:993/imap/ssl/novalidate-cert}", "username", "password");
+
+        $hostname = '{' . $request->incomingServer . ':' . $request->incomingPort . '/imap/' . $request->incomingEncryption. '}' . $request->folder;
+            
+        //OP_READONLY flag prevent imap_check from flagging new/recent messages as checked
+        return imap_open($hostname, $request->userName, $request->password, OP_READONLY);
+
+    }
+
+    public function testEmail(Request $request)
+    {
+        // To use Gmail
+        //https://myaccount.google.com/security
+        // Less secure app Access must be on
+
+        //https://hotexamples.com/examples/-/-/imap_errors/php-imap_errors-function-examples.html
+        //IMAP always has an INBOX folder
+
+        //https://www.sitepoint.com/exploring-phps-imap-library-1/
+        //Some servers might use self-signed certificates, in which you would include “novalidate-cert”.
+        //$imap = imap_open("{localhost:993/imap/ssl/novalidate-cert}", "username", "password");
+
+        $returnData = new \stdClass();
+
+        try {
+
+            //********** IMAP WAY DOESN'T SEEM TO WORK THAT WELL ******/
+            $mail = new Imap([
+                'host'     => $request->incomingServer,
+                'port'     => $request->incomingPort,
+                'user'     => $request->userName,
+                'password' => $request->password,
+                'ssl'      => isset($request->incomingEncryption) ? $request->incomingEncryption : null,
+            ]);
+
+            //********** IMAP WAY DOESN'T SEEM TO WORK THAT WELL ******/
+            // https://www.php.net/manual/en/function.imap-open.php
+            // OP_HALFOPEN flag - Open a connection but don't open a mailbox
+            // OP_READONLY flag - Prevent imap_check from flagging new/recent messages as checked
+
+            // $hostname = '{' . $request->incomingServer . ':' . $request->incomingPort . '/imap/' . $request->incomingEncryption. '}';
+            // $username = $request->userName;
+            // $password = $request->password;
+
+            //$imap_connection = imap_open($hostname, $username, $password, OP_HALFOPEN) or die('Cannot connect to Email Server: ' . imap_last_error());
+            //$mailbox = imap_check($imap_connection);
+
+            //imap_close($imap_connection);
+
+            //$returnData->driver = $mailbox-driver;
+            //$returnData->hostname = $hostname;
+
+            //return json_encode($returnData);
+
+        } 
+        
+        catch(\Exception $e)  {
+
+            $returnData->error = "<p>An error was encountered trying to access the email server.</p>
+            <p>Host: " . $request->incomingServer . ':' . $request->incomingPort . ' (Encryption: ' . $request->incomingEncryption . ")</p>
+            <p>" . $e->getMessage() . "</p>";
+
+            return json_encode($returnData);
+
+        }
+
+        return json_encode($returnData);
+    }
+
+    //***************************************************
+
+    public function getMessageNew(Request $request)
+    {
+
+        $returnData = new \stdClass();
+
+        try {
+
+            $imap = $this->getConnection($request);
+
+            $header = imap_header($imap, $request->id);
+
+            //logger('$header',[$header]);
+
+            $fromInfo = $header->from[0];
+            $replyInfo = $header->reply_to[0];
+        
+            $returnData->fromAddr = (isset($fromInfo->mailbox) && isset($fromInfo->host))
+                ? $fromInfo->mailbox . "@" . $fromInfo->host : "";
+
+            //$returnData->fromName = (isset($fromInfo->personal)) ? $fromInfo->personal : "";
+
+            $returnData->replyAddr = (isset($replyInfo->mailbox) && isset($replyInfo->host))
+                ? $replyInfo->mailbox . "@" . $replyInfo->host : "";
+            $returnData->replyName = (isset($replyTo->personal))
+                ? $replyto->personal : "";
+            $returnData->subject = (isset($header->subject))
+                ? $header->subject : "";
+            $returnData->udate = (isset($header->udate))
+                ? $header->udate : "";
+            $returnData->date = (isset($header->date))
+                ? $header->date : "";
+        
+            $uid = imap_uid($imap, $request->id);
+
+
+            $returnData->body = '';
+
+            $body = $this->getBody($uid, $imap);
+
+            //logger('1 $body',[$body]);
+
+            $canDecodeBody = json_encode(quoted_printable_decode($body));
+
+            logger('$canDecodeBody',[$canDecodeBody]);
+
+            if ($canDecodeBody) {
+
+                $returnData->body = $body;
+
+            } else {
+
+                $plainBody = $this->get_part($imap, $uid, "TEXT/PLAIN");
+
+                //logger('$plainBody',[$plainBody]);
+
+                $canDecodePlainBody = json_encode($plainBody);
+
+                logger('$canDecodePlainBody',[$canDecodePlainBody]);
+
+                if ($canDecodePlainBody) {
+    
+                    $returnData->body = $plainBody;
+                    
+                } else {
+                    
+                    $returnData->body = 'Error decoding body';
+                    
+    
+                }
+
+
+            }
+
+            logger('$returnData->body',[$returnData->body]);
+
+            //$bodyDecoded = iconv_mime_decode($body, 0, 'UTF-8');
+
+            //logger('2 $bodyDecoded',[$bodyDecoded]);
+
+            //logger('3 json_encode($bodyDecoded)',[json_encode($bodyDecoded)]);
+
+            //$returnData->body = $bodyDecoded ? $bodyDecoded : 'Error reading email body';
+        } 
+
+        catch(\Exception $e)  {
+
+            $returnData->error = "<p>An error was encountered trying to access the email server.</p>
+            <p>Host: " . $request->incomingServer . ':' . $request->incomingPort . ' (Encryption: ' . $request->incomingEncryption . ")</p>
+            <p>" . $e->getMessage() . "</p>";
+
+            return json_encode($returnData);
+
+        }
+
+        return json_encode($returnData);
+
+    }
+
+
+
+    //https://www.sitepoint.com/exploring-phps-imap-library-1/
+
+    private function getBody($uid, $imap) {
+
+        $body = $this->get_part($imap, $uid, "TEXT/HTML");
+
+        // if HTML body is empty, try getting text body
+        if ($body == "") {
+            $body = $this->get_part($imap, $uid, "TEXT/PLAIN");
+        }
+
+        return $body;
+    }
+    
+    private function get_part($imap, $uid, $mimetype, $structure = false, $partNumber = false) {
+
+        if (!$structure) {
+            $structure = imap_fetchstructure($imap, $uid, FT_UID);
+        }
+        if ($structure) {
+
+            if ($mimetype == $this->get_mime_type($structure)) {
+
+                if (!$partNumber) {
+                    $partNumber = 1;
+                }
+
+                $text = imap_fetchbody($imap, $uid, $partNumber, FT_UID);
+
+                logger('$structure->encoding',[$structure->encoding]);
+
+                switch ($structure->encoding) {
+                    case 3: return imap_base64($text);
+                    case 4: return imap_qprint($text);
+                    default: return $text;
+                }
+            }
+    
+            // multipart 
+            if ($structure->type == 1) {
+
+                foreach ($structure->parts as $index => $subStruct) {
+
+                    $prefix = "";
+
+                    if ($partNumber) {
+                        $prefix = $partNumber . ".";
+                    }
+
+                    $data = $this->get_part($imap, $uid, $mimetype, $subStruct, $prefix . ($index + 1));
+
+                    if ($data) {
+                        return $data;
+                    }
+
+                }
+
+            }
+        }
+        return false;
+    }
+    
+    private function get_mime_type($structure) {
+        $primaryMimetype = array("TEXT", "MULTIPART", "MESSAGE", "APPLICATION", "AUDIO", "IMAGE", "VIDEO", "OTHER");
+    
+        if ($structure->subtype) {
+            return $primaryMimetype[(int)$structure->type] . "/" . $structure->subtype;
+        }
+        return "TEXT/PLAIN";
+    }
+
+
+
+    //***************************************************
+    
+
+
+    public function getMessage(Request $request)
+    {
+
+        $returnData = new \stdClass();
+
+        try {
+            $mail = new Imap([
+                'host'     => $request->incomingServer,
+                'port'     => $request->incomingPort,
+                'user'     => $request->userName,
+                'password' => $request->password,
+                'ssl'      => isset($request->incomingEncryption) ? $request->incomingEncryption : null,
+            ]);
+
+            $mail->selectFolder($request->folder);
+
+            $message = $mail->getMessage($request->id);
+
+            $returnData->date = $message->date;
+            $returnData->from = $message->from;
+            $returnData->to = $message->to;
+            $returnData->subject = $message->subject;
+
+            $foundHtmlContents = null;
+            $foundPlainContents = null;
+
+            // foreach (new RecursiveIteratorIterator($message) as $part) {
+            //     try {
+            //         if (strtok($part->contentType, ';') == 'text/plain') {
+            //             $foundPlainContents = $part;
+            //             break;
+            //         }
+            //     } catch (Exception $e) {
+            //         // ignore
+            //     }
+            // }
+
+            $contentTransferEncoding = '';
+
+            foreach (new RecursiveIteratorIterator($message) as $part) {
+                try {
+                    if (strtok($part->contentType, ';') == 'text/html') {
+                        $contentTransferEncoding = $part->contentTransferEncoding;
+                        $foundHtmlContents = $part;
+                        break;
+                    }
+                } catch (Exception $e) {
+                    // ignore
+                }
+            }
+
+
+            //$returnData->plainContents = $foundPlainContents ? $foundPlainContents->getContent() : '';
+            $returnData->htmlContents = $foundHtmlContents ? $foundHtmlContents->getContent() : '';
+
+            logger('$contentTransferEncoding',[$contentTransferEncoding]);
+
+
+            if ( $contentTransferEncoding == 'base64' ) {
+                // Some emails are base64 encoded
+                $base64Converion = imap_base64($returnData->htmlContents);
+
+                if ($base64Converion) {
+
+                    $returnData->htmlContents = $base64Converion;
+                    
+                } else {
+                    
+                    $returnData->htmlContents = 'base64Converion error';
+                }
+
+            } else if ( $contentTransferEncoding == 'quoted-printable' ) {
+
+                
+                $quotedPrintableConverionCustom = $this->decode_qprint($returnData->htmlContents);
+                $quotedPrintableConverion = imap_qprint($quotedPrintableConverionCustom);
+                //$quotedPrintableConverion = quoted_printable_decode($quotedPrintableConverionCustom);
+
+
+                if ($quotedPrintableConverion) {
+
+                    $returnData->htmlContents = $quotedPrintableConverion;
+
+                } else {
+                    
+                    $returnData->htmlContents = 'quotedPrintable error';
+
+                }
+
+            }
+
+        } 
+        
+        catch(\Exception $e)  {
+
+            $returnData->error = "<p>An error was encountered trying to access the email server.</p>
+            <p>Host: " . $request->incomingServer . ':' . $request->incomingPort . ' (Encryption: ' . $request->incomingEncryption . ")</p>
+            <p>" . $e->getMessage() . "</p>";
+
+            return json_encode($returnData);
+
+        }
+
+        return json_encode($returnData);
+    }
+
+
+    private function decode_qprint($str) {
+        $str = preg_replace("/\=([A-F][A-F0-9])/","%$1",$str);
+        $str = urldecode($str);
+        $str = utf8_encode($str);
+        return $str;
+    }
+
+    public function readEmail(Request $request)
+    {
+
+        $returnData = new \stdClass();
+        
+        try {
+            
+            //IMAP SEEMS TO BE A LOT QUICKER THAN LAMINAS
+            //https://davidwalsh.name/gmail-php-imap
+            
+            $hostname = '{' . $request->incomingServer . ':' . $request->incomingPort . '/imap/' . $request->incomingEncryption. '}' . $request->folder;
+            
+            //OP_READONLY flag prevent imap_check from flagging new/recent messages as checked
+            $imap_connection = imap_open($hostname, $request->userName, $request->password, OP_READONLY);// or die('Cannot connect to Gmail: ' . imap_last_error());
+            
+            $emailMessages = imap_search($imap_connection,'ALL');
+
+            if($emailMessages) {
+
+                $emails = array();
+                
+                /* Put the newest emails on top */
+                rsort($emailMessages);
+                
+                foreach($emailMessages as $email_number) {
+
+                    $overview = imap_fetch_overview($imap_connection, $email_number, 0);
+                    //$message = imap_fetchbody($imap_connection, $email_number, 2);
+
+                    array_push($emails,$overview);
+
+                }
+
+                imap_close($imap_connection);
+
+                $returnData->data = $emails;
+
+            }
+
+
+        }
+        catch(\Exception $e)  {
+
+            $returnData->error = "<p>An error was encountered trying to read email</p><p>" . $e->getMessage() . "</p>";
+
+            return json_encode($returnData);
+
+        }
+
+        return json_encode($returnData);
+    }
+
+    //https://docs.laminas.dev/laminas-mail/read/
+    public function getFolders(Request $request)
+    {
+
+        $returnData = new \stdClass();
+
+        try {
+
+            $mail = new Imap([
+                'host'     => $request->incomingServer,
+                'port'     => $request->incomingPort,
+                'user'     => $request->userName,
+                'password' => $request->password,
+                'ssl'      => isset($request->incomingEncryption) ? $request->incomingEncryption : null,
+            ]);
+
+            $folderNames = array();
+
+            $folders = new RecursiveIteratorIterator(
+                $mail->getFolders(),
+                RecursiveIteratorIterator::SELF_FIRST
+            );
+
+            foreach ($folders as $localName => $folder) {
+
+                if ($folder->isSelectable()) {
+
+                    array_push($folderNames,$folder->getGlobalName());
+
+                }
+            }
+
+            $returnData->data = $folderNames;
+
+            return json_encode($returnData);
+
+
+        } 
+        
+        catch(\Exception $e)  {
+
+            $returnData->error = "<p>An error was encountered trying to get email folders</p><p>" . $e->getMessage() . "</p>";
+
+            return json_encode($returnData);
+
+        }
+
+        return json_encode($returnData);
+
+
+    }
+
+    public function readEmailLaminas(Request $request)
+    {
+
+        $returnData = new \stdClass();
+
+        try {
+
+            if ( $request->incomingServerProtocol === 'Pop3') {
+
+                $mail = new Pop3([
+                    'host'     => $request->incomingServerHost,
+                    'port'     => $request->incomingServerPort,
+                    'user'     => $request->incomingServerUserName,
+                    'password' => $request->incomingServerPassword,
+                    'ssl'      => isset($request->incomingServerEncryption) ? $request->incomingServerEncryption : null,
+                ]);
+
+            } else if ( $request->incomingServerProtocol === 'Imap') {
+
+                $mail = new Imap([
+                    'host'     => $request->incomingServerHost,
+                    'port'     => $request->incomingServerPort,
+                    'user'     => $request->incomingServerUserName,
+                    'password' => $request->incomingServerPassword,
+                    'ssl'      => isset($request->incomingServerEncryption) ? $request->incomingServerEncryption : null,
+                ]);
+
+                    
+            } else {
+                    
+                $returnData->error = "<p>An error was encountered trying to read email</p>
+                <p>Invalid or unknown Server Protocol</p>
+                <p>It must be Pop3 or IMap</p>";
+
+                return json_encode($returnData);
+
+            }
+
+            if ( isset($request->getFolders) ) {
+
+                $folderNames = array();
+
+                $folders = new RecursiveIteratorIterator(
+                    $mail->getFolders(),
+                    RecursiveIteratorIterator::SELF_FIRST
+                );
+
+                foreach ($folders as $localName => $folder) {
+
+                    if ($folder->isSelectable()) {
+
+                        array_push($folderNames,$folder->getGlobalName());
+
+                        //logger('localName',[$folder->getGlobalName(), $folder->getLocalName(), $localName]);
+                
+                    }
+                }
+
+                $returnData->data = $folderNames;
+
+
+
+            } else {
+
+                $emails = array();
+                $email = new \stdClass();
+
+                $mail->selectFolder('INBOX');
+
+                foreach ($mail as $messageNum => $message) {
+
+                    $foundHtmlContents = null;
+                    $foundPlainContents = null;
+
+                    // foreach (new RecursiveIteratorIterator($message) as $part) {
+                    //     try {
+                    //         if (strtok($part->contentType, ';') == 'text/plain') {
+                    //             $foundPlainContents = $part;
+                    //             break;
+                    //         }
+                    //     } catch (Exception $e) {
+                    //         // ignore
+                    //     }
+                    // }
+
+                    // foreach (new RecursiveIteratorIterator($message) as $part) {
+                    //     try {
+                    //         if (strtok($part->contentType, ';') == 'text/html') {
+                    //             $foundHtmlContents = $part;
+                    //             break;
+                    //         }
+                    //     } catch (Exception $e) {
+                    //         // ignore
+                    //     }
+                    // }
+
+
+                    $emailPlainContents = $foundPlainContents ? $foundPlainContents->getContent() : '';
+                    $emailHtmlContents = $foundHtmlContents ? $foundHtmlContents->getContent() : '';
+
+                    // logger('Email message',[
+                    //     date("Y-m-d H:i:s"),
+                    //     $messageNum,
+                    //     $message->date,
+                    //     $message->from,
+                    //     $message->to,
+                    //     $message->subject,
+                    //     $emailPlainContents
+                    // ]);
+
+
+
+                    $email->messageNumber = $messageNum;
+                    $email->date = $message->date;
+                    $email->from = $message->from;
+                    $email->to = $message->to;
+                    $email->subject = $message->subject;
+                    //$email->plainContents = $emailPlainContents;
+                    //$email->htmlContents = $emailHtmlContents;
+
+
+                    array_push($emails,$email);
+
+
+                }   
+
+                logger('Got all emails',[date("Y-m-d H:i:s")]);
+
+                /* Put the newest emails on top */
+                rsort($emails);
+
+                $returnData->data = $emails;
+
+            }
+
+            return json_encode($returnData);
+
+
+        } 
+        
+        catch(\Exception $e)  {
+
+            $returnData->error = "<p>An error was encountered trying to read email</p><p>" . $e->getMessage() . "</p>";
+
+            return json_encode($returnData);
+
+        }
+
+        return json_encode($returnData);
+        
+    }    
+
+    public function sendEmail(Request $request)
+    {
+
+        //https://laravel-news.com/allowing-users-to-send-email-with-their-own-smtp-settings-in-laravel
+
+        $returnData = new \stdClass();
+
+        try {
+
+            $configuration = [
+                'smtp_host'    => $request->smtpServer,
+                'smtp_port'    => $request->smtpPort,
+                'smtp_username'  => $request->smtpUserName,
+                'smtp_password'  => $request->smtpPassword,
+                'smtp_encryption'  => $request->smtpEncryption,
+
+                'from_email'    => $request->email,
+                'from_name'    => $request->name,
+            ];
+
+            // $configuration = [
+            //     'smtp_host'    => 'smtp.bittex.co.za',
+            //     'smtp_port'    => '587',
+            //     'smtp_username'  => 'ettorney@bittex.co.za',
+            //     'smtp_password'  => 'Bacon1024!!',
+            //     'smtp_encryption'  => 'tls',
+
+            //     'from_email'    => 'admin@acme.co.za',
+            //     'from_name'    => 'admin',
+            // ];
+
+            //logger('$configuration',$configuration);
+
+
+
+
+            $mailer = app()->makeWith('user.mailer', $configuration);
+
+            $mailer->send(new EmailMessage($request->to, $request->cc, $request->bcc, $request->subject, $request->body, $request->attachments));
+
+            //Mail::send(new EmailMessage($request->to, $request->cc, $request->bcc, $request->subject, $request->body, $request->attachments));
+
+        }
+
+        catch ( JWTException $exception ){
+
+
+            $returnData->error = "<p>An error was encountered sending the email</p><p>" . $exception->getMessage() . "</p>";
+
+            return json_encode($returnData);
+
+        }
+
+        if ( count(Mail::failures()) > 0 ) {
+            
+            $returnData->error = "An error was encountered sending the email to " + implode(" ",Mail::failures() );
+
+        }
+
+        return json_encode($returnData);
+        
+    }    
+
+    public function getSmtpDetails(Request $request)
+    {
+
+        $returnData = new \stdClass();
+        
+        $company = \App\Models\Company::firstOrFail();
+        $employee = \App\Models\Employee::findOrFail( session('employeeId') );
+
+
+        $returnData->smtpServer = $company->smtpServer;
+        $returnData->smtpPort = $company->smtpPort;
+        $returnData->smtpEncryption = $company->smtpEncryption;
+        $returnData->smtpAuthentication = $company->smtpAuthentication;
+
+        $returnData->incomingServer = $company->incomingServer;
+        $returnData->incomingPort = $company->incomingPort;
+        $returnData->incomingEncryption = $company->incomingEncryption;
+
+
+        $returnData->smtpUserName = $employee->smtpUserName;
+        $returnData->smtpPassword = $employee->smtpPassword;
+        $returnData->email = $employee->email;
+        $returnData->name = $employee->name;
+
+        return json_encode($returnData);
+
+    }
+
+
+
+    public function sendEmail_Old(Request $request)
+    {
+
+        $returnData = new \stdClass();
+
+        try {
+
+            Mail::send(new EmailMessage($request->to, $request->cc, $request->bcc, $request->subject, $request->body, $request->attachments));
+
+        }
+
+        catch ( JWTException $exception ){
+
+
+            $returnData->error = "<p>An error was encountered sending the email</p><p>" . $exception->getMessage() . "</p>";
+
+            return json_encode($returnData);
+
+        }
+
+        if ( count(Mail::failures()) > 0 ) {
+            
+            $returnData->error = "An error was encountered sending the email to " + implode(" ",Mail::failures() );
+
+        }
+
+        return json_encode($returnData);
+        
+    }    
+
+
+
+
+}

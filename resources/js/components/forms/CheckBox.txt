@@ -1,0 +1,93 @@
+<template>
+
+    <!--Note - Use Bootstrap Vue (https://bootstrap-vue.js.org/docs/components/form-checkbox) -->
+    <div :class="_class">
+
+        <div v-if="label !== ''" class="mb-2">
+            <label class="control-label">{{label}}</label>
+            <pop-over v-show="popOver" :content="popOver"/>
+        </div>
+
+
+        <div class="form-check-inline">
+            <label class="form-check-label" :title="title">
+                <input type="checkbox" class="form-check-input" :checked="checked" v-model="checked"  :name="name">{{text}}
+            </label>
+        </div>   
+
+        <!-- :value="value" -->
+
+
+
+        <div v-show="error[0]" v-html="error[0]" class="invalid-feedback"></div>
+
+    </div>                                        
+
+</template>
+
+<script>
+
+//See: https://bangjelkoski.com/blog/building-a-controlled-vue-input-component
+
+export default {
+  props: {
+        error: {
+            type: Array,
+            default: function () {
+                return [null]
+            },
+        },
+
+        name: String,
+
+        text: String,
+
+        // record: Object,
+
+        // column: String,
+
+        // value: {
+        //     type: String,
+        //     default:'',
+        // },
+
+        title: {
+            type: String,
+            default:'',
+        },
+
+        popOver: {
+            type: String,
+            default:'',
+        },
+
+       label: {
+            type: String,
+            default: '',
+        },
+        _class: {
+            type: String,
+            default: 'col-md-12',
+        },
+
+  },
+
+  data() {
+      return {
+          checked: null
+      }
+  },
+
+  watch: {
+
+      checked(newValue, oldValue) {
+
+          console.log('Watching checked',oldValue,newValue);
+          
+      }
+  },
+
+
+
+}  
+</script>

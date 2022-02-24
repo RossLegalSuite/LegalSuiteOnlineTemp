@@ -1,0 +1,189 @@
+<template>
+<section class="h-100">
+    <div class="card h-100 border-0">
+        <div class="card-header statements-bg">
+            <div class="d-flex justify-content-between">
+                <h3><i class="fa fa-server mr-2"></i>Statements</h3>
+                <page-close-button @closeClicked="closeClicked"/>
+            </div>
+        </div>
+
+        <div class="card-body overflow-auto p-3">
+
+            <statement-table 
+                tableId="statements-table" 
+                :lazyLoadFlag="true" 
+                formRef="statement-edit-party-form"
+                ref="statement-table" 
+                @tableMounted="tableMounted"
+            />
+            
+        </div>
+    </div>
+
+    <edit-party 
+        id="statements-table-edit-party-modal"
+        ref="statement-edit-party-form"
+    />
+
+        <!-- :table="$refs['statement-table']" -->
+
+
+</section>
+</template>     
+
+<script>
+
+import { mapGetters } from 'vuex';
+import { mapMutations } from 'vuex';
+import leftTemplate from "../left-template";
+
+
+export default {
+
+    extends: leftTemplate,
+
+    components: {
+        StatementTable: () => import("./StatementTable"),
+        EditParty: () => import("../parties/EditParty"),
+    },
+
+    data() {
+        return {
+            rightPage: null,
+            tableMounted: false,
+            formMounted: false,
+            componentsMounted: 0,
+            pageName: "Statements",
+            rowsSelected: false,
+            selectedRows: [],
+            selectedRowIds: [],
+        };
+    },
+
+    computed: {
+        ...mapGetters(['leftTabs']),
+    },
+
+
+    mounted() {
+
+        let thisTab = this.leftTabs.filter(tab => tab.pageName === this.pageName);
+
+        if (thisTab.length)  this.displayLeftTab(thisTab[0]);
+
+    },
+
+  
+
+    watch: {
+
+        // Doing it this way so that we can link the form to the table by $ref
+        componentsMounted: function (newValue) {
+
+            if (newValue > 1) {
+                this.$refs['statement-edit-party-form'].tableComponent = this.table;
+            }
+
+        },
+
+        tableMounted: function () {
+
+            this.componentsMounted += 1;
+
+            this.initializeTable();
+        },
+
+        formMounted: function () {
+
+            this.componentsMounted += 1;
+            
+        },
+
+        selectedRows: function () {
+
+            this.rowsSelected = this.selectedRows.length;
+
+        },    
+    },
+
+    methods: {
+
+        ...mapMutations(['displayLeftTab','hideLeftTab']),
+        
+        initializeTable() {
+
+            this.table.tagTableFlag = true;
+            this.table.selectTableFlag = true;
+
+            this.table.tableOptions = {
+
+                select: {
+                    style: 'multi',
+                    selector: 'td:first-child'
+                },
+
+                initComplete: (settings, tableId, api) => {
+
+                    api.table().off('user-select').on('user-select', (e, dt, type, cell, originalEvent) => {
+
+                        let rowId = $(originalEvent.target).parent().attr('id');
+
+                        if (this.selectedRows.includes(rowId)) {
+
+                            for (var i = 0; i < this.selectedRows.length; i++) {
+                                if (this.selectedRows[i] === rowId) {
+                                    this.selectedRows.splice(i, 1);
+                                }
+                            }
+
+                            for (var i = 0; i < this.selectedRowIds.length; i++) {
+                                if (this.selectedRowIds[i] === '#' + rowId) {
+                                    this.selectedRowIds.splice(i, 1);
+                                }
+                            }
+
+                        } else {
+
+                            this.selectedRows.push(rowId);                            
+                            this.selectedRowIds.push('#' + rowId);
+
+                        }
+
+                    });
+
+                },
+
+                drawCallback: (tableId, api) => {
+
+                    api.rows().deselect();
+                    api.rows(this.selectedRowIds).select();
+
+                },                
+
+
+            };   
+
+            this.table.loadDataTable();
+
+
+        },
+
+        selectRecord() {
+
+            console.log('selectRecord',selectRecord);
+        },
+
+
+
+        closeClicked() {
+
+            this.hideLeftTab(this.pageName);
+
+            this.$router.push({ name: 'home' });
+
+        },
+
+    },
+}
+</script>

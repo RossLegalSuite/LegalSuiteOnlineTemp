@@ -1,0 +1,52 @@
+
+
+<h3>Step 1: Check that IMAP is turned on</h3>
+
+<ol>
+    <li>If you use Gmail on this device, open your Gmail app by clicking <a href="https://mail.google.com/" target="_blank" rel="noopener">here</a>.</li>
+    <li>Otherwise open your Gmail app on a device from which you send and receive email.</li>
+    <li>Once you have opened Gmail, in the top right, click <strong>Settings</strong> and then <strong>See all settings.</strong></li>
+    <li>Click the <strong>Forwarding and POP/IMAP</strong> tab.</li>
+    <li>In the "IMAP access" section, select <strong>Enable IMAP</strong>.</li>
+    <li>Click <strong>Save Changes</strong>.</li>
+</ol>
+
+<h3>Step 2: Allow "Less Secure Apps" to access your Gmail</h3>
+
+<p>Gmail restricts access from third party apps by default.</p>
+
+<p>To allow Ettorney to access your email, click <a href="https://myaccount.google.com/lesssecureapps" target="_blank" rel="noopener noreferrer">here</a>
+    to go to your Google account settings and make sure "Allow less secure apps" is set to "ON"</p>
+
+<h3>Step 3: Gmail settings</h3>
+
+<p>Use the following settings to setup the Incoming and Outgoing servers in Ettorney.</p>
+
+<table class="table table-bordered">
+    <tbody>
+        <tr>
+            <td style="width:33%">Outgoing (SMTP) Server</td>
+            <td>
+                <p><strong>Server:</strong> smtp.gmail.com</p>
+
+                <p><strong>Port:</strong> 587</p>
+
+                <p><strong>Encryption:</strong> TLS</p>
+
+                <p><strong>Authentication:</strong> Yes</p>
+
+            </td>
+        </tr>
+        <tr>
+            <td>Incoming (IMAP) Server</td>
+            <td>
+                <p><strong>Server:</strong> imap.gmail.com</p>
+
+                <p><strong>Port:</strong> 993</p>
+
+                <p><strong>Encryption:</strong> SSL</p>
+
+            </td>
+        </tr>
+    </tbody>
+</table>

@@ -1,0 +1,181 @@
+<template>
+
+    <div class="card h-100 border-0">
+        <div class="card-header settings-bg">
+            <div class="d-flex justify-content-between">
+                <h3>Settings</h3>
+                <page-close-button @closeClicked="closeLeftPage(pageName)"/>
+            </div>
+        </div>
+
+        <div class="card-body overflow-auto p-1">
+
+            <div class="d-flex">
+
+                <div class="program-icon" @click="showPage('Company')">
+                    <img src="/icons/toolbox.gif">
+                    <div class="program-icon-text">Company<br/>Settings</div>
+                </div>
+
+                <div class="program-icon" @click="showPage('EmployeeRoles')">
+                    <img src="/icons/employee-role.png">
+                    <div class="program-icon-text">Employee Roles</div>
+                </div>
+
+                <div v-show="$root.supervisorFlag" class="program-icon" @click="showPage('EmployeeGroups')">
+                    <img src="/icons/employee-group.png">
+                    <div class="program-icon-text">Employee Groups</div>
+                </div>
+
+            </div>
+
+            <div class="d-flex">
+
+                <div class="program-icon" @click="showPage('PartyEntities')">
+                    <img src="/icons/party-entity-red.gif">
+                    <div class="program-icon-text">Party Entities</div>
+                </div>
+
+                <div class="program-icon" @click="showPage('PartyTypes')">
+                    <img src="/icons/user-group.gif">
+                    <div class="program-icon-text">Party Types</div>
+                </div>
+                
+                <div class="program-icon" @click="showPage('PartyRoles')">
+                    <img src="/icons/party-role.png">
+                    <div class="program-icon-text">Party Roles</div>
+                </div>
+
+                <div class="program-icon" @click="showPage('MarriageTypes')">
+                    <img src="/icons/books.png">
+                    <div class="program-icon-text">Marriage Types</div>
+                </div>
+
+            </div>
+
+            <div class="d-flex">
+
+                <div class="program-icon" @click="showPage('Branches')">
+                    <img src="/icons/branches.png">
+                    <div class="program-icon-text">Branches</div>
+                </div>
+
+                <div class="program-icon" @click="showPage('MatterTypes')">
+                    <img src="/icons/matter-type.png">
+                    <div class="program-icon-text">Matter Types</div>
+                </div>
+
+                <!-- <div class="program-icon" @click="loadLeftTab('Document Sets')"> -->
+                <div class="program-icon" @click="showPage('DocumentSets')">
+                    <img src="/icons/file-tag.png">
+                    <div class="program-icon-text">Document Sets</div>
+                </div>
+
+                <div class="program-icon" @click="loadLeftTab('Fee Sheets')">
+                    <img src="/icons/document-set.png">
+                    <div class="program-icon-text">Fee Sheets</div>
+                </div>
+
+                <div class="program-icon" @click="showPage('FeeUnits')">
+                    <img src="/icons/hourglass.gif">
+                    <div class="program-icon-text">Units</div>
+                </div>
+
+                <!-- <div class="program-icon" @click="loadLeftTab('Fee Codes')">
+                    <img src="/icons/folder.png">
+                    <div class="program-icon-text">Fee Codes</div>
+                </div> -->
+
+
+            </div>
+
+            <div class="d-flex">
+
+                <div class="program-icon" @click="loadLeftTab('Document Templates')">
+                    <img src="/icons/word.gif">
+                    <div class="program-icon-text">Document Templates</div>
+                </div>
+
+                <div class="program-icon" @click="loadLeftTab('System Templates')">
+                    <img src="/icons/blueprint.gif">
+                    <div class="program-icon-text">System Templates</div>
+                </div>
+
+                <div class="program-icon" @click="loadLeftTab('Components')">
+                    <img src="/icons/puzzle.gif">
+                    <div class="program-icon-text">Template Components</div>
+                </div>            
+
+                <div class="program-icon" @click="loadLeftTab('Extra Screens')">
+                    <img src="/icons/palette.gif">
+                    <div class="program-icon-text">Extra<br>Screens</div>
+                </div>            
+
+                <div class="program-icon" @click="showPage('Utilities')">
+                    <img src="/icons/preference.gif">
+                    <div class="program-icon-text">Utilities</div>
+                </div>            
+
+            </div>
+
+        </div>
+    </div>
+
+</template>
+
+<script>
+
+import leftTemplate from "../left-template";
+import { mapGetters } from 'vuex';
+import { mapMutations } from 'vuex';
+
+export default {
+
+    extends: leftTemplate,
+
+    computed: {
+        ...mapGetters(['leftTabs','activeLeftTabs']),
+    },
+
+    data() {
+        return {
+            pageName: 'Settings',
+        }
+    },
+
+    methods: {
+
+        ...mapMutations(['displayLeftTab','hideLeftTab']),  
+
+        showPage( pageName) {
+
+            this.$root.$refs['right-hand-tab-container'].$refs['right-hand-tabs'].showPage( pageName );
+
+        },
+
+        loadCompanyPages() {
+            
+            this.loadPage('Company');
+
+        },
+
+
+        loadLeftTab( name) {
+
+            let thisTab = this.leftTabs.filter(tab => tab.pageName == name);
+
+            if (thisTab.length) {
+
+                this.displayLeftTab(thisTab[0]);
+    
+                this.$router.push({ name: thisTab[0].routeName });
+
+
+            }
+        },
+
+    }
+
+}
+</script> 
+

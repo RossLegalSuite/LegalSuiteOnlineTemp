@@ -1,0 +1,287 @@
+/**********************************************
+           Filofax - Start
+**********************************************/
+
+.leather-background {
+    background:url(../img/leather.jpg);
+    background-repeat:repeat;
+}
+
+body {
+    background-color: unset; 
+    padding: 0.64rem;
+}
+
+.stitched-border {
+    background-color: unset;
+    border: 0.15vw dashed #CFA473;
+    border-radius: 10px; 
+    padding: 0.65rem 1rem 1rem 1rem;
+    height: 100%
+}
+
+.filofax-pages-container {
+    height: 95%;
+    width: 100%;
+    background: #efefef;
+    border-top-right-radius: 7px;
+    border-bottom-right-radius: 7px;
+    border-bottom-left-radius: 7px;
+}
+.filofax-page-container {
+    height: 100%;
+}
+
+.filofax-page {
+    
+    height: 100%;
+    overflow: auto !important;
+    
+}
+
+.filofax-left-page {
+    border-top-right-radius: 7px;
+    border-bottom-left-radius: 7px;
+    border-bottom-right-radius: 7px;
+    position: relative;
+}
+
+.filofax-right-page {
+    margin-top: 1.75rem;
+    border-radius: 7px;
+    position: relative;
+}
+
+
+.filofax-page-container .card, .filofax-page-container .card-header {
+    border-top-left-radius: 0px;
+    border-top-right-radius: 0px;
+}
+
+.filofax-right-page .card, .filofax-right-page .card-header {
+    border-top-right-radius: 7px;
+}
+
+.filofax-left-page .card, .filofax-left-page .card-body {
+    border-bottom-left-radius: 7px;
+}
+
+.filofax-right-page .card, .filofax-right-page .card-body {
+    border-bottom-right-radius: 7px;
+}
+
+
+
+
+.filofax-binder { 
+    height: 100%;
+    background:url(../img/binding.gif);
+    background-size:100%;
+    background-repeat:repeat-y;	
+    
+}
+
+/* .filofax-pencil {
+    height: 100%;
+    height:70%;
+    cursor: pointer;
+    overflow-y: hidden;
+    background:url(../img/pencil.gif);
+    background-size: 100% 100%;
+    background-repeat:no-repeat;
+    position:relative;
+    top:15%;
+} */
+
+.filofax-footer {
+    color: white;
+    font-size: 80%;
+    font-weight: 400;
+    /* width: 99%; */
+    margin-top: 3px;
+}
+
+.filofax-top-right {
+    position: fixed;
+    top: 1rem;
+    right: 2.25rem;
+    color: white;
+    font-size: 80%;
+    font-weight: 400;
+}
+
+/* For Wide Desktops */
+/* @media (min-width: 1200px) {
+    .filofax-pencil {
+        margin-left: 7px !important;
+    }
+} */
+
+.filofax-tabs-container {
+    min-height: 40px;
+}
+
+/* For Desktops */
+@media (min-width: 992px) {
+    html, body, .app-container {
+        height: 100%;
+    }
+
+    .filofax-tabs-container {
+        width:100%;
+    }
+
+    .filofax-left-tabs {
+        flex: 0 0 48.5%;
+        overflow: hidden;
+        margin-right: 3%;        
+        /* max-width: 51.5%; */
+    }
+
+    .filofax-right-tabs {
+        flex: 0 0 48.5%;
+        overflow: hidden;
+        /* max-width: 48.5%; */
+    }
+
+    .filofax-left-page {
+        border-top-right-radius: 0px;
+        border-bottom-right-radius: 0px;
+        border-bottom-left-radius: 7px;
+        flex: 0 0 48.5%;
+        max-width: 48.5%;
+    }
+    
+    .filofax-right-page {
+        margin-top: 0px;
+        border-bottom-left-radius: 0px;
+        border-top-left-radius: 0px;
+        flex: 0 0 48.5%;
+        max-width: 48.5%;
+    }
+
+    .filofax-binder {
+        flex: 0 0 3%;
+        max-width: 3%;
+    }
+
+}
+
+.tab-item-small {
+    padding: 0 6px !important;
+}
+
+@media (max-width: 1801px) {
+    .tab-item-small {
+        font-size: small;
+        margin-right: 4px !important;
+    }
+}
+
+@media (max-width: 1601px) {
+    .tab-item-small {
+        font-size: smaller;
+        margin-right: 2px !important;
+    }
+}
+
+.tab-item {
+    color: white;
+    overflow: hidden;
+    padding: 0 8px;
+    margin-right: 4px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    cursor: pointer;
+    border-top-right-radius: 8px;
+    border-top-left-radius: 8px;
+    font-weight: normal;
+    height: 1.75rem;
+    /* line-height: 2; */
+}
+
+.tab-item:hover {
+    color: antiquewhite;
+    text-decoration: none;
+}
+
+.tab-item .d-table-row, .tab-item .d-table-cell {
+    vertical-align:middle;
+}
+
+.tab-item.router-link-active .d-table-row, .tab-item.tab-active .d-table-row {
+    font-weight: bold;
+    height: 2.5rem;
+}
+
+.tab-item.router-link-active .tab-item-icon, .tab-item.tab-active .tab-item-icon {
+    padding-top: 3px;
+}
+.tab-item.router-link-active span.fa, .tab-item.tab-active span.fa {
+    font-size: 1.5em;
+}
+
+/**************************************************
+ Forms Tabs 
+***************************************************/
+.form-tab-body {
+    display: flex; 
+    flex-flow: column;
+    background: white; 
+    padding: 1rem 1rem 2rem 1rem;
+}
+
+
+.form-tab-content {
+    flex: 1;
+    padding: 1rem 0.75rem;
+    border-bottom-left-radius: 4px;
+    border-bottom-right-radius: 4px;
+    border-top-right-radius: 4px;
+    border: 1px solid slategray;
+    box-shadow: 4px 4px 3px rgba(0, 0, 0, 0.25);
+    background: #efefef;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.form-tab-item {
+    line-height: 1.9;
+    display: flex;
+    align-items: center;
+    /* height: 5.5vh;     */
+}    
+
+.form-tab-item.tab-active {
+    line-height: 2.4;
+    font-weight: bold;
+    height: 2.3rem;
+    /* height: 7.5vh;     */
+}    
+
+/***************************************************/
+
+.program-icon {
+    width: 80px;
+    margin-top: 15px;
+    margin-left: 15px;
+    margin-bottom: 10px;
+    text-align: center;
+    cursor: pointer;
+}
+
+.program-icon a {
+    text-decoration: none !important;
+    color: black;
+}
+
+.program-icon-text {
+    font-size: 80%;
+    font-weight: 400;
+    line-height: 1;
+    margin-top: 2px;
+}
+
+/**********************************************
+           Filofax - End
+**********************************************/

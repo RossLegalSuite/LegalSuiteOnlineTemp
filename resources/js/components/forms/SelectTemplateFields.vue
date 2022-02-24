@@ -1,0 +1,648 @@
+<template>
+
+    <div>
+
+        <div class="modal" :id="id">
+
+            <div class="modal-dialog modal-dialog-left modal-lg">
+
+                <div class="modal-content" style="border-color:indianred">
+
+                    <div class="modal-header indianred">
+                        <h2 class="modal-title page-title"><i class="fa fa-server mr-2"></i>Select a Field</h2>
+                        <i title="Close this window" class="cp top-right fa fa-times-circle fa-2x text-white" data-dismiss="modal"></i>
+                    </div>
+
+                    <div class="modal-body form-tab-body p-3" style="height: 60vh; overflow-y: auto;">
+
+                        <form-tabs :tabs="tabs"/>
+
+                        <div v-show="activeTab === 'Company'" class="form-tab-content">
+                            <table :id="id + '-company-table'" class="table bordered" style="table-layout: auto; width:100%"></table>
+                        </div>
+
+                        <div v-show="activeTab === 'Employee'" class="form-tab-content">
+                            <table :id="id + '-employee-table'" class="table bordered" style="table-layout: auto; width:100%"></table>
+                        </div>
+
+                        <div v-show="activeTab === 'Party'" class="form-tab-content">
+                            <table :id="id + '-party-table'" class="table bordered" style="table-layout: auto; width:100%"></table>
+                        </div>
+
+                        <div v-show="activeTab === 'Matter'" class="form-tab-content">
+                            <table :id="id + '-matter-table'" class="table bordered" style="table-layout: auto; width:100%"></table>
+                        </div>
+
+                        <div v-show="activeTab === 'Report'" class="form-tab-content">
+                            <table :id="id + '-report-table'" class="table bordered" style="table-layout: auto; width:100%"></table>
+                        </div>
+
+                        <div v-show="activeTab === 'General'" class="form-tab-content">
+                            <table :id="id + '-general-table'" class="table bordered" style="table-layout: auto; width:100%"></table>
+                        </div>
+
+                        <div v-show="activeTab === 'Components'" class="form-tab-content">
+                            <system-components-table
+                                tableId="select-tenplate-system-components-table"
+                                :lazyLoadFlag="true"
+                                :newRecordButton="false"
+                                ref="select-tenplate-system-components-table"
+                                formRef="globalSelectTemplateFields"
+                            />
+                            
+                        </div>
+
+                    </div>
+
+                    <div class="modal-footer justify-content-between">
+
+                        <div/>
+                        <div>
+                            <button class="btn btn-danger form-button" type="button"  v-on:click="hide" title="Cancel selection"><i class="fa fa-times-circle fa-lg mr-2"></i>Cancel</button>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+</template>
+
+<script>
+
+import modalTemplate from "@components/modals/modal-template";
+
+export default {
+
+    mixins: [modalTemplate],     
+    
+    components: {
+        SystemComponentsTable: () => import("@pages/system-components/SystemComponentsTable"),
+    },
+    
+
+    data() {
+        return {
+            generalTable: null,
+            generalTableRows: [],
+            companyTable: null,
+            companyTableRows: [],
+            employeeTable: null,
+            employeeTableRows: [],
+            partyTable: null,
+            partyTableRows: [],
+            matterTable: null,
+            matterTableRows: [],
+            reportTable: null,
+            reportTableRows: [],
+            generalTable: null,
+            generalTableRows: [],
+            activeTab: null,
+            source: null,
+            callingComponent: null,
+            tabs: [
+                {
+                    pageName: "Company",
+                    title: "Company",
+                    iconClass: '',
+                    visible: true,
+                    active: true,
+                },
+                {
+                    pageName: "Employee",
+                    title: "Employee",
+                    iconClass: '',
+                    visible: true,
+                    active: false,
+                },
+                {
+                    pageName: "Party",
+                    title: "Party",
+                    iconClass: '',
+                    visible: false,
+                    active: false,
+                },
+                {
+                    pageName: "Matter",
+                    title: "Matter",
+                    iconClass: '',
+                    visible: false,
+                    active: false,
+                },
+                {
+                    pageName: "Report",
+                    title: "Report",
+                    iconClass: '',
+                    visible: false,
+                    active: false,
+                },
+                {
+                    pageName: "General",
+                    title: "General",
+                    iconClass: '',
+                    visible: true,
+                    active: false,
+                },
+                {
+                    pageName: "Components",
+                    title: "Components",
+                    iconClass: '',
+                    visible: true,
+                    active: false,
+                },
+            ],
+
+        }
+    },    
+
+    watch: {
+        
+        activeTab(newValue) {
+
+            if ( newValue === "Company") {
+
+                if ( !this.companyTable ) {
+                    
+                    setTimeout(() => {
+                        this.companyTable = $('#' + this.id + '-company-table').DataTable(this.setDataTableParameters(this.companyTableRows));
+                    }, 100);
+
+                } else {
+
+                    this.companyTable.columns.adjust;
+
+                }
+
+            } else if ( newValue === "Employee") {
+                
+                if ( !this.employeeTable ) {
+
+                    setTimeout(() => {
+                        this.employeeTable = $('#' + this.id + '-employee-table').DataTable(this.setDataTableParameters(this.employeeTableRows));
+                    }, 100);
+
+                } else {
+
+                    this.employeeTable.columns.adjust;
+
+                }
+            } else if ( newValue === "Party") {
+                
+                if ( !this.partyTable ) {
+
+                    setTimeout(() => {
+                        this.partyTable = $('#' + this.id + '-party-table').DataTable(this.setDataTableParameters(this.partyTableRows));
+                    }, 100);
+
+                } else {
+
+                    this.partyTable.columns.adjust;
+
+                }
+            } else if ( newValue === "Matter") {
+                
+                if ( !this.matterTable ) {
+
+                    setTimeout(() => {
+                        this.matterTable = $('#' + this.id + '-matter-table').DataTable(this.setDataTableParameters(this.matterTableRows));
+                    }, 100);
+
+                } else {
+
+                    this.matterTable.columns.adjust;
+
+                }
+            } else if ( newValue === "Report") {
+                
+                if ( !this.reportTable ) {
+
+                    setTimeout(() => {
+                        this.reportTable = $('#' + this.id + '-report-table').DataTable(this.setDataTableParameters(this.reportTableRows));
+                    }, 100);
+
+                } else {
+
+                    this.reportTable.columns.adjust;
+
+                }
+            } else if ( newValue === "General") {
+                
+                if ( !this.generalTable ) {
+
+                    setTimeout(() => {
+                        this.generalTable = $('#' + this.id + '-general-table').DataTable(this.setDataTableParameters(this.generalTableRows));
+                    }, 100);
+
+                } else {
+
+                    this.generalTable.columns.adjust;
+
+                }
+            } else if ( newValue === "Components") {
+
+                this.loadComponentsTable();
+                
+            }
+        },
+
+    },
+
+
+    methods: {
+        
+        load( summerNoteInstance ) {
+
+            let index = 0;
+
+            this.generalTableRows = [];
+            this.companyTableRows = [];
+            this.employeeTableRows = [];
+            this.partyTableRows = [];
+            this.matterTableRows = [];
+            this.reportTableRows = [];
+            this.generalTableRows = [];
+
+            this.summerNoteInstance = summerNoteInstance;
+
+            this.summerNoteInstance.$note.summernote('saveRange'); // Important - so it inserts the field at the current cursor position
+
+            this.callingComponent = this.summerNoteInstance.options.callingComponent;
+
+            this.source = this.callingComponent.source;
+
+            let templateData = this.callingComponent.templateData ? this.callingComponent.templateData : root.initTemplateData();
+
+            index++;
+            this.generalTableRows.push({
+                index: index,
+                field: 'todaysDate',
+                value: templateData.todaysDate,
+            });
+
+            index++;
+            this.generalTableRows.push({
+                index: index,
+                field: 'tableFilter',
+                value: templateData.tableFilter,
+            });
+
+
+            Object.entries(templateData.company).forEach(field => {
+                index++;
+                this.companyTableRows.push({
+                    index: index,
+                    field: field[0],
+                    value: field[1],
+                });
+
+            });
+
+
+            Object.entries(templateData.employee).forEach(field => {
+                index++;
+                this.employeeTableRows.push({
+                    index: index,
+                    field: field[0],
+                    value: field[1],
+                });
+            });
+
+
+            if ( templateData.matter && !$.isEmptyObject(templateData.matter))  {
+
+                Object.entries(templateData.matter).forEach(field => {
+                    index++;
+                    this.matterTableRows.push({
+                        index: index,
+                        field: field[0],
+                        value: field[1],
+                    });
+                });
+
+                this.tabs.filter(tab => tab.pageName === 'Matter')[0].visible = true;
+
+            }
+
+            if ( templateData.party && !$.isEmptyObject(templateData.party))  {
+
+                Object.entries(templateData.party).forEach(field => {
+                    index++;
+                    this.partyTableRows.push({
+                        index: index,
+                        field: field[0],
+                        value: field[1],
+                    });
+                });
+
+                this.tabs.filter(tab => tab.pageName === 'Party')[0].visible = true;
+
+            }
+
+            if ( this.source == 'Report' && templateData.report && !$.isEmptyObject(templateData.report))  {
+
+                Object.entries(templateData.report).forEach(field => {
+                    index++;
+                    this.reportTableRows.push({
+                        index: index,
+                        field: field[0],
+                        value: field[1],
+                    });
+                });
+
+                this.tabs.filter(tab => tab.pageName === 'Report')[0].visible = true;
+
+            }
+
+            this.setTabs()
+
+            this.show();
+
+        },
+
+        setTabs() {
+
+            // Set the most 'logical' Tab for the user
+
+            let setDefaultTab = false;
+
+            for (let index = 1; index < this.tabs.length; index++) {
+
+                this.tabs[index].active = false;
+
+                if ( this.tabs[index].pageName == 'Party' ) {
+
+                    if ( this.tabs[index].pageName == this.source ) {
+
+                        this.tabs[0].active = false;
+
+                        this.activeTab = this.source;
+                        this.tabs[index].active = true;
+                        this.tabs[index].visible = true;
+
+                        setDefaultTab = true;
+
+                    } else {
+                        this.tabs[index].visible = false;
+                    }
+
+                } else if ( this.tabs[index].pageName == 'Matter' ) {
+
+                    if ( this.tabs[index].pageName == this.source ) {
+
+                        this.tabs[0].active = false;
+                        
+                        this.activeTab = this.source;
+                        this.tabs[index].active = true;
+                        this.tabs[index].visible = true;
+
+                        setDefaultTab = true;
+
+                    } else {
+                        this.tabs[index].visible = false;
+                    }
+
+                } else if ( this.tabs[index].pageName == 'Report' ) {
+
+                    if ( this.tabs[index].pageName == this.source ) {
+
+                        this.tabs[0].active = false;
+                        
+                        this.activeTab = this.source;
+                        this.tabs[index].active = true;
+                        this.tabs[index].visible = true;
+
+                        setDefaultTab = true;
+
+                    } else {
+                        this.tabs[index].visible = false;
+                    }
+
+                } 
+
+                if (!setDefaultTab) {
+
+                    this.activeTab = 'Company';
+                    this.tabs[0].active = true;
+
+                }
+
+
+            }
+        },
+
+        loadComponentsTable() {
+
+            this.componentsTable = this.$refs['select-tenplate-system-components-table'];
+
+            setTimeout(() => {
+
+                if ( this.componentsTable.table ) {
+
+                    this.componentsTable.table.columns.adjust;
+
+                } else {
+
+                    this.componentsTable.selectTableFlag = true;
+                    this.componentsTable.selectTableCallBack = 'componentSelected';
+                    this.componentsTable.loadDataTable( this.adjustComponentsTableColumns ); 
+
+                }
+
+            },100);
+
+        },
+
+        setDataTableParameters( dataSource) {
+
+            return {
+                destroy: true,
+                dom: "ft",
+                data: dataSource,
+                serverSide: false,
+                paging: false,
+                select: false,
+                scrollX: true,
+                responsive: false,
+                scrollY: false,
+                scroller: false,
+                rowId: "index",
+                ordering: true,
+                order: [[2, "asc"]],
+                language: {
+                    emptyTable: "No Fields found",
+                    zeroRecords: "No Fields found",
+                },
+                columnDefs: [
+                    {
+                        title: "",
+                        data: null,
+                        targets: 0,
+                        visible: false,
+                        render: function (data) {
+                            return data.index;
+                        }
+                    },
+                    {
+                        title: "Action",
+                        data: null,
+                        class: "text-center",
+                        width: "15%",
+                        orderable: false,
+                        targets: 1,
+                        render: function (data) {
+                            return '<span class="badge badge-danger py-2 px-2" onclick="componentFunction(\'globalSelectTemplateFields\',\'selectRecord\',' + data.index + ')"  title ="Select this Field">Select</span>';
+                        }
+                    },
+                    {
+                        title: "Name",
+                        data: null,
+                        targets: 2,
+                        render: function(data) {
+                            return data.field;
+                        }
+                    },
+                    {
+                        title: "Value",
+                        data: null,
+                        targets: 3,
+                        render: function(data) {
+                            return data.value ? data.value : '';
+                        }
+                    },
+
+                ]
+            };            
+
+        },
+
+        selectRecord(id) {
+
+            this.hide();
+
+            if ( this.activeTab === "Company") {
+                
+                this.insertField( this.companyTable.row('#' + id).data(), this.activeTab.toLowerCase() );
+
+            } else if ( this.activeTab === "Employee") {
+
+                this.insertField( this.employeeTable.row('#' + id).data(), this.activeTab.toLowerCase() );
+
+            } else if ( this.activeTab === "Party") {
+
+                this.insertField( this.partyTable.row('#' + id).data(), this.activeTab.toLowerCase() );
+
+            } else if ( this.activeTab === "Matter") {
+
+                this.insertField( this.matterTable.row('#' + id).data(), this.activeTab.toLowerCase() );
+
+            } else if ( this.activeTab === "Report") {
+
+                this.insertField( this.reportTable.row('#' + id).data(), this.activeTab.toLowerCase() );
+
+            } else if ( this.activeTab === "General") {
+
+                this.insertField( this.generalTable.row('#' + id).data() );
+
+            } else if ( this.activeTab === "Components") {
+
+                this.insertComponent( this.componentsTable.table.row('#' + id).data() );
+
+            }
+
+
+        },
+
+        insertField( data, prefix = null) {
+
+            let codeViewFlag = this.summerNoteInstance.$note.summernote('codeview.isActivated');
+
+            if ( codeViewFlag ) {
+
+                let codeMirrorElement = $('#' + this.callingComponent.id + ' .CodeMirror');
+
+                if ( codeMirrorElement.length ) {
+
+                    let codeViewInstance = codeMirrorElement[0].CodeMirror;
+
+                    if ( codeViewInstance ) {
+
+                        if ( prefix ) {
+                            codeViewInstance.replaceSelection( '{{' + prefix + '.' + data.field + '}}' );
+                        } else {
+                            codeViewInstance.replaceSelection( '{{' + data.field + '}}' );
+                        }
+
+                    } else {
+                        showError('Error','codeView Instance not found');
+                    }
+
+                } else {
+
+                    showError('Error','codeView Element not found');
+
+                }
+
+            } else {
+
+                this.summerNoteInstance.$note.summernote('restoreRange'); // Important - so it inserts the text at the current cursor position
+
+                if ( prefix ) {
+                    this.summerNoteInstance.$note.summernote('insertText', '{{' + prefix + '.' + data.field + '}}');
+                } else {
+                    this.summerNoteInstance.$note.summernote('insertText', '{{' + data.field + '}}');
+                }
+
+            }
+
+        },
+
+        insertComponent( data ) {
+
+
+            let codeViewFlag = this.summerNoteInstance.$note.summernote('codeview.isActivated');
+
+            if ( !codeViewFlag ) {
+                showError('Warning','<p>You must be in Code View mode to insert Components.</p><p>Please place your cursor where you want the Component inserted and try again</p>');
+                this.summerNoteInstance.$note.summernote('codeview.toggle');
+                return;
+            }
+
+            let codeMirrorElement = $('#' + this.callingComponent.id + ' .CodeMirror');
+
+            if ( codeMirrorElement.length ) {
+
+                let codeViewInstance = codeMirrorElement[0].CodeMirror;
+
+                if ( codeViewInstance ) {
+
+                    codeViewInstance.replaceSelection( '<component is="' + data.title + '">[' + data.title.capitalize() + ']</component>' );
+
+                } else {
+                    showError('Error','codeView Instance not found');
+                }
+
+            } else {
+
+                showError('Error','codeView Element not found');
+
+            }
+
+            //if ( !codeViewFlag ) this.summerNoteInstance.$note.summernote('codeview.toggle');
+
+        },
+
+        adjustComponentsTableColumns() {
+            this.componentsTable.table.columns.adjust;
+        },
+
+
+    },
+
+}  
+</script>
+

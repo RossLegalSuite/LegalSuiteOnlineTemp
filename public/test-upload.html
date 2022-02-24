@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<script src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
+		<link href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css" rel="stylesheet" type="text/css" />
+		<meta charset=utf-8 />
+		<title>Test Document Upload</title>
+	</head>
+	<body>
+		<div class="container">
+
+			<form id="form" action="upload.php" method="post" enctype="multipart/form-data">
+				<input id="uploadDocument" type="file" accept="*/*" name="upload" />
+			</form>
+		
+		</div>
+
+		<script>
+
+			$(document).ready( function () {
+	
+				$("#uploadDocument").change(function() {
+    				$('#form').submit();
+  				});
+
+			});
+
+
+		</script>
+
+	</body>
+</html>
+

@@ -1,0 +1,1 @@
+ssh -i \Users\Rick\.ssh\ettorney-key-pair.pem ec2-user@13.244.109.111
