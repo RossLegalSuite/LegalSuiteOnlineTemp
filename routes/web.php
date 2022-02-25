@@ -7,9 +7,28 @@
 // use App\Custom\DataTablesHelper;
 // use App\Custom\Utils;
 //use Illuminate\Http\Request;
+use App\Http\Controllers\App\ColDebitController;
+use App\Http\Controllers\App\ContactNumberController;
+use App\Http\Controllers\App\EmailController;
+use App\Http\Controllers\App\EmployeeController;
+use App\Http\Controllers\App\ExtraScreenController;
+use App\Http\Controllers\App\ExtraScreenFieldController;
+use App\Http\Controllers\App\FileController;
+use App\Http\Controllers\App\GenericTableController;
+use App\Http\Controllers\App\HelpController;
+use App\Http\Controllers\App\LibraryController;
+use App\Http\Controllers\App\LibreController;
+use App\Http\Controllers\App\MatterExtraScreenController;
+use App\Http\Controllers\App\MatterPartyController;
+use App\Http\Controllers\App\MatterPartyExtraScreenController;
+use App\Http\Controllers\App\PartyExtraScreenController;
+use App\Http\Controllers\App\PdfController;
+use App\Http\Controllers\App\PermissionController;
+use App\Http\Controllers\App\ReportController;
+use App\Http\Controllers\App\UtilsController;
 use Illuminate\Support\Facades\Route;
 
-Route::post('/logout', '\App\Http\Controllers\Auth\LoginController@logout')->name('logout');
+Route::post('/logout', [\App\Http\Controllers\Auth\LoginController::class, 'logout'])->name('logout');
 
 Route::get('/checkSession', function () {
     return session()->has('companyCode') ? 'true' : 'false';
@@ -21,10 +40,10 @@ Route::get('/killSession', function () {
 });
 
 Route::middleware(['loggedout'])->group(function () {
-    Route::post('/login', '\App\Http\Controllers\Auth\LoginController@login')->name('login');
-    Route::post('/register', '\App\Http\Controllers\Auth\RegisterController@register')->name('register');
-    Route::post('/generateCompanyCode', '\App\Http\Controllers\Auth\RegisterController@generateCompanyCode');
-    Route::post('/checkRegister', '\App\Http\Controllers\Auth\RegisterController@checkRegister')->name('checkRegister');
+    Route::post('/login', [\App\Http\Controllers\Auth\LoginController::class, 'login'])->name('login');
+    Route::post('/register', [\App\Http\Controllers\Auth\RegisterController::class, 'register'])->name('register');
+    Route::post('/generateCompanyCode', [\App\Http\Controllers\Auth\RegisterController::class, 'generateCompanyCode']);
+    Route::post('/checkRegister', [\App\Http\Controllers\Auth\RegisterController::class, 'checkRegister'])->name('checkRegister');
 });
 
 Route::get('/', function () {
@@ -48,92 +67,92 @@ Route::middleware(['loggedin'])->group(function () {
     // Extra Screens
     //***************************************************************/
     Route::prefix('extrascreens')->group(function () {
-        Route::post('store', 'ExtraScreenController@store');
+        Route::post('store', [ExtraScreenController::class, 'store']);
     });
 
     //***************************************************************/
     // Extra Screen Fields
     //***************************************************************/
     Route::prefix('extra_screen_fields')->group(function () {
-        Route::post('get', 'ExtraScreenFieldController@get');
-        Route::post('store', 'ExtraScreenFieldController@store');
-        Route::post('delete', 'ExtraScreenFieldController@destroy');
+        Route::post('get', [ExtraScreenFieldController::class, 'get']);
+        Route::post('store', [ExtraScreenFieldController::class, 'store']);
+        Route::post('delete', [ExtraScreenFieldController::class, 'destroy']);
     });
 
     //***************************************************************/
     // Matter Extra Screen Data
     //***************************************************************/
     Route::prefix('matter_extra_screens')->group(function () {
-        Route::post('get', 'MatterExtraScreenController@get');
+        Route::post('get', [MatterExtraScreenController::class, 'get']);
     });
 
     //***************************************************************/
     // Party Extra Screen Data
     //***************************************************************/
     Route::prefix('party_extra_screens')->group(function () {
-        Route::post('get', 'PartyExtraScreenController@get');
+        Route::post('get', [PartyExtraScreenController::class, 'get']);
     });
 
     //***************************************************************/
     // Matter Party Extra Screen Data
     //***************************************************************/
     Route::prefix('matter_party_extra_screens')->group(function () {
-        Route::post('get', 'MatterPartyExtraScreenController@get');
+        Route::post('get', [MatterPartyExtraScreenController::class, 'get']);
     });
 
     //***************************************************************/
     // Contact Numbers
     //***************************************************************/
     Route::prefix('contact_numbers')->group(function () {
-        Route::post('get', 'ContactNumberController@get');
+        Route::post('get', [ContactNumberController::class, 'get']);
     });
 
     //***************************************************************/
     // DocLog
     //***************************************************************/
 
-    Route::post('doclog/upload/{recordid}', 'UtilsController@uploadDocLogDocument');
+    Route::post('doclog/upload/{recordid}', [UtilsController::class, 'uploadDocLogDocument']);
 
     //***************************************************************/
     // Utils Controller
     //***************************************************************/
     Route::prefix('utils')->group(function () {
-        Route::post('call/{method}', 'UtilsController@call');
-        Route::post('getapikey', 'UtilsController@getApiKey');
-        Route::post('getFeeItems', 'UtilsController@getFeeItems');
-        Route::post('getIncomeAccount', 'UtilsController@getIncomeAccount');
-        Route::post('getBasicData', 'UtilsController@getBasicData');
-        Route::post('getFileType', 'UtilsController@getFileType');
-        Route::post('getMimeType', 'UtilsController@getMimeType');
-        Route::post('deleteTagged', 'UtilsController@deleteTagged');
-        Route::post('clearTagged', 'UtilsController@clearTagged');
-        Route::post('deleteEmployeeTags', 'UtilsController@deleteEmployeeTags');
-        Route::get('initializeData', 'UtilsController@initializeData');
-        Route::get('getCollCommPercentAndLimit', 'UtilsController@getCollCommPercentAndLimit');
+        Route::post('call/{method}', [UtilsController::class, 'call']);
+        Route::post('getapikey', [UtilsController::class, 'getApiKey']);
+        Route::post('getFeeItems', [UtilsController::class, 'getFeeItems']);
+        Route::post('getIncomeAccount', [UtilsController::class, 'getIncomeAccount']);
+        Route::post('getBasicData', [UtilsController::class, 'getBasicData']);
+        Route::post('getFileType', [UtilsController::class, 'getFileType']);
+        Route::post('getMimeType', [UtilsController::class, 'getMimeType']);
+        Route::post('deleteTagged', [UtilsController::class, 'deleteTagged']);
+        Route::post('clearTagged', [UtilsController::class, 'clearTagged']);
+        Route::post('deleteEmployeeTags', [UtilsController::class, 'deleteEmployeeTags']);
+        Route::get('initializeData', [UtilsController::class, 'initializeData']);
+        Route::get('getCollCommPercentAndLimit', [UtilsController::class, 'getCollCommPercentAndLimit']);
     });
 
     //***************************************************************/
     // Lookup Library
     //***************************************************************/
     // Route::prefix('library')->group(function () {
-    //     Route::post('store', 'LibraryController@store');
-    //     Route::post('getTablePosition', 'LibraryController@getTablePosition');
+    //     Route::post('store', [LibraryController::class, 'store']);
+    //     Route::post('getTablePosition', [LibraryController::class, 'getTablePosition']);
     // });
 
     //***************************************************************/
     // ColDebit
     //***************************************************************/
     Route::prefix('coldebits')->group(function () {
-        Route::post('get', 'ColDebitController@get');
+        Route::post('get', [ColDebitController::class, 'get']);
     });
 
     //***************************************************************/
     // Matter Parties
     //***************************************************************/
     Route::prefix('matter_parties')->group(function () {
-        Route::post('store', 'MatterPartyController@store');
-        Route::post('checkSorter', 'MatterPartyController@checkSorter');
-        Route::post('getTablePosition', 'MatterPartyController@getTablePosition');
+        Route::post('store', [MatterPartyController::class, 'store']);
+        Route::post('checkSorter', [MatterPartyController::class, 'checkSorter']);
+        Route::post('getTablePosition', [MatterPartyController::class, 'getTablePosition']);
     });
 
     //***************************************************************/
@@ -141,31 +160,31 @@ Route::middleware(['loggedin'])->group(function () {
     //***************************************************************/
 
     Route::prefix('employees')->group(function () {
-        Route::post('saveSmtpDetails', 'EmployeeController@saveSmtpDetails');
-        Route::get('get-current', 'EmployeeController@getCurrent');
+        Route::post('saveSmtpDetails', [EmployeeController::class, 'saveSmtpDetails']);
+        Route::get('get-current', [EmployeeController::class, 'getCurrent']);
     });
 
     //***************************************************************/
     // Permissions
     //***************************************************************/
     // Route::prefix('permissions')->group(function () {
-    //     Route::post('get', 'PermissionController@get');
-    //     Route::post('store', 'PermissionController@store');
+    //     Route::post('get', [PermissionController::class, 'get']);
+    //     Route::post('store', [PermissionController::class, 'store']);
     // });
 
     //***************************************************************/
     // Emails
     //***************************************************************/
     Route::prefix('mail')->group(function () {
-        Route::post('testIncomingServer', 'EmailController@testIncomingServer');
-        Route::post('testOutgoingServer', 'EmailController@testOutgoingServer');
-        Route::post('sendEmail', 'EmailController@sendEmail');
-        Route::post('getMessages', 'EmailController@getMessages');
-        Route::post('getMessageBody', 'EmailController@getMessageBody');
-        Route::post('getFolders', 'EmailController@getFolders');
-        Route::post('saveAttachments', 'EmailController@saveAttachments');
-        Route::post('uploadEmailMessage', 'EmailController@uploadEmailMessage');
-        Route::post('getCorrespondenceEmail', 'EmailController@getCorrespondenceEmail');
+        Route::post('testIncomingServer', [EmailController::class, 'testIncomingServer']);
+        Route::post('testOutgoingServer', [EmailController::class, 'testOutgoingServer']);
+        Route::post('sendEmail', [EmailController::class, 'sendEmail']);
+        Route::post('getMessages', [EmailController::class, 'getMessages']);
+        Route::post('getMessageBody', [EmailController::class, 'getMessageBody']);
+        Route::post('getFolders', [EmailController::class, 'getFolders']);
+        Route::post('saveAttachments', [EmailController::class, 'saveAttachments']);
+        Route::post('uploadEmailMessage', [EmailController::class, 'uploadEmailMessage']);
+        Route::post('getCorrespondenceEmail', [EmailController::class, 'getCorrespondenceEmail']);
     });
 
     //***************************************************************/
@@ -173,21 +192,21 @@ Route::middleware(['loggedin'])->group(function () {
     //***************************************************************/
 
     // Route::prefix('reports')->group(function () {
-    //     Route::post('get', 'ReportController@get');
-    //     Route::post('store', 'ReportController@store');
-    //     Route::post('delete', 'ReportController@destroy');
-    //     Route::post('getTablePosition', 'ReportController@getTablePosition');
-    //     Route::post('trial-balance', 'ReportController@trialBalance');
-    //     Route::post('income-statement', 'ReportController@incomeStatement');
-    //     Route::post('balance-sheet', 'ReportController@balanceSheet');
+    //     Route::post('get', [ReportController::class, 'get']);
+    //     Route::post('store', [ReportController::class, 'store']);
+    //     Route::post('delete', [ReportController::class, 'destroy']);
+    //     Route::post('getTablePosition', [ReportController::class, 'getTablePosition']);
+    //     Route::post('trial-balance', [ReportController::class, 'trialBalance']);
+    //     Route::post('income-statement', [ReportController::class, 'incomeStatement']);
+    //     Route::post('balance-sheet', [ReportController::class, 'balanceSheet']);
     // });
 
     //***************************************************************/
     // LibreOffice
     //***************************************************************/
     // Route::prefix('libre')->group(function () {
-    //     Route::post('testMacro', 'LibreController@testMacro');
-    //     Route::post('replaceLetterHead', 'LibreController@replaceLetterHead');
+    //     Route::post('testMacro', [LibreController::class, 'testMacro']);
+    //     Route::post('replaceLetterHead', [LibreController::class, 'replaceLetterHead']);
     // });
 
     //***************************************************************/
@@ -195,41 +214,41 @@ Route::middleware(['loggedin'])->group(function () {
     //***************************************************************/
 
     Route::prefix('pdf')->group(function () {
-        Route::get('combine', 'PdfController@combine');
-        Route::post('combine', 'PdfController@combine');
-        Route::post('htmlToPdf', 'PdfController@htmlToPdf');
+        Route::get('combine', [PdfController::class, 'combine']);
+        Route::post('combine', [PdfController::class, 'combine']);
+        Route::post('htmlToPdf', [PdfController::class, 'htmlToPdf']);
     });
 
     //***************************************************************/
     // Files
     //***************************************************************/
     Route::prefix('file')->group(function () {
-        Route::post('checkIfRemoteFileExists', 'FileController@checkIfRemoteFileExists');
-        Route::post('exists', 'FileController@exists');
-        Route::post('selected', 'FileController@selected');
-        Route::post('uploadFile', 'FileController@uploadFile');
-        Route::post('upload', 'FileController@upload');
-        Route::post('save', 'FileController@save');
-        Route::post('delete', 'FileController@delete');
-        Route::post('convertDocxToPdf', 'FileController@convertDocxToPdf');
+        Route::post('checkIfRemoteFileExists', [FileController::class, 'checkIfRemoteFileExists']);
+        Route::post('exists', [FileController::class, 'exists']);
+        Route::post('selected', [FileController::class, 'selected']);
+        Route::post('uploadFile', [FileController::class, 'uploadFile']);
+        Route::post('upload', [FileController::class, 'upload']);
+        Route::post('save', [FileController::class, 'save']);
+        Route::post('delete', [FileController::class, 'delete']);
+        Route::post('convertDocxToPdf', [FileController::class, 'convertDocxToPdf']);
     });
 
     //***************************************************************/
     // Help
     //***************************************************************/
     Route::prefix('help')->group(function () {
-        Route::post('get', 'HelpController@get');
+        Route::post('get', [HelpController::class, 'get']);
     });
 
     //***************************************************************/
     // All other tables
     //***************************************************************/
-    Route::post('{tablename}/get/{recordid?}', 'GenericTableController@get');
-    Route::post('{tablename}/store', 'GenericTableController@store');
-    Route::post('{tablename}/update', 'GenericTableController@update');
-    Route::post('{tablename}/delete/{recordid}', 'GenericTableController@delete');
-    Route::post('{tablename}/first', 'GenericTableController@first');
-    Route::post('{tablename}/copy', 'GenericTableController@copy');
-    Route::post('{tablename}/getTemplateData/{recordid?}', 'GenericTableController@getTemplateData');
-    Route::post('{tablename}/storeRecords', 'GenericTableController@storeRecords');
+    Route::post('{tablename}/get/{recordid?}', [GenericTableController::class, 'get']);
+    Route::post('{tablename}/store', [GenericTableController::class, 'store']);
+    Route::post('{tablename}/update', [GenericTableController::class, 'update']);
+    Route::post('{tablename}/delete/{recordid}', [GenericTableController::class, 'delete']);
+    Route::post('{tablename}/first', [GenericTableController::class, 'first']);
+    Route::post('{tablename}/copy', [GenericTableController::class, 'copy']);
+    Route::post('{tablename}/getTemplateData/{recordid?}', [GenericTableController::class, 'getTemplateData']);
+    Route::post('{tablename}/storeRecords', [GenericTableController::class, 'storeRecords']);
 });
