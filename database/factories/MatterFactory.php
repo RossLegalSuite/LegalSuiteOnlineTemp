@@ -19,7 +19,7 @@ use Illuminate\Support\Str;
 $factory->define(Matter::class, function (Faker $faker) {
     return [
 
-        'fileRef' => Str::upper($faker->word).'/'.$faker->randomNumber(7),
+        'fileRef' => Str::upper($faker->word()).'/'.$faker->randomNumber(7),
         'description' => $faker->realText(100),
         'instructed' => now(),
         'matterTypeId' => $faker->numberBetween(1, 4),
