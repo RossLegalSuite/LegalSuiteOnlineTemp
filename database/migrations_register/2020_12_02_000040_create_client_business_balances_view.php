@@ -6,8 +6,7 @@ class CreateClientBusinessBalancesView extends Migration
 {
     public function up()
     {
-
-        DB::statement("
+        DB::statement('
         CREATE OR REPLACE VIEW client_business_balances AS
             select 
             clientParty.partyId as partyId,
@@ -21,12 +20,11 @@ class CreateClientBusinessBalancesView extends Migration
             join matter_parties AS clientParty ON invoices.matterId = clientParty.matterId and clientParty.roleId = 1 and clientParty.rank = 1 
             where invoices.posted = 1
             group by invoices.id, clientParty.partyId
-        ");
+        ');
     }
 
     public function down()
     {
         DB::statement('DROP VIEW IF EXISTS client_business_balances');
     }
-    
 }

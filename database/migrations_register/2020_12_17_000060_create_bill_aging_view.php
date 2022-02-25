@@ -6,8 +6,7 @@ class CreateBillAgingView extends Migration
 {
     public function up()
     {
-
-        DB::statement("
+        DB::statement('
         CREATE OR REPLACE VIEW bill_aging AS
             select 
             billId,
@@ -18,12 +17,11 @@ class CreateBillAgingView extends Migration
             sum(case when days > 120 then balance else 0 end) as days120
             from bill_balances
             group by billId
-        ");
+        ');
     }
 
     public function down()
     {
         DB::statement('DROP VIEW IF EXISTS bill_aging');
     }
-    
 }

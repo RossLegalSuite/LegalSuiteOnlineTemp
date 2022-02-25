@@ -6,8 +6,7 @@ class CreateCreditorBalancesView extends Migration
 {
     public function up()
     {
-
-        DB::statement("
+        DB::statement('
         CREATE OR REPLACE VIEW creditor_balances AS
         SELECT 
             creditors.id as creditorId,
@@ -20,12 +19,11 @@ class CreateCreditorBalancesView extends Migration
         JOIN creditors ON bills.creditorId = creditors.id
         WHERE bills.posted = 1
         GROUP BY bills.id, creditors.id
-        ");
+        ');
     }
 
     public function down()
     {
         DB::statement('DROP VIEW IF EXISTS creditor_balances');
     }
-    
 }

@@ -2,33 +2,37 @@
 
 namespace App\Http\Controllers\App;
 
-use App\Models\FeeUnit;
 use App\Custom\DataTablesHelper;
+use App\Custom\Utils;
+use App\Models\FeeUnit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Custom\Utils;
-use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
-class FeeUnitController extends Controller {
-
+class FeeUnitController extends Controller
+{
     public function get(Request $request)
     {
-
         $query = DB::table('fee_units');
 
         $query->addSelect('fee_units.*');
 
-        if ($request->id) $query->where('fee_units.id',$request->id);
+        if ($request->id) {
+            $query->where('fee_units.id', $request->id);
+        }
 
-        if ($request->code) $query->where('fee_units.code',$request->code);
+        if ($request->code) {
+            $query->where('fee_units.code', $request->code);
+        }
 
-        if ($request->description) $query->where('fee_units.description',$request->description);
+        if ($request->description) {
+            $query->where('fee_units.description', $request->description);
+        }
 
         DataTablesHelper::AddCommonWhereClauses($query, $request);
 
         return DataTablesHelper::ReturnData($query, $request);
-
     }
 
     public function store(Request $request)
@@ -49,22 +53,22 @@ class FeeUnitController extends Controller {
             'code.unique' => 'This Code is being used by another Unit',
         ];
 
-        if ( isset($request->id) )$rules['code'] = ['required',Rule::unique('fee_units')->ignore($request->id)];
+        if (isset($request->id)) {
+            $rules['code'] = ['required', Rule::unique('fee_units')->ignore($request->id)];
+        }
 
-        $validator = Validator::make($request->all(), $rules,$messages); 
-        
+        $validator = Validator::make($request->all(), $rules, $messages);
+
         if ($validator->fails()) {
-
             $returnData->errors = $validator->errors();
-            return json_encode($returnData);            
 
-        }        
+            return json_encode($returnData);
+        }
 
         try {
-
             $record = isset($request->id) ? FeeUnit::findOrFail($request->id) : new FeeUnit;
 
-            $record->code = isset($request->id) ? $request->code : Utils::generateCode('fee_units',$request->description);
+            $record->code = isset($request->id) ? $request->code : Utils::generateCode('fee_units', $request->description);
 
             $record->description = $request->description;
             $record->singular = $request->singular;
@@ -74,38 +78,31 @@ class FeeUnitController extends Controller {
 
             $record->save();
 
-            return json_encode($record);            
-    
+            return json_encode($record);
         } catch (\Illuminate\Database\QueryException $e) {
-
             $validator->errors()->add('general', Utils::MySqlError($e));
 
             $returnData->errors = $validator->errors();
-            return json_encode($returnData);            
 
-        } catch(\Exception $e)  {
-
+            return json_encode($returnData);
+        } catch (\Exception $e) {
             $validator->errors()->add('general', $e->getMessage());
 
             $returnData->errors = $validator->errors();
+
             return json_encode($returnData);
-
         }
-
     }
 
     public function getTablePosition(Request $request)
     {
-
-        return FeeUnit::where('code','<',$request->code)
+        return FeeUnit::where('code', '<', $request->code)
         ->orderBy('code')
         ->count();
-
     }
 
     public function destroy(Request $request)
     {
         return DataTablesHelper::destroy($request, FeeUnit::class);
     }
-
 }

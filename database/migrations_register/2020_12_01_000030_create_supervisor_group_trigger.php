@@ -4,7 +4,6 @@ use Illuminate\Database\Migrations\Migration;
 
 class CreateSupervisorGroupTrigger extends Migration
 {
-
     public function up()
     {
         DB::unprepared('
@@ -18,13 +17,10 @@ class CreateSupervisorGroupTrigger extends Migration
                 END IF;
             END
         ');
-
     }
 
     public function down()
     {
-
         DB::unprepared('DROP TRIGGER `Supervisor_Group_Prevent_Deletion`');
-
     }
 }

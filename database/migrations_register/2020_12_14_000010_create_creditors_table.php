@@ -1,8 +1,8 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 class CreateCreditorsTable extends Migration
 {
@@ -15,25 +15,25 @@ class CreateCreditorsTable extends Migration
     {
         Schema::create('creditors', function (Blueprint $table) {
             $table->increments('id');
-            $table->string('code',50)->unique();
+            $table->string('code', 50)->unique();
             $table->enum('type', ['Business', 'Person']);
             $table->unsignedInteger('defaultExpenseId');
             $table->string('name');
             $table->string('firstName')->nullable();
             $table->string('lastName')->nullable();
-            $table->string('title',50)->nullable();
+            $table->string('title', 50)->nullable();
             $table->string('friendlyName')->nullable();
             $table->string('salutation');
             $table->string('physicalLine1')->nullable();
             $table->string('physicalLine2')->nullable();
             $table->string('physicalLine3')->nullable();
-            $table->string('physicalCode',50)->nullable();
+            $table->string('physicalCode', 50)->nullable();
             $table->unsignedInteger('physicalProvinceId');
             $table->unsignedInteger('physicalCountryId');
             $table->string('postalLine1')->nullable();
             $table->string('postalLine2')->nullable();
             $table->string('postalLine3')->nullable();
-            $table->string('postalCode',50)->nullable();
+            $table->string('postalCode', 50)->nullable();
             $table->unsignedInteger('postalProvinceId');
             $table->unsignedInteger('postalCountryId');
 
@@ -61,7 +61,6 @@ class CreateCreditorsTable extends Migration
             $table->foreign('postalProvinceId')
             ->references('id')->on('provinces')
             ->onDelete('restrict');
-
         });
     }
 
@@ -75,5 +74,3 @@ class CreateCreditorsTable extends Migration
         Schema::dropIfExists('creditors');
     }
 }
-
-

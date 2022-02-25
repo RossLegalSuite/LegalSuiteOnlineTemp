@@ -1,8 +1,8 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 class CreateTaxComponentsTable extends Migration
 {
@@ -14,7 +14,6 @@ class CreateTaxComponentsTable extends Migration
     public function up()
     {
         Schema::create('tax_components', function (Blueprint $table) {
-
             $table->increments('id');
 
             $table->string('description');
@@ -22,8 +21,7 @@ class CreateTaxComponentsTable extends Migration
             $table->timestamps();
 
             $table->index(['description']);
-
-        });    
+        });
     }
 
     /**

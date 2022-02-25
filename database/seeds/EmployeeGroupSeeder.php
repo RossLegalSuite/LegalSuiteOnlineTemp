@@ -2,10 +2,8 @@
 
 use Illuminate\Database\Seeder;
 
-
 class EmployeeGroupSeeder extends Seeder
 {
-
     public function run()
     {
         DB::table('employee_groups')->insert(['code' => 'supervisor', 'description' => 'Supervisor']);
@@ -26,7 +24,7 @@ class EmployeeGroupSeeder extends Seeder
         DB::table('resources')->insert(['description' => 'Fee Codes']);
         DB::table('resources')->insert(['description' => 'Fee Items']);
         DB::table('resources')->insert(['description' => 'Fee Units']);
-        
+
         DB::table('resources')->insert(['description' => 'Fee Notes']);
         DB::table('resources')->insert(['description' => 'Disbursements']);
         DB::table('resources')->insert(['description' => 'File Notes']);
@@ -45,8 +43,8 @@ class EmployeeGroupSeeder extends Seeder
         DB::table('resources')->insert(['description' => 'Trust Accounts']);
 
         DB::table('resources')->insert(['description' => 'General Ledger']);
-        DB::table('resources')->insert(['description' => 'Journals', ]);
-        DB::table('resources')->insert(['description' => 'Audit Trail', ]);
+        DB::table('resources')->insert(['description' => 'Journals']);
+        DB::table('resources')->insert(['description' => 'Audit Trail']);
 
         DB::table('resources')->insert(['description' => 'Settings']);
         DB::table('resources')->insert(['description' => 'Company']);
@@ -67,15 +65,13 @@ class EmployeeGroupSeeder extends Seeder
         DB::table('resources')->insert(['description' => 'Template Components']);
         DB::table('resources')->insert(['description' => 'Extra Screens']);
 
-        $query = DB::table('employee_groups')->where('code','<>','supervisor');
+        $query = DB::table('employee_groups')->where('code', '<>', 'supervisor');
 
         foreach ($query->cursor() as $employeeGroup) {
-
             $childQuery = DB::table('resources');
 
             foreach ($childQuery->cursor() as $resource) {
-
-                if  ( 
+                if (
                     $resource->description === 'Import Data' ||
                     $resource->description === 'Employee Groups'
                 ) {
@@ -83,57 +79,42 @@ class EmployeeGroupSeeder extends Seeder
                     $insertFlag = 0;
                     $changeFlag = 0;
                     $deleteFlag = 0;
-
-                } else if  ( $resource->description === 'Settings' || 
+                } elseif ($resource->description === 'Settings' ||
                     $resource->description === 'General Ledger' ||
                     $resource->description === 'Bank Recon' ||
                     $resource->description === 'Trust Accounts'
                     ) {
-
-                    if ( $employeeGroup->code === 'manager' || $employeeGroup->code === 'accountant' ) {
-    
+                    if ($employeeGroup->code === 'manager' || $employeeGroup->code === 'accountant') {
                         $viewFlag = 1;
                         $insertFlag = 1;
                         $changeFlag = 1;
                         $deleteFlag = 1;
-    
                     } else {
-    
                         $viewFlag = 0;
                         $insertFlag = 0;
                         $changeFlag = 0;
                         $deleteFlag = 0;
-    
                     }
-    
-                } else if  ($resource->description === 'Journals' || 
-                            $resource->description === 'Chart of Accounts' || 
-                            $resource->description === 'Trust Accounts' || 
+                } elseif ($resource->description === 'Journals' ||
+                            $resource->description === 'Chart of Accounts' ||
+                            $resource->description === 'Trust Accounts' ||
                             $resource->description === 'Tax Rates') {
-    
-                    if ( $employeeGroup->code === 'accountant' ) {
-    
+                    if ($employeeGroup->code === 'accountant') {
                         $viewFlag = 1;
                         $insertFlag = 1;
                         $changeFlag = 1;
                         $deleteFlag = 1;
-    
                     } else {
-    
                         $viewFlag = 0;
                         $insertFlag = 0;
                         $changeFlag = 0;
                         $deleteFlag = 0;
-    
                     }
-    
                 } else {
-    
                     $viewFlag = 1;
                     $insertFlag = 1;
                     $changeFlag = 1;
                     $deleteFlag = 1;
-    
                 }
 
                 DB::table('permissions')->insert([
@@ -144,9 +125,7 @@ class EmployeeGroupSeeder extends Seeder
                     'changeFlag' => $changeFlag,
                     'deleteFlag' => $deleteFlag,
                 ]);
-
             }
-
-        };        
+        }
     }
 }

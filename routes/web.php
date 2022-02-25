@@ -9,36 +9,40 @@
 //use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-
 Route::post('/logout', '\App\Http\Controllers\Auth\LoginController@logout')->name('logout');
 
-Route::get('/checkSession', function () {  return session()->has('companyCode') ? 'true' : 'false'; });
-Route::get('/killSession', function () {  session()->flush(); return 'Session killed'; });
+Route::get('/checkSession', function () {
+    return session()->has('companyCode') ? 'true' : 'false';
+});
+Route::get('/killSession', function () {
+    session()->flush();
+
+    return 'Session killed';
+});
 
 Route::middleware(['loggedout'])->group(function () {
-
     Route::post('/login', '\App\Http\Controllers\Auth\LoginController@login')->name('login');
     Route::post('/register', '\App\Http\Controllers\Auth\RegisterController@register')->name('register');
     Route::post('/generateCompanyCode', '\App\Http\Controllers\Auth\RegisterController@generateCompanyCode');
     Route::post('/checkRegister', '\App\Http\Controllers\Auth\RegisterController@checkRegister')->name('checkRegister');
-
 });
 
-Route::get('/', function () {  
-    return view('welcome'); 
-});//->name('welcome');
+Route::get('/', function () {
+    return view('welcome');
+}); //->name('welcome');
 
-Route::get('/login/{firmcode}', function () {  
-    return view('client'); 
+Route::get('/login/{firmcode}', function () {
+    return view('client');
 });
-
 
 Route::middleware(['loggedin'])->group(function () {
+    Route::get('/home', function () {
+        return view('app');
+    })->name('home');
 
-    
-    Route::get('/home', function () {  return view('app'); })->name('home');
-
-    Route::get('/{any}', function () { return redirect('/home'); });//->where('any','.*');
+    Route::get('/{any}', function () {
+        return redirect('/home');
+    }); //->where('any','.*');
 
     //***************************************************************/
     // Extra Screens
@@ -46,7 +50,7 @@ Route::middleware(['loggedin'])->group(function () {
     Route::prefix('extrascreens')->group(function () {
         Route::post('store', 'ExtraScreenController@store');
     });
-    
+
     //***************************************************************/
     // Extra Screen Fields
     //***************************************************************/
@@ -55,7 +59,6 @@ Route::middleware(['loggedin'])->group(function () {
         Route::post('store', 'ExtraScreenFieldController@store');
         Route::post('delete', 'ExtraScreenFieldController@destroy');
     });
-    
 
     //***************************************************************/
     // Matter Extra Screen Data
@@ -63,21 +66,20 @@ Route::middleware(['loggedin'])->group(function () {
     Route::prefix('matter_extra_screens')->group(function () {
         Route::post('get', 'MatterExtraScreenController@get');
     });
-    
+
     //***************************************************************/
     // Party Extra Screen Data
     //***************************************************************/
     Route::prefix('party_extra_screens')->group(function () {
         Route::post('get', 'PartyExtraScreenController@get');
     });
-    
+
     //***************************************************************/
     // Matter Party Extra Screen Data
     //***************************************************************/
     Route::prefix('matter_party_extra_screens')->group(function () {
         Route::post('get', 'MatterPartyExtraScreenController@get');
     });
-    
 
     //***************************************************************/
     // Contact Numbers
@@ -92,7 +94,6 @@ Route::middleware(['loggedin'])->group(function () {
 
     Route::post('doclog/upload/{recordid}', 'UtilsController@uploadDocLogDocument');
 
-    
     //***************************************************************/
     // Utils Controller
     //***************************************************************/
@@ -134,7 +135,7 @@ Route::middleware(['loggedin'])->group(function () {
         Route::post('checkSorter', 'MatterPartyController@checkSorter');
         Route::post('getTablePosition', 'MatterPartyController@getTablePosition');
     });
-    
+
     //***************************************************************/
     // Employees
     //***************************************************************/
@@ -167,8 +168,6 @@ Route::middleware(['loggedin'])->group(function () {
         Route::post('getCorrespondenceEmail', 'EmailController@getCorrespondenceEmail');
     });
 
-
-
     //***************************************************************/
     // Reports
     //***************************************************************/
@@ -191,17 +190,15 @@ Route::middleware(['loggedin'])->group(function () {
     //     Route::post('replaceLetterHead', 'LibreController@replaceLetterHead');
     // });
 
-
     //***************************************************************/
     // Pdf
     //***************************************************************/
-    
+
     Route::prefix('pdf')->group(function () {
         Route::get('combine', 'PdfController@combine');
         Route::post('combine', 'PdfController@combine');
         Route::post('htmlToPdf', 'PdfController@htmlToPdf');
     });
-
 
     //***************************************************************/
     // Files
@@ -235,5 +232,4 @@ Route::middleware(['loggedin'])->group(function () {
     Route::post('{tablename}/copy', 'GenericTableController@copy');
     Route::post('{tablename}/getTemplateData/{recordid?}', 'GenericTableController@getTemplateData');
     Route::post('{tablename}/storeRecords', 'GenericTableController@storeRecords');
-
 });

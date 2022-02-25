@@ -1,15 +1,14 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 class CreateEmployeeFiltersTable extends Migration
 {
     public function up()
     {
         Schema::create('employee_filters', function (Blueprint $table) {
-
             $table->string('tableId');
             $table->unsignedInteger('employeeId');
             $table->unsignedInteger('index');
@@ -33,8 +32,7 @@ class CreateEmployeeFiltersTable extends Migration
 
             $table->foreign('employeeId')
             ->references('id')->on('employees')
-            ->onDelete('restrict');            
-
+            ->onDelete('restrict');
         });
     }
 

@@ -1,8 +1,8 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 class CreatePartyEntitiesTable extends Migration
 {
@@ -21,7 +21,7 @@ class CreatePartyEntitiesTable extends Migration
             $table->string('textColor')->default('#000');
             $table->string('backgroundColor')->default('#FFF');
 
-            $table->index(['type','description']);
+            $table->index(['type', 'description']);
         });
     }
 

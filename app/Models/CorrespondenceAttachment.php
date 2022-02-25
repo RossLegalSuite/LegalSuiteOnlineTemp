@@ -7,8 +7,10 @@ use Illuminate\Database\Eloquent\Model;
 class CorrespondenceAttachment extends Model
 {
     protected $guarded = ['id'];
-    protected $table = 'correspondence_attachments';
-    public $timestamps = false;
-    protected $connection = 'user';
 
+    protected $table = 'correspondence_attachments';
+
+    public $timestamps = false;
+
+    protected $connection = 'user';
 }

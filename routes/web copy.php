@@ -2,8 +2,9 @@
 
 //logger('web.php session->all()',[session()->all()]);
 
-
-Route::get('/', function () {return view('welcome');})->name('welcome')->middleware('loggedout');
+Route::get('/', function () {
+    return view('welcome');
+})->name('welcome')->middleware('loggedout');
 
 Route::get('/login', 'Auth\LoginController@showLoginForm')->middleware('loggedout');
 Route::post('/login', 'Auth\LoginController@login')->name('login');
@@ -14,7 +15,6 @@ Route::post('/register', 'Auth\RegisterController@register')->name('register');
 
 Route::get('/home', 'HomeController@index')->name('home')->middleware('loggedin');
 Route::get('/filofax', 'HomeController@filofax')->middleware('loggedin');
-
 
 Route::resource('employees', 'EmployeeController')->except(['index']);
 Route::post('/get-employees', 'EmployeeController@getEmployees');
@@ -39,7 +39,6 @@ Route::post('/matters/create', 'MatterController@store');
 Route::get('/matters/{party}/edit', 'MatterController@edit');
 Route::patch('/matters/{party}/edit', 'MatterController@store');
 Route::delete('/matters/{party}', 'MatterController@destroy');
-
 
 Route::resource('party_roles', 'PartyRoleController')->except(['index']);
 Route::post('/getPartyRoles', 'PartyRoleController@getPartyRoles');
@@ -67,7 +66,12 @@ Route::post('/getPartyNumbers', 'PartyNumberController@getPartyNumbers');
 Route::post('/storePartyNumber', 'PartyNumberController@storePartyNumber');
 Route::post('/deletePartyNumber', 'PartyNumberController@deletePartyNumber');
 
-Route::get('/chat', function () { return view('chat'); } );
-Route::get('/mail', function () { return view('mail'); } );
-Route::get('/dual-register', function () { return view('dual-register'); } );
-
+Route::get('/chat', function () {
+    return view('chat');
+});
+Route::get('/mail', function () {
+    return view('mail');
+});
+Route::get('/dual-register', function () {
+    return view('dual-register');
+});

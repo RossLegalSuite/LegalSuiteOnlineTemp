@@ -6,8 +6,7 @@ class CreateCreditorAgingView extends Migration
 {
     public function up()
     {
-
-        DB::statement("
+        DB::statement('
         CREATE OR REPLACE VIEW creditor_aging AS
             select 
             creditorId,
@@ -18,12 +17,11 @@ class CreateCreditorAgingView extends Migration
             sum(case when days > 120 then balance else 0 end) as days120
             from creditor_balances
             group by creditorId
-        ");
+        ');
     }
 
     public function down()
     {
         DB::statement('DROP VIEW IF EXISTS creditor_aging');
     }
-    
 }

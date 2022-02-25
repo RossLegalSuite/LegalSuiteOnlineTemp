@@ -6,7 +6,6 @@ class CreateClientTrustBalancesView extends Migration
 {
     public function up()
     {
-
         DB::statement("
         CREATE OR REPLACE VIEW client_trust_balances AS
         select clientParty.partyId, 
@@ -26,5 +25,4 @@ class CreateClientTrustBalancesView extends Migration
     {
         DB::statement('DROP VIEW IF EXISTS client_trust_balances');
     }
-    
 }

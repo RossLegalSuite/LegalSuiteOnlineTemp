@@ -2,7 +2,6 @@
 
 use Illuminate\Database\Seeder;
 
-
 class DocumentTemplateSeeder extends Seeder
 {
     public function run()
@@ -18,6 +17,5 @@ class DocumentTemplateSeeder extends Seeder
             'docxFile' => 'https://ettorney-users.s3.af-south-1.amazonaws.com/acme/1/templates/MatterExample.docx',
             'pdfFile' => 'https://ettorney-users.s3.af-south-1.amazonaws.com/acme/1/templates/MatterExample.pdf',
         ]);
-        
     }
 }

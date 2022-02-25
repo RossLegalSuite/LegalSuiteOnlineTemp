@@ -1,8 +1,8 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 class CreateBillDebitsTable extends Migration
 {
@@ -14,7 +14,6 @@ class CreateBillDebitsTable extends Migration
     public function up()
     {
         Schema::create('bill_debits', function (Blueprint $table) {
-
             $table->increments('id');
             $table->unsignedInteger('createdById');
             $table->unsignedInteger('billId');
@@ -24,19 +23,19 @@ class CreateBillDebitsTable extends Migration
             $table->dateTime('date');
             $table->enum('type', ['Expense', 'Disbursement']);
             $table->text('description');
-            
+
             $table->unsignedInteger('taxRateId');
             $table->decimal('taxAmount', 15, 2);
             $table->decimal('amount', 15, 2);
             $table->decimal('totalAmount', 15, 2)->storedAs('taxAmount + amount');
 
             $table->index(['type']);
-            $table->index(['billId','type']);
+            $table->index(['billId', 'type']);
 
             $table->foreign('matterId')
             ->references('id')->on('matters')
             ->onDelete('restrict');
-            
+
             $table->foreign('createdById')
             ->references('id')->on('employees')
             ->onDelete('restrict');
@@ -52,9 +51,7 @@ class CreateBillDebitsTable extends Migration
             $table->foreign('expenseAccountId')
             ->references('id')->on('accounts')
             ->onDelete('restrict');
-
-
-        });    
+        });
     }
 
     /**

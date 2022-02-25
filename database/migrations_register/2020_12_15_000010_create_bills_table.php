@@ -1,8 +1,8 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 class CreateBillsTable extends Migration
 {
@@ -20,13 +20,11 @@ class CreateBillsTable extends Migration
 
             $table->foreign('createdById')
             ->references('id')->on('employees')
-            ->onDelete('restrict');            
-            
+            ->onDelete('restrict');
+
             $table->foreign('creditorId')
             ->references('id')->on('creditors')
             ->onDelete('restrict');
-
-
         });
     }
 

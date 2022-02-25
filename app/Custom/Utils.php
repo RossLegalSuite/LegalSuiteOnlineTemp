@@ -2,21 +2,20 @@
 
 namespace App\Custom;
 
-
 //use App\Models\Company;
 //use App\Models\Employee;
 use Carbon\Carbon;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Config;
-use Maatwebsite\Excel\{Sheet, Writer};
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use Maatwebsite\Excel\Sheet;
+use Maatwebsite\Excel\Writer;
 
 class Utils
 {
-
-        /* TO DO 
+        /* TO DO
         if ($request->where) $query->where( $request->where['column'], $request->where['value'] );
-        
+
         if ($request->where2) $query->where( $request->where2['column'], $request->where2['value'] );
 
         if ($request->whereIn) $query->whereIn( $request->whereIn['column'], $request->whereIn['value'] );
@@ -32,9 +31,6 @@ class Utils
         if ($request->whereClause) $query->whereRaw($request->whereClause);
         */
 
-
-
-
     public static function convertClarionDate($date)
     {
 
@@ -42,24 +38,20 @@ class Utils
 
         $thisDate = strtotime($date); // Get the unix date for the sent date (in seconds since 1 Jan 1970)
 
-        $baseDate = mktime(0,0,0,1,1,1980); //Set a base date that UNIX can Handle (it cant go before 1/1/1902!!)
+        $baseDate = mktime(0, 0, 0, 1, 1, 1980); //Set a base date that UNIX can Handle (it cant go before 1/1/1902!!)
 
         $daysDiff = $thisDate - $baseDate; //Get the difference (in seconds)
 
-        $clarionDays = (int)floor($daysDiff/86400); //Divide by (60*60*24) and round down to the whole number to give us the no of days since 1/1/1980
-        
+        $clarionDays = (int) floor($daysDiff / 86400); //Divide by (60*60*24) and round down to the whole number to give us the no of days since 1/1/1980
+
         $clarionDays += 65382; //Add the days since 1/1/1800 Clarions Base Date to give us the Clarion Date integer for $SentDate
 
-        return($clarionDays);
-
+        return $clarionDays;
     }
 
-
-
-    public static function getCurlError($errNo) {
-
-
-        $error_codes=array(
+    public static function getCurlError($errNo)
+    {
+        $error_codes = [
             '1' => 'CURLE_UNSUPPORTED_PROTOCOL',
             '2' => 'CURLE_FAILED_INIT',
             '3' => 'CURLE_URL_MALFORMAT',
@@ -136,18 +128,17 @@ class Utils
             '85' => 'CURLE_RTSP_CSEQ_ERROR',
             '86' => 'CURLE_RTSP_SESSION_ERROR',
             '87' => 'CURLE_FTP_BAD_FILE_LIST',
-            '88' => 'CURLE_CHUNK_FAILED');
-            return $error_codes[$errNo];
+            '88' => 'CURLE_CHUNK_FAILED', ];
 
+        return $error_codes[$errNo];
     }
 
     public static function SetCurlParams($apiUrl, $customRequest = 'GET', $postFields = [])
     {
-
         try {
 
             // Stripping out Char(13) e.g. in case a Where Clause is sent from a text area
-            $apiUrl = str_replace("\n", "", $apiUrl);
+            $apiUrl = str_replace("\n", '', $apiUrl);
 
             // if ($apiUrl == "/library/get" || $apiUrl == "/LolSystemTemplate/get") {
             //      logger('Util.php Curl Settings',[config('api.url') . $apiUrl,$customRequest,$postFields]);
@@ -157,8 +148,8 @@ class Utils
 
             //https://stackoverflow.com/questions/4344528/curlopt-postfields-has-a-length-or-size-limit
 
-            curl_setopt_array($curl, array(
-                CURLOPT_URL => config('api.url') . $apiUrl,
+            curl_setopt_array($curl, [
+                CURLOPT_URL => config('api.url').$apiUrl,
                 CURLOPT_RETURNTRANSFER => true,
                 CURLOPT_ENCODING => '',
                 CURLOPT_SSL_VERIFYPEER => false,
@@ -169,37 +160,30 @@ class Utils
                 CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
                 CURLOPT_CUSTOMREQUEST => $customRequest,
                 CURLOPT_POSTFIELDS => $postFields,
-                CURLOPT_HTTPHEADER => array(
-                    'Authorization: Bearer ' . session('api_token'),
+                CURLOPT_HTTPHEADER => [
+                    'Authorization: Bearer '.session('api_token'),
                     'Content-Type: application/x-www-form-urlencoded',
-                    'Expect: 100-continue'
-                ),
-            ));
+                    'Expect: 100-continue',
+                ],
+            ]);
 
             $curlResponse = curl_exec($curl);
 
-            if ( curl_errno($curl) ) {
-            
-                $response["errors"] = '<p>Could not connect to ' . config('api.url') . '</p><p>Curl Error No: ' . curl_errno($curl) . '</p><p>' . \App\Custom\Utils::getCurlError( curl_errno($curl) ) . '</p>'; 
-                curl_close($curl); 
+            if (curl_errno($curl)) {
+                $response['errors'] = '<p>Could not connect to '.config('api.url').'</p><p>Curl Error No: '.curl_errno($curl).'</p><p>'.self::getCurlError(curl_errno($curl)).'</p>';
+                curl_close($curl);
+
                 return $response;
-
             } else {
-
-                $response = json_decode( $curlResponse );
-
+                $response = json_decode($curlResponse);
             }
 
             curl_close($curl);
 
             return $response;
-
-        } catch(\Exception $e)  {
-
+        } catch (\Exception $e) {
             throw new \Exception($e->getMessage());
-
         }
-
     }
 
     public static function SetExcelMacros()
@@ -226,16 +210,14 @@ class Utils
 
     public static function DB()
     {
-
         return DB::connection('user');
-        
     }
-
 
     public static function SetConnection($companyCode)
     {
-
-        if(! defined('STDIN')) define('STDIN', fopen("php://stdin","r"));
+        if (! defined('STDIN')) {
+            define('STDIN', fopen('php://stdin', 'r'));
+        }
 
         // 18 Oct 2020
         // Problem: env('DB_HOST') is null in General.php
@@ -245,21 +227,19 @@ class Utils
 
         $dbHost = Config::get('values.dbhost');
 
-
-        $db = strtolower(preg_replace('/[^a-zA-Z0-9-_\.]/','', $companyCode));
-        $user = $db . '_user';
-        $password = $db . '_1024';
+        $db = strtolower(preg_replace('/[^a-zA-Z0-9-_\.]/', '', $companyCode));
+        $user = $db.'_user';
+        $password = $db.'_1024';
 
         config(['database.default' => 'user']);
-        
-        config(['database.connections.user' =>
-        [
+
+        config(['database.connections.user' => [
             'driver' =>     'mysql',
-            "host" =>       $dbHost,
-            "database" =>   $db,
-            "port" =>       '3306',
-            "username" =>   $user,
-            "password" =>   $password,
+            'host' =>       $dbHost,
+            'database' =>   $db,
+            'port' =>       '3306',
+            'username' =>   $user,
+            'password' =>   $password,
             'charset' =>    'utf8mb4',
             'collation' =>  'utf8mb4_unicode_ci',
             'prefix' =>     '',
@@ -270,21 +250,20 @@ class Utils
 
         //logger("User Connection')",config('database.connections.user'));
 
-        $adminUser = $db . '_admin';
+        $adminUser = $db.'_admin';
         $adminPassword = 'Bacon1024!!';
 
         // **********************************************
         //Create an admin connection to do the migrations
         // **********************************************
 
-        config(['database.connections.admin' =>
-        [
+        config(['database.connections.admin' => [
             'driver' =>     'mysql',
-            "host" =>       $dbHost,
-            "database" =>   $db,
-            "port" =>       '3306',
-            "username" =>   $adminUser,
-            "password" =>   $adminPassword,
+            'host' =>       $dbHost,
+            'database' =>   $db,
+            'port' =>       '3306',
+            'username' =>   $adminUser,
+            'password' =>   $adminPassword,
             'charset' =>    'utf8mb4',
             'collation' =>  'utf8mb4_unicode_ci',
             'prefix' =>     '',
@@ -294,15 +273,11 @@ class Utils
         ]]);
 
         //logger("admin Connection')",config('database.connections.admin'));
-
     }
-
 
     public static function LogSqlQuery($query)
     {
-
         if (config('app.debug')) {
-
             $sqlQuery = str_replace_array('?', $query->getBindings(), $query->toSql());
             logger($sqlQuery);
         }
@@ -310,24 +285,20 @@ class Utils
 
     public static function getDisbursementsControlAccount($disbursementsControlAccountId, $disbursementId, $disbursementDescription)
     {
-
         $parentAccountId = $disbursementsControlAccountId;
 
         $parentAccount = \App\Models\Account::findOrFail($parentAccountId);
 
-        $disbursementChildAccount = \App\Models\Account::where('parentId',$disbursementsControlAccountId)
+        $disbursementChildAccount = \App\Models\Account::where('parentId', $disbursementsControlAccountId)
         ->where('disbursementId', $disbursementId)
         ->first();
 
-        if ( $disbursementChildAccount ) {
-
+        if ($disbursementChildAccount) {
             return $disbursementChildAccount;
-
         } else {
-
             return \App\Models\Account::create([
                 'parentId' => $parentAccount->id,
-                'code' => $parentAccount->code . '-' . Utils::padNumber($disbursementId),
+                'code' => $parentAccount->code.'-'.self::padNumber($disbursementId),
                 'disbursementId' => $disbursementId,
                 'description' => $disbursementDescription,
                 'category' => $parentAccount->category,
@@ -335,202 +306,155 @@ class Utils
                 'taxRateId' => $parentAccount->taxRateId,
                 'notes' => 'Prepaid expense recoverable from the Client',
             ]);
-
         }
-
     }
-
 
     public static function padNumber($number)
     {
-
         if ($number < 10000) {
-
             return str_pad(strval($number), 5, '0', STR_PAD_LEFT);
-
         } else {
-
-            return(strval($number));
-
+            return strval($number);
         }
-
     }
 
-
-
-    public static function generateCode($table, $description) {
-
-        $description = preg_replace("/[^a-zA-Z0-9]/", "", $description);
+    public static function generateCode($table, $description)
+    {
+        $description = preg_replace('/[^a-zA-Z0-9]/', '', $description);
 
         return Str::camel($description);
-
     }
 
-    public static function generateCode_Deprecated($table, $description) {
+    public static function generateCode_Deprecated($table, $description)
+    {
+        $description = preg_replace('/[^a-zA-Z0-9]/', '', $description);
 
-        $description = preg_replace("/[^a-zA-Z0-9]/", "", $description);
+        while (strlen($description) < 4) {
+            $description = $description.'_';
+        }
 
-        while ( strlen($description) < 4 ) { $description = $description . '_'; }
+        $code = strtoupper(substr($description, 0, 4));
 
-        $code = strtoupper(substr($description,0,4));
-
-        $counter = DB::table($table)->where('code', 'like', $code . '%')->count();
+        $counter = DB::table($table)->where('code', 'like', $code.'%')->count();
 
         if ($counter) {
 
             //$counter++;
-            
-            while($counter <= 5000) {
 
-                $existingRecord = DB::table($table)->where('code',$code . $counter)->first();
+            while ($counter <= 5000) {
+                $existingRecord = DB::table($table)->where('code', $code.$counter)->first();
 
-                if (!$existingRecord) break;
+                if (! $existingRecord) {
+                    break;
+                }
 
                 $counter++;
-                
             }
 
-            return $code . $counter;
-
+            return $code.$counter;
         } else {
-
             return $code;
-
         }
-
-
     }
 
-
-    public static function isWritable($path) {
-
-        
+    public static function isWritable($path)
+    {
         if (file_exists($path)) {
-            if (!($f = @fopen($path, 'r+')))  return false;
+            if (! ($f = @fopen($path, 'r+'))) {
+                return false;
+            }
             fclose($f);
+
             return true;
         }
-        
-        if (!($f = @fopen($path, 'w'))) return false;
+
+        if (! ($f = @fopen($path, 'w'))) {
+            return false;
+        }
 
         fclose($f);
 
         unlink($path);
 
         return true;
-
     }
 
     public static function sqlDateFormat()
     {
 
         //https://www.w3schools.com/sql/func_mysql_date_format.asp
-        
 
-        if ( session('dateFormat') === 'DD MMM YYYY') {
-
+        if (session('dateFormat') === 'DD MMM YYYY') {
             return '%d %b %Y';
-
-        } else if ( session('dateFormat') === 'DD-MM-YYYY') {   
-
+        } elseif (session('dateFormat') === 'DD-MM-YYYY') {
             return '%d-%m-%Y';
-
-        } else if ( session('dateFormat') === 'DD/MM/YYYY') {
-
+        } elseif (session('dateFormat') === 'DD/MM/YYYY') {
             return '%d/%m/%Y';
-
-        } else if ( session('dateFormat') === 'MM-DD-YYYY') {   
-
+        } elseif (session('dateFormat') === 'MM-DD-YYYY') {
             return '%m-%d-%Y';
-
-        } else if ( session('dateFormat') === 'MM/DD/YYYY') {   
-
+        } elseif (session('dateFormat') === 'MM/DD/YYYY') {
             return '%m/%d/%Y';
-
-        } else if ( session('dateFormat') === 'YYYY-MM-DD') {   
-
+        } elseif (session('dateFormat') === 'YYYY-MM-DD') {
             return '%Y-%m-%d';
-
-        } else if ( session('dateFormat') === 'YYYY/MM/DD') {   
-
+        } elseif (session('dateFormat') === 'YYYY/MM/DD') {
             return '%Y/%m/%d';
-
-        } else {   
-
+        } else {
             return '%m-%d-%Y';
-
         }
-
     }
 
     public static function sqlDateTimeFormat()
     {
-
-        return Utils::sqlDateFormat() . ' %H:%i:%s';
-
+        return self::sqlDateFormat().' %H:%i:%s';
     }
 
     public static function convertDate($date)
     {
 
         //https://stackoverflow.com/questions/2891937/strtotime-doesnt-work-with-dd-mm-yyyy-format
-        
 
-        if ( session('dateFormat') === 'DD/MM/YYYY') {
-
+        if (session('dateFormat') === 'DD/MM/YYYY') {
             $date = str_replace('/', '-', $date);
-
-        } else if ( session('dateFormat') === 'MM-DD-YYYY') {   
-
+        } elseif (session('dateFormat') === 'MM-DD-YYYY') {
             $date = str_replace('-', '/', $date);
         }
 
-
-        return date('Y-m-d', strtotime( $date ));
-
-
+        return date('Y-m-d', strtotime($date));
     }
 
     public static function convertDateTime($date)
     {
 
         //https://stackoverflow.com/questions/2891937/strtotime-doesnt-work-with-dd-mm-yyyy-format
-        
 
-        if ( session('dateFormat') === 'DD/MM/YYYY') {
-
+        if (session('dateFormat') === 'DD/MM/YYYY') {
             $date = str_replace('/', '-', $date);
-
-        } else if ( session('dateFormat') === 'MM-DD-YYYY') {   
-
+        } elseif (session('dateFormat') === 'MM-DD-YYYY') {
             $date = str_replace('-', '/', $date);
         }
 
-        $utcDate = Carbon::parse($date, session('timeZone') )->setTimezone('UTC');
+        $utcDate = Carbon::parse($date, session('timeZone'))->setTimezone('UTC');
 
-        return date('Y-m-d H:i:s', strtotime( $utcDate ));
-
+        return date('Y-m-d H:i:s', strtotime($utcDate));
     }
-
 
     public static function MySqlError($e, $recordInUse = 'another record')
     {
-
         $message = explode(' ', $e->getMessage());
         $dbCode = rtrim($message[3], ']');
         $dbCode = trim($dbCode, '[');
 
-        if (!is_numeric($dbCode)) {
+        if (! is_numeric($dbCode)) {
             $dbCode = rtrim($message[4], ']');
             $dbCode = trim($dbCode, '[');
         }
 
-        if (!is_numeric($dbCode)) {
+        if (! is_numeric($dbCode)) {
             $dbCode = rtrim($message[5], ']');
             $dbCode = trim($dbCode, '[');
         }
 
-        if (!is_numeric($dbCode)) {
+        if (! is_numeric($dbCode)) {
             $dbCode = rtrim($message[6], ']');
             $dbCode = trim($dbCode, '[');
         }
@@ -539,8 +463,7 @@ class Utils
         //logger('MySql error ARRAY',[$message]);
         //logger('$dbCode',[$dbCode]);
 
-        switch ($dbCode)
-        {
+        switch ($dbCode) {
             case 1396:
                 $userMessage = 'Cannot create user.';
                 break;
@@ -571,10 +494,5 @@ class Utils
         }
 
         return $userMessage;
-
     }
-    
 }
-
-
-

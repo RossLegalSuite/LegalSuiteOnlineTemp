@@ -1,8 +1,8 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 class CreateMattersTable extends Migration
 {
@@ -10,12 +10,12 @@ class CreateMattersTable extends Migration
     {
         Schema::create('matters', function (Blueprint $table) {
             $table->increments('id');
-            
+
             $table->string('fileRef')->unique();
             $table->string('description');
             $table->date('instructed');
             $table->decimal('quantum', 15, 2)->nullable();
-                        
+
             $table->unsignedInteger('feeSheetId');
             $table->unsignedInteger('matterTypeId');
             $table->unsignedInteger('documentSetId');
@@ -26,7 +26,7 @@ class CreateMattersTable extends Migration
             $table->index(['description']);
             $table->index(['instructed']);
 
-            $table->foreign('feeSheetId')->references('id')->on('fee_sheets');            
+            $table->foreign('feeSheetId')->references('id')->on('fee_sheets');
 
             $table->foreign('branchId')->references('id')->on('branches');
 
@@ -37,7 +37,6 @@ class CreateMattersTable extends Migration
             $table->foreign('incomeAccountId')->references('id')->on('accounts');
 
             $table->foreign('trustBankAccountId')->references('id')->on('accounts');
-
         });
     }
 

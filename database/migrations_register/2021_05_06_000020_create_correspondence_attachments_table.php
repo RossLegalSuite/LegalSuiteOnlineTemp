@@ -1,13 +1,11 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
-
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 class CreateCorrespondenceAttachmentsTable extends Migration
 {
-    
     public function up()
     {
         Schema::create('correspondence_attachments', function (Blueprint $table) {
@@ -20,9 +18,7 @@ class CreateCorrespondenceAttachmentsTable extends Migration
             $table->string('imageFileName');
 
             $table->foreign('correspondenceId')->references('id')->on('correspondence');
-
-            
-        });    
+        });
     }
 
     public function down()

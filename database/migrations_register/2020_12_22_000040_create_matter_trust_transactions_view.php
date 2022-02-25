@@ -6,7 +6,6 @@ class CreateMatterTrustTransactionsView extends Migration
 {
     public function up()
     {
-
         DB::statement("
         CREATE OR REPLACE VIEW matter_trust_transactions AS
         SELECT
@@ -48,5 +47,4 @@ class CreateMatterTrustTransactionsView extends Migration
     {
         DB::statement('DROP VIEW IF EXISTS matter_trust_transactions');
     }
-    
 }

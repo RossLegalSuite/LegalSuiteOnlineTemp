@@ -23,7 +23,6 @@ return [
     //     'passwords' => 'users',
     // ],
 
-
     /*
     |--------------------------------------------------------------------------
     | Authentication Guards
@@ -42,12 +41,12 @@ return [
     */
 
     'guards' => [
-        
+
         'web' => [
             'driver' => 'session',
             'provider' => 'users',
         ],
-        
+
         'employee' => [
             'driver' => 'session',
             'provider' => 'employees',
@@ -86,8 +85,7 @@ return [
         'employees' => [
             'driver' => 'eloquent',
             'model' => App\Employee::class,
-        ],    
-    
+        ],
 
         // 'users' => [
         //     'driver' => 'database',
@@ -123,6 +121,5 @@ return [
         //     'expire' => 60,
         // ],
     ],
-
 
 ];

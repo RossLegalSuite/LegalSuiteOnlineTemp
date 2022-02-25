@@ -4,26 +4,50 @@ namespace App\Custom;
 
 use App\Models\Account;
 use App\Models\Company;
-use App\Models\TaxRate;
 use App\Models\TaxComponent;
+use App\Models\TaxRate;
 use App\Models\TaxRateComponent;
-
 
 class AccountingSeeder
 {
+    protected $noTaxRate;
 
-    protected $noTaxRate, $noTaxComponent;
-    protected $oldTaxRate, $oldTaxComponent;
-    protected $salesTaxRate, $purchasesTaxRate, $currentTaxComponent;
-    protected $businessBankAccount, $trustBankAccount;
-    protected $equityAccount, $retainedEarningsAccount;
+    protected $noTaxComponent;
+
+    protected $oldTaxRate;
+
+    protected $oldTaxComponent;
+
+    protected $salesTaxRate;
+
+    protected $purchasesTaxRate;
+
+    protected $currentTaxComponent;
+
+    protected $businessBankAccount;
+
+    protected $trustBankAccount;
+
+    protected $equityAccount;
+
+    protected $retainedEarningsAccount;
+
     protected $incomeAccount;
+
     //protected $disbursementIncomeAccount;
     protected $interestReceivedAccount;
-    protected $purchasesAccount;
-    protected $accountsReceivableAccount, $disbursementsControlAccount, $accountsPayableAccount;
-    protected $trustControlAccount, $salesTaxAccount;
 
+    protected $purchasesAccount;
+
+    protected $accountsReceivableAccount;
+
+    protected $disbursementsControlAccount;
+
+    protected $accountsPayableAccount;
+
+    protected $trustControlAccount;
+
+    protected $salesTaxAccount;
 
     public function createCompany($request)
     {
@@ -61,48 +85,35 @@ class AccountingSeeder
         $region = 'us-east-1';
 
         if ($request->company_country === 'ZA') {
-
             $currencyCode = 'ZAR';
             $currencySymbol = 'R';
             $taxAuthority = 'SARS';
             $region = 'af-south-1';
             $salesTaxType = 'Vat';
-            
-        } else if ($request->company_country === 'GB') {
-            
+        } elseif ($request->company_country === 'GB') {
             $currencyCode = 'GBP';
             $currencySymbol = '£'; //Alt 0163
             $taxAuthority = 'HM Revenue & Customs';
             $region = 'eu-west-2';
             $salesTaxType = 'Vat';
-            
-        } else if ($request->company_country === 'AU') {
-            
+        } elseif ($request->company_country === 'AU') {
             $currencyCode = 'AUD';
             $taxAuthority = 'Australian Taxation Office';
             $region = 'ap-southeast-2';
-            
-        } else if ($request->company_country === 'NZ') {
-            
+        } elseif ($request->company_country === 'NZ') {
             $currencyCode = 'NZD';
             $taxAuthority = 'Inland Revenue';
             $region = 'ap-southeast-2';
-            
-        } else if ($request->company_country === 'CA') {
-            
+        } elseif ($request->company_country === 'CA') {
             $currencyCode = 'CAD';
             $taxAuthority = 'Canada Revenue Agency';
             $paperSize = 'Letter';
             $region = 'ca-central-1';
-
-        } else if ($request->company_country === 'US') {
-
+        } elseif ($request->company_country === 'US') {
             $currencyCode = 'USD';
             $taxAuthority = 'Internal Revenue Service';
             $paperSize = 'Letter';
-
         }
-
 
         Company::create([
             'name' => $request->company_name,
@@ -149,9 +160,7 @@ class AccountingSeeder
             'expensesTextColor' => '#222',
             'equityTextColor' => '#222',
         ]);
-            
     }
-
 
     // See: https://strategiccfo.com/standard-chart-of-accounts/
 
@@ -160,7 +169,6 @@ class AccountingSeeder
     // Equity - 3000-3990
     // Revenue - 4000-4990
     // Expenses - 5000-5990
-
 
     public function createAccounts($request)
     {
@@ -194,7 +202,7 @@ class AccountingSeeder
             'type' => 'Current Asset',
             'taxRateId' => $this->salesTaxRate->id,
         ]);
-        
+
         $this->disbursementsControlAccount = Account::create([
             'code' => '1210',
             'description' => 'Disbursements Receivable',
@@ -203,7 +211,6 @@ class AccountingSeeder
             'type' => 'Current Asset',
             'taxRateId' => $this->noTaxRate->id,
         ]);
-        
 
         Account::create([
             'code' => '1300',
@@ -272,21 +279,18 @@ class AccountingSeeder
             'taxRateId' => $this->noTaxRate->id,
         ]);
 
-        if ( $request->company_country === 'ZA' || $request->company_country === 'GB') {
-
+        if ($request->company_country === 'ZA' || $request->company_country === 'GB') {
             $taxAuthority = $request->company_country === 'ZA' ? 'SARS' : 'HM Revenue & Customs';
 
             $this->salesTaxAccount = Account::create([
                 'code' => '2310',
                 'description' => 'Vat Control Account',
-                'notes' => 'The Vat owed to ' . $taxAuthority,
+                'notes' => 'The Vat owed to '.$taxAuthority,
                 'category' => 'Liabilities',
                 'type' => 'Current Liability',
                 'taxRateId' => $this->noTaxRate->id,
             ]);
-
         } else {
-
             $this->salesTaxAccount = Account::create([
                 'code' => '2310',
                 'description' => 'Sales Tax Control Account',
@@ -295,12 +299,10 @@ class AccountingSeeder
                 'type' => 'Current Liability',
                 'taxRateId' => $this->noTaxRate->id,
             ]);
-
-
         }
 
         //https://strategiccfo.com/standard-chart-of-accounts/
-        if ( $request->company_country === 'US') {
+        if ($request->company_country === 'US') {
 
         // 2200 ACCRUED COMPENSATION & RELATED ITEMS
         // 2210 Accrued – Payroll
@@ -313,13 +315,12 @@ class AccountingSeeder
         // 2275 W/H – FICA
         // 2280 W/H – Medical Benefits
         // 2285 W/H – 401 K Employee Contribution
-        
+
         // 2300 OTHER ACCRUED EXPENSES
         // 2310 Accrued – Rent
         // 2320 Accrued – Interest
         // 2330 Accrued – Property Taxes
         // 2340 Accrued – Warranty Expense
-
         }
 
         Account::create([
@@ -392,7 +393,7 @@ class AccountingSeeder
             'type' => 'Revenue',
             'taxRateId' => $this->noTaxRate->id,
         ]);
-        
+
         Account::create([
             'code' => '4200',
             'description' => 'Other Income',
@@ -416,7 +417,6 @@ class AccountingSeeder
             'taxRateId' => $this->purchasesTaxRate->id,
         ]);
 
-
         Account::create([
             'code' => '5010',
             'description' => 'Accounting',
@@ -437,7 +437,7 @@ class AccountingSeeder
             'systemFlag' => 0,
 
         ]);
-        
+
         Account::create([
             'code' => '5030',
             'description' => 'Bad Debts',
@@ -457,10 +457,10 @@ class AccountingSeeder
             'type' => 'Expense',
             'taxRateId' => $this->purchasesTaxRate->id,
             'systemFlag' => 0,
-            
-            ]);
-            
-            Account::create([
+
+        ]);
+
+        Account::create([
             'code' => '5050',
             'description' => 'Commissions',
             'notes' => 'Payments to employees or third parties for work done',
@@ -481,7 +481,6 @@ class AccountingSeeder
             'systemFlag' => 0,
 
         ]);
-
 
         Account::create([
             'code' => '5070',
@@ -546,9 +545,9 @@ class AccountingSeeder
             'type' => 'Expense',
             'taxRateId' => $this->purchasesTaxRate->id,
             'systemFlag' => 0,
-            
-            ]);
-            
+
+        ]);
+
         Account::create([
             'code' => '5130',
             'description' => 'Licenses',
@@ -743,66 +742,61 @@ class AccountingSeeder
             'taxRateId' => $this->purchasesTaxRate->id,
             'systemFlag' => 0,
         ]);
-
-
     }
-
 
     public function createSouthAfricanTaxRates()
     {
 
-        // ******************************************************    
+        // ******************************************************
         // No Vat
-        // ******************************************************    
+        // ******************************************************
 
         $this->noTaxRate = TaxRate::create([
             'description' => 'No Vat',
-            'systemFlag' => true
+            'systemFlag' => true,
         ]);
 
         $this->noTaxComponent = TaxComponent::create([
             'description' => 'No Vat',
             'rate' => 0,
-            ]);
+        ]);
 
         TaxRateComponent::create([
             'taxRateId' => $this->noTaxRate->id,
             'taxComponentId' => $this->noTaxComponent->id,
         ]);
 
-        // ******************************************************    
+        // ******************************************************
         // Zero Rated
-        // ******************************************************    
+        // ******************************************************
 
         $zeroTaxRate = TaxRate::create([
             'description' => 'Zero Rated',
-            'systemFlag' => true
+            'systemFlag' => true,
         ]);
-
 
         TaxRateComponent::create([
             'taxRateId' => $zeroTaxRate->id,
             'taxComponentId' => $this->noTaxComponent->id,
         ]);
 
-        // ******************************************************    
+        // ******************************************************
         // Exempt
-        // ******************************************************    
+        // ******************************************************
 
         $exemptTaxRate = TaxRate::create([
             'description' => 'Exempt',
-            'systemFlag' => true
+            'systemFlag' => true,
         ]);
-
 
         TaxRateComponent::create([
             'taxRateId' => $exemptTaxRate->id,
             'taxComponentId' => $this->noTaxComponent->id,
         ]);
 
-        // ******************************************************    
+        // ******************************************************
         // Old Tax Rate
-        // ******************************************************    
+        // ******************************************************
 
         $this->oldTaxRate = TaxRate::create([
             'description' => 'Vat (14%)',
@@ -812,21 +806,21 @@ class AccountingSeeder
         $this->oldTaxComponent = TaxComponent::create([
             'description' => 'Vat',
             'rate' => 14,
-            ]);
+        ]);
 
         TaxRateComponent::create([
             'taxRateId' => $this->oldTaxRate->id,
             'taxComponentId' => $this->oldTaxComponent->id,
         ]);
 
-        // ******************************************************    
+        // ******************************************************
         // Current Sales Tax Rate
-        // ******************************************************    
+        // ******************************************************
 
         $this->salesTaxRate = $this->purchasesTaxRate = TaxRate::create([
             'description' => 'Vat (15%)',
             'rate' => 15,
-            'systemFlag' => true
+            'systemFlag' => true,
         ]);
 
         $currentTaxComponent = TaxComponent::create([
@@ -838,8 +832,5 @@ class AccountingSeeder
             'taxRateId' => $this->salesTaxRate->id,
             'taxComponentId' => $currentTaxComponent->id,
         ]);
-
     }
-
 }
-

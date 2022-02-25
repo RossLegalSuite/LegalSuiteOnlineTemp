@@ -6,8 +6,7 @@ class CreateInvoiceAgingView extends Migration
 {
     public function up()
     {
-
-        DB::statement("
+        DB::statement('
         CREATE OR REPLACE VIEW invoice_aging AS
             select 
             invoiceId,
@@ -18,12 +17,11 @@ class CreateInvoiceAgingView extends Migration
             sum(case when days > 120 then balance else 0 end) as days120
             from invoice_balances
             group by invoiceId
-        ");
+        ');
     }
 
     public function down()
     {
         DB::statement('DROP VIEW IF EXISTS invoice_aging');
     }
-    
 }

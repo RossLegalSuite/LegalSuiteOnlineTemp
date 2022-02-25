@@ -1,16 +1,14 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 class CreateExtraScreenFieldsTable extends Migration
 {
-
     public function up()
     {
         Schema::create('extra_screen_fields', function (Blueprint $table) {
-
             $table->increments('id');
 
             $table->unsignedInteger('extraScreenId');
@@ -29,8 +27,7 @@ class CreateExtraScreenFieldsTable extends Migration
             $table->json('values')->nullable();
 
             $table->foreign('extraScreenId')->references('id')->on('extra_screens');
-
-        });    
+        });
     }
 
     public function down()

@@ -2,10 +2,8 @@
 
 use Illuminate\Database\Seeder;
 
-
 class MarriageTypeSeeder extends Seeder
 {
-
     public function run()
     {
         DB::table('marriage_types')->insert(['code' => 'unmarried', 'description' => 'Unmarried']);
@@ -17,6 +15,5 @@ class MarriageTypeSeeder extends Seeder
         DB::table('marriage_types')->insert(['code' => 'religiousCeremony', 'description' => 'Religious Ceremony']);
         DB::table('marriage_types')->insert(['code' => 'other', 'description' => 'Other']);
         DB::table('marriage_types')->insert(['code' => 'unknown', 'description' => 'Unknown']);
-
     }
 }

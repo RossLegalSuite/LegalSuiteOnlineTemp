@@ -6,8 +6,6 @@ class PartyRoleSeeder extends Seeder
 {
     public function run()
     {
-
-        
         DB::table('party_roles')->insert(['code' => 'client', 'plural' => 'clients', 'description' => 'Client']);
         DB::table('party_roles')->insert(['code' => 'contact', 'plural' => 'contacts', 'description' => 'Contact Person']);
         DB::table('party_roles')->insert(['code' => 'defendant', 'plural' => 'defendants', 'description' => 'Defendant']);
@@ -92,6 +90,5 @@ class PartyRoleSeeder extends Seeder
         DB::table('party_roles')->insert(['code' => 'legalRepresentative', 'plural' => 'legalRepresentatives', 'description' => 'Legal Representative']);
         DB::table('party_roles')->insert(['code' => 'other', 'plural' => 'others', 'description' => 'Other']);
         DB::table('party_roles')->insert(['code' => 'unknown', 'plural' => 'unknowns', 'description' => 'Unknown']);
-
     }
 }

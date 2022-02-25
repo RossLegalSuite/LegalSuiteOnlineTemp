@@ -1,8 +1,8 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 class CreatePartyNumbersTable extends Migration
 {
@@ -20,9 +20,9 @@ class CreatePartyNumbersTable extends Migration
             $table->string('description');
             $table->boolean('defaultFlag')->default(0);
 
-            $table->index(['partyId','description']);
-            $table->index(['partyId','methodId']);
-            
+            $table->index(['partyId', 'description']);
+            $table->index(['partyId', 'methodId']);
+
             $table->foreign('methodId')
             ->references('id')->on('contact_methods')
             ->onDelete('restrict');

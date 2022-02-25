@@ -13,22 +13,20 @@ class PartiesTestSeeder extends Seeder
      */
     public function run()
     {
-
         $db = 'acme';
-        $user = $db . '_user';
-        $password = $db . '_1024';
+        $user = $db.'_user';
+        $password = $db.'_1024';
 
         config(['database.default' => 'ettorney']);
-        
-        config(['database.connections.ettorney' =>
-        [
+
+        config(['database.connections.ettorney' => [
             'driver' =>     'mysql',
-            
-            "host" =>       '127.0.0.1',
-            "database" =>   $db,
-            "port" =>       '3306',
-            "username" =>   $user,
-            "password" =>   $password,
+
+            'host' =>       '127.0.0.1',
+            'database' =>   $db,
+            'port' =>       '3306',
+            'username' =>   $user,
+            'password' =>   $password,
             'charset' =>    'utf8mb4',
             'collation' =>  'utf8mb4_unicode_ci',
             'prefix' =>     '',
@@ -37,8 +35,6 @@ class PartiesTestSeeder extends Seeder
             'engine' => null,
         ]]);
 
-
         factory(App\Party::class, 1000)->create();
-
     }
 }

@@ -1,10 +1,8 @@
 <?php
 
-
-
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 class CreateMatterPartiesTable extends Migration
 {
@@ -26,7 +24,7 @@ class CreateMatterPartiesTable extends Migration
             $table->foreign('matterId')
             ->references('id')->on('matters')
             ->onDelete('cascade');
-            
+
             $table->foreign('partyId')
             ->references('id')->on('parties')
             ->onDelete('restrict');
@@ -36,11 +34,8 @@ class CreateMatterPartiesTable extends Migration
             ->onDelete('restrict');
 
             $table->unique(['matterId', 'partyId', 'roleId']);
-            
+
             $table->index(['matterId', 'partyId', 'roleId', 'rank']);
-
-
-
         });
     }
 

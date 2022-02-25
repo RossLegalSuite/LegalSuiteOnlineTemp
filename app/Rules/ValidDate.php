@@ -23,25 +23,18 @@ class ValidDate implements Rule
      * @param  mixed  $value
      * @return bool
      */
-
     public function passes($attribute, $date)
     {
-     
-        
+
         //https://stackoverflow.com/questions/2891937/strtotime-doesnt-work-with-dd-mm-yyyy-format
-        
-        if ( session('dateFormat') === 'DD/MM/YYYY') {
 
+        if (session('dateFormat') === 'DD/MM/YYYY') {
             $date = str_replace('/', '-', $date);
-
-        } else if ( session('dateFormat') === 'MM-DD-YYYY') {   
-
+        } elseif (session('dateFormat') === 'MM-DD-YYYY') {
             $date = str_replace('-', '/', $date);
         }
 
-        return strtotime( $date ) === false ? false : true;
-
-
+        return strtotime($date) === false ? false : true;
     }
 
     /**
@@ -49,9 +42,8 @@ class ValidDate implements Rule
      *
      * @return string
      */
-
     public function message()
     {
-        return 'Please enter a valid date in the format: ' . session('dateFormat');
+        return 'Please enter a valid date in the format: '.session('dateFormat');
     }
 }

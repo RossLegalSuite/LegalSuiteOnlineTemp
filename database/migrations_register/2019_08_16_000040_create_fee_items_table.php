@@ -1,8 +1,8 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 class CreateFeeItemsTable extends Migration
 {
@@ -30,13 +30,12 @@ class CreateFeeItemsTable extends Migration
             $table->unsignedInteger('unitsId')->nullable();
             $table->decimal('unitsFactor', 15, 2)->nullable();
 
-            $table->index(['feeCodeId','sorter']);
+            $table->index(['feeCodeId', 'sorter']);
 
             $table->foreign('feeCodeId')->references('id')->on('fee_codes')->onDelete('cascade');
             $table->foreign('unitsId')->references('id')->on('fee_units');
 
             // Additional Foreign Keys are added after all parent tables have been created in a separate migration
-
         });
     }
 

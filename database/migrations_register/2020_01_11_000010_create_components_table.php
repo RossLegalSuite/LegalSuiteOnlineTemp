@@ -1,8 +1,8 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 class CreateComponentsTable extends Migration
 {
@@ -16,19 +16,18 @@ class CreateComponentsTable extends Migration
         Schema::create('components', function (Blueprint $table) {
             $table->increments('id');
             $table->unsignedInteger('employeeId');
-            
+
             $table->string('title')->unique();
             $table->string('description');
             $table->string('source');
             $table->text('contents')->nullable();
 
             $table->timestamps();
-            
+
             $table->foreign('employeeId')
             ->references('id')->on('employees')
             ->onDelete('restrict');
-
-        });    
+        });
     }
 
     /**

@@ -1,9 +1,9 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Query\Expression;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 class CreateTemplatesTable extends Migration
 {
@@ -17,7 +17,7 @@ class CreateTemplatesTable extends Migration
         Schema::create('templates', function (Blueprint $table) {
             $table->increments('id');
             $table->unsignedInteger('employeeId');
-            
+
             $table->string('source');
 
             $table->string('title')->unique();
@@ -26,7 +26,7 @@ class CreateTemplatesTable extends Migration
             $table->text('footer')->nullable();
             $table->text('header')->nullable();
             $table->enum('orientation', ['Portrait', 'Landscape'])->default('Portrait');
-            $table->string('paperSize',20)->default('A4');
+            $table->string('paperSize', 20)->default('A4');
             $table->string('password')->nullable();
             $table->boolean('allowPrint')->default(1);
             $table->boolean('allowEdit')->default(0);
@@ -37,14 +37,11 @@ class CreateTemplatesTable extends Migration
             $table->string('rightMargin')->default('5');
 
             $table->timestamps();
-            
+
             $table->foreign('employeeId')
             ->references('id')->on('employees')
             ->onDelete('restrict');
-
-
-
-        });    
+        });
     }
 
     /**

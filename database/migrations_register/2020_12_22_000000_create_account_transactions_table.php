@@ -1,16 +1,14 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 class CreateAccountTransactionsTable extends Migration
 {
-
     public function up()
     {
         Schema::create('account_transactions', function (Blueprint $table) {
-
             $table->increments('id');
 
             $table->unsignedInteger('accountId');
@@ -21,17 +19,16 @@ class CreateAccountTransactionsTable extends Migration
             $table->unsignedInteger('invoiceId')->nullable();
             $table->unsignedInteger('receiptId')->nullable();
             $table->unsignedInteger('paymentId')->nullable();
-            
+
             $table->boolean('reservedFlag')->default(0);
-            
-            
+
             $table->enum('type', ['Debit', 'Credit']);
             $table->decimal('amount', 15, 2);
-            
-            $table->index(['type']);            
+
+            $table->index(['type']);
             $table->index(['amount']);
 
-            $table->index(['accountId','type']);
+            $table->index(['accountId', 'type']);
 
             $table->foreign('batchId')->references('id')->on('batches');
 
@@ -48,8 +45,7 @@ class CreateAccountTransactionsTable extends Migration
             $table->foreign('receiptId')->references('id')->on('receipts');
 
             $table->foreign('paymentId')->references('id')->on('payments');
-
-        });    
+        });
     }
 
     public function down()

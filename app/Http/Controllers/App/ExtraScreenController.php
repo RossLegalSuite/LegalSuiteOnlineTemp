@@ -2,15 +2,13 @@
 
 namespace App\Http\Controllers\App;
 
-
-use Illuminate\Http\Request;
 use App\Custom\Utils;
+use Illuminate\Http\Request;
 
-class ExtraScreenController extends Controller {
-    
+class ExtraScreenController extends Controller
+{
     public function store(Request $request)
     {
-
         $returnData = new \stdClass();
 
         try {
@@ -20,29 +18,20 @@ class ExtraScreenController extends Controller {
             //'P' = select docscreenid, partyid  from parfield
             //'R' = select rolescreenid, matpartyid from ParRolSc
 
-
             // Check if there is a record (and create one if not)
-            if ( $request->screenType == 'M') {
-
-                $apiUrl = "/matfield/". $request->matterId;
-
-            } else if ( $request->screenType == 'D') {
-
-                $apiUrl = "/matdocsc/". $request->matterId . "/" . $request->docScreenId;
-
-            } else if ( $request->screenType == 'P') {
-
-                $apiUrl = "/parfield/". $request->partyId . "/" . $request->docScreenId;
-
-            } else if ( $request->screenType == 'R') {
-
-                $apiUrl = "/parrolsc/". $request->matPartyId . "/" . $request->roleScreenId;
-
+            if ($request->screenType == 'M') {
+                $apiUrl = '/matfield/'.$request->matterId;
+            } elseif ($request->screenType == 'D') {
+                $apiUrl = '/matdocsc/'.$request->matterId.'/'.$request->docScreenId;
+            } elseif ($request->screenType == 'P') {
+                $apiUrl = '/parfield/'.$request->partyId.'/'.$request->docScreenId;
+            } elseif ($request->screenType == 'R') {
+                $apiUrl = '/parrolsc/'.$request->matPartyId.'/'.$request->roleScreenId;
             }
 
             $existingRecord = Utils::SetCurlParams($apiUrl);
 
-            if ( empty($existingRecord->data) ) {
+            if (empty($existingRecord->data)) {
                 $customRequest = 'POST';
             } else {
                 $customRequest = 'PUT';
@@ -55,16 +44,10 @@ class ExtraScreenController extends Controller {
             $response = Utils::SetCurlParams($apiUrl, $customRequest, $postFields);
 
             return json_encode($response);
-
-
-        } catch(\Exception $e)  {
-            
+        } catch (\Exception $e) {
             $returnData->errors = $e->getMessage();
+
             return json_encode($returnData);
-
         }
-
     }
-
-
 }

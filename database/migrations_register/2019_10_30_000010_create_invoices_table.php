@@ -1,8 +1,8 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 class CreateInvoicesTable extends Migration
 {
@@ -20,8 +20,8 @@ class CreateInvoicesTable extends Migration
 
             $table->foreign('createdById')
             ->references('id')->on('employees')
-            ->onDelete('restrict');            
-            
+            ->onDelete('restrict');
+
             $table->foreign('matterId')
             ->references('id')->on('matters')
             ->onDelete('restrict');
@@ -29,7 +29,6 @@ class CreateInvoicesTable extends Migration
             $table->foreign('incomeAccountId')
             ->references('id')->on('accounts')
             ->onDelete('restrict');
-
         });
     }
 

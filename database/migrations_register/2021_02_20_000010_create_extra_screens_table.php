@@ -1,16 +1,14 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 class CreateExtraScreensTable extends Migration
 {
-
     public function up()
     {
         Schema::create('extra_screens', function (Blueprint $table) {
-
             $table->increments('id');
             $table->unsignedInteger('createdById');
             $table->string('title')->unique();
@@ -40,7 +38,7 @@ class CreateExtraScreensTable extends Migration
 
             $table->index(['location']);
             $table->index(['position']);
-            
+
             $table->foreign('createdById')->references('id')->on('employees');
 
             $table->foreign('matterTypeId')->references('id')->on('matter_types');
@@ -52,9 +50,7 @@ class CreateExtraScreensTable extends Migration
             $table->foreign('partyEntityId')->references('id')->on('party_entities');
 
             $table->foreign('partyTypeId')->references('id')->on('party_types');
-
-
-        });    
+        });
     }
 
     public function down()

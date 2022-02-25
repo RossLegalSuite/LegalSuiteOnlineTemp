@@ -4,7 +4,6 @@ use Illuminate\Database\Migrations\Migration;
 
 class CreateOwnerRoleTrigger extends Migration
 {
-
     public function up()
     {
         DB::unprepared('
@@ -18,13 +17,10 @@ class CreateOwnerRoleTrigger extends Migration
                 END IF;
             END
         ');
-
     }
 
     public function down()
     {
-
         DB::unprepared('DROP TRIGGER `Owner_Role_Prevent_Deletion`');
-
     }
 }

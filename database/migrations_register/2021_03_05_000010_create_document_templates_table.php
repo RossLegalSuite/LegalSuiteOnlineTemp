@@ -1,9 +1,8 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
-
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 class CreateDocumentTemplatesTable extends Migration
 {
@@ -19,7 +18,7 @@ class CreateDocumentTemplatesTable extends Migration
             $table->unsignedInteger('employeeId');
             $table->unsignedInteger('extraScreenId')->nullable();
             $table->unsignedInteger('documentSetId')->nullable();
-            
+
             $table->enum('type', ['Template', 'Report']);
             $table->enum('source', ['General', 'Matters', 'Parties', 'Employees', 'Party Roles']);
 
@@ -36,8 +35,7 @@ class CreateDocumentTemplatesTable extends Migration
             $table->foreign('employeeId')->references('id')->on('employees');
             $table->foreign('extraScreenId')->references('id')->on('extra_screens');
             $table->foreign('documentSetId')->references('id')->on('document_sets');
-            
-        });    
+        });
     }
 
     /**

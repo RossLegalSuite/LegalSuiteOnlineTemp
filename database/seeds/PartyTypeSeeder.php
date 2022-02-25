@@ -2,10 +2,8 @@
 
 use Illuminate\Database\Seeder;
 
-
 class PartyTypeSeeder extends Seeder
 {
-
     public function run()
     {
         DB::table('party_types')->insert(['type' => 'N', 'code' => 'male', 'description' => 'Male']);
@@ -56,8 +54,5 @@ class PartyTypeSeeder extends Seeder
         DB::table('party_types')->insert(['type' => 'J', 'code' => 'unknownJuristic', 'description' => 'Unknown (Juristic)']);
         DB::table('party_types')->insert(['type' => 'N', 'code' => 'otherPerson', 'description' => 'Other (Person)']);
         DB::table('party_types')->insert(['type' => 'J', 'code' => 'otherJuristic', 'description' => 'Other (Juristic)']);
-            
-
-
     }
 }

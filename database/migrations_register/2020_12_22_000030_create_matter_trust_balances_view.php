@@ -6,7 +6,6 @@ class CreateMatterTrustBalancesView extends Migration
 {
     public function up()
     {
-
         DB::statement("
         CREATE OR REPLACE VIEW matter_trust_balances AS
         select matters.id as matterId, 
@@ -25,5 +24,4 @@ class CreateMatterTrustBalancesView extends Migration
     {
         DB::statement('DROP VIEW IF EXISTS matter_trust_balances');
     }
-    
 }

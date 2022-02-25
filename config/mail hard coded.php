@@ -24,6 +24,4 @@ return [
         'name' => 'Big Rick',
     ],
 
-
-
 ];

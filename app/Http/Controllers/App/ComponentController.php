@@ -2,98 +2,78 @@
 
 namespace App\Http\Controllers\App;
 
-use Illuminate\Http\Request;
 use App\Custom\Utils;
+use Illuminate\Http\Request;
 
-class ComponentController extends Controller {
-
+class ComponentController extends Controller
+{
     public function get(Request $request)
     {
-
         $returnData = new \stdClass();
 
         try {
-
-            $apiUrl = "/components/get?id=" . $request->id;
+            $apiUrl = '/components/get?id='.$request->id;
 
             $response = Utils::SetCurlParams($apiUrl);
 
             return json_encode($response);
-    
-        } catch(\Exception $e)  {
-    
+        } catch (\Exception $e) {
             $returnData->errors = $e->getMessage();
-            return json_encode($returnData);
-    
-        }
 
+            return json_encode($returnData);
+        }
     }
 
     public function index(Request $request)
     {
-
         $returnData = new \stdClass();
 
         try {
-
-            $apiUrl = "/components/index";
+            $apiUrl = '/components/index';
 
             $response = Utils::SetCurlParams($apiUrl);
 
             return json_encode($response);
-    
-        } catch(\Exception $e)  {
-    
+        } catch (\Exception $e) {
             $returnData->errors = $e->getMessage();
+
             return json_encode($returnData);
-    
         }
-
     }
-
 
     public function store(Request $request)
     {
-
         $returnData = new \stdClass();
 
         try {
-
             if ($request->copyFlag) {
                 $request['title'] = $this->generateTitle($request['title']);
             }
 
-            $apiUrl = "/components/store";
-            if ( isset($request->recordid) ) {
+            $apiUrl = '/components/store';
+            if (isset($request->recordid)) {
                 $customRequest = 'PUT';
             } else {
                 $customRequest = 'POST';
-            } 
-            
+            }
+
             $postFields = http_build_query($request->all());
 
             $response = Utils::SetCurlParams($apiUrl, $customRequest, $postFields);
 
             return json_encode($response);
-    
-        } catch(\Exception $e)  {
-    
+        } catch (\Exception $e) {
             $returnData->errors = $e->getMessage();
+
             return json_encode($returnData);
-    
         }
-    
     }
-
-
 
     protected function generateTitle($title)
     {
+        $title = preg_replace("/ \(Copy(.*?)\)/i", '', $title);
 
-        $title = preg_replace("/ \(Copy(.*?)\)/i", "", $title);
-
-        return $title . ' (Copy' . random_int(100, 999) . ')';
-
+        return $title.' (Copy'.random_int(100, 999).')';
 
         /*$counter = Template::where('title', 'like', $title . ' (Copy%')
         ->count();
@@ -107,7 +87,7 @@ class ComponentController extends Controller {
                 if (!$existingRecord) break;
 
                 $counter++;
-                
+
             }
 
             return $title . ' (Copy' . $counter . ')';
@@ -117,7 +97,6 @@ class ComponentController extends Controller {
             return $title . ' (Copy)';
 
         }*/
-        
     }
 
     public function destroy(Request $request)
@@ -125,28 +104,20 @@ class ComponentController extends Controller {
         //return DataTablesHelper::destroy($request, Template::class);
     }
 
-
     public function getTablePosition(Request $request)
     {
-
         $returnData = new \stdClass();
 
         try {
-
-            $apiUrl = '/components/getTablePosition?title=' . $request['title'];
+            $apiUrl = '/components/getTablePosition?title='.$request['title'];
 
             $response = Utils::SetCurlParams($apiUrl);
 
             return json_encode($response);
-    
-        } catch(\Exception $e)  {
-    
+        } catch (\Exception $e) {
             $returnData->errors = $e->getMessage();
+
             return json_encode($returnData);
-    
         }
-
-    }    
-
-
+    }
 }

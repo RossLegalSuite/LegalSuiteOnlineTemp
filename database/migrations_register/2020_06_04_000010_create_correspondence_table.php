@@ -1,13 +1,11 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
-
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 class CreateCorrespondenceTable extends Migration
 {
-    
     public function up()
     {
         Schema::create('correspondence', function (Blueprint $table) {
@@ -21,7 +19,7 @@ class CreateCorrespondenceTable extends Migration
             $table->dateTime('date');
             $table->string('batchId')->nullable();
             $table->string('description');
-            $table->enum('parentType', ['General','Matter','Party','Employee']);
+            $table->enum('parentType', ['General', 'Matter', 'Party', 'Employee']);
             $table->enum('type', ['Document', 'Email', 'Image', 'Video', 'Audio', 'Message', 'Other']);
             $table->string('path');
             $table->string('url');
@@ -41,9 +39,7 @@ class CreateCorrespondenceTable extends Migration
             $table->foreign('matterId')->references('id')->on('matters');
 
             $table->foreign('partyId')->references('id')->on('parties');
-
-            
-        });    
+        });
     }
 
     public function down()

@@ -38,5 +38,4 @@ class CreateContactNumbersView extends Migration
     {
         DB::statement('DROP VIEW IF EXISTS contact_numbers');
     }
-    
 }

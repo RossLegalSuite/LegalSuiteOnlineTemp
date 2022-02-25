@@ -1,8 +1,8 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 class CreateFeeNotesTable extends Migration
 {
@@ -22,16 +22,14 @@ class CreateFeeNotesTable extends Migration
             $table->decimal('amount', 15, 2);
             $table->decimal('totalAmount', 15, 2)->storedAs('taxAmount + amount');
 
-            $table->index(['date']);            
+            $table->index(['date']);
 
             // Foreign Keys are added after all parent tables have been created in a separate migration
-
-        });    
+        });
     }
 
     public function down()
     {
-
         Schema::dropIfExists('fee_notes');
     }
 }

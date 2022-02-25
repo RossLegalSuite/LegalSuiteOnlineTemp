@@ -7,7 +7,6 @@ class CreateLedgerView extends Migration
     public function up()
     {
 
-
         //,ABS(COALESCE(SUM(CASE WHEN account_transactions.type='Debit' THEN account_transactions.amount WHEN account_transactions.type='Credit' THEN -account_transactions.amount END),0)) AS total
 
         DB::statement("
@@ -28,5 +27,4 @@ class CreateLedgerView extends Migration
     {
         DB::statement('DROP VIEW IF EXISTS ledger_view');
     }
-
 }

@@ -6,8 +6,7 @@ class CreateClientAgingView extends Migration
 {
     public function up()
     {
-
-        DB::statement("
+        DB::statement('
         CREATE OR REPLACE VIEW client_aging AS
             select 
             partyId,
@@ -18,12 +17,11 @@ class CreateClientAgingView extends Migration
             sum(case when days > 120 then balance else 0 end) as days120
             from client_business_balances
             group by partyId
-        ");
+        ');
     }
 
     public function down()
     {
         DB::statement('DROP VIEW IF EXISTS client_aging');
     }
-    
 }

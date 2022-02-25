@@ -48,10 +48,10 @@ class Handler extends ExceptionHandler
     {
         $returnData = new \stdClass();
         $returnData->data = [];
-        $returnData->errors = '*Error on line ' . $exception->getLine() . ' in ' . $exception->getFile() . ': <br/>'.$exception->getMessage();
+        $returnData->errors = '*Error on line '.$exception->getLine().' in '.$exception->getFile().': <br/>'.$exception->getMessage();
+
         return response(json_encode($returnData));
 
         // return parent::render($request, $exception);
-
     }
 }

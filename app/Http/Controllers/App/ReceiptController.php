@@ -2,30 +2,28 @@
 
 namespace App\Http\Controllers\App;
 
-use App\Models\Receipt;
-use App\Models\ReceiptTransaction;
-use App\Models\Party;
-use App\Models\Matter;
+use App\Custom\DataTablesHelper;
+use App\Custom\Utils;
+use App\Models\Account;
 use App\Models\AccountTransaction;
 use App\Models\Batch;
-use App\Models\Account;
 use App\Models\Company;
-use App\Custom\DataTablesHelper;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Datatables;
-use Illuminate\Support\Facades\Validator;
+use App\Models\Matter;
+use App\Models\Party;
+use App\Models\Receipt;
+use App\Models\ReceiptTransaction;
 use App\Rules\ValidDate;
 use App\Rules\ValidNumber;
+use Datatables;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
-use App\Custom\Utils;
 
-class ReceiptController extends Controller {
-
-
+class ReceiptController extends Controller
+{
     private function addColumns(&$query)
     {
-
         $query->addSelect('receipts.id');
         $query->addSelect('receipts.createdById');
 
@@ -33,242 +31,236 @@ class ReceiptController extends Controller {
         $query->addSelect('created.name as createdEmployeeName');
 
         $query->addSelect('receipts.clientId');
-        $query->addSelect( DB::raw("CASE WHEN receipts.id < 10000 THEN LPAD(receipts.id,5,'0') ELSE receipts.id END as number") );
+        $query->addSelect(DB::raw("CASE WHEN receipts.id < 10000 THEN LPAD(receipts.id,5,'0') ELSE receipts.id END as number"));
         $query->addSelect('receipts.method');
         $query->addSelect('receipts.reference');
         $query->addSelect('receipts.type');
         $query->addSelect('receipts.postTo');
         $query->addSelect('receipts.posted');
-        $query->addSelect( DB::raw("CASE WHEN receipts.posted = 1 THEN 'Posted' ELSE 'Unposted' END as postedDescription") );
-        
-        $query->addSelect('receipts.date');
-        $query->addSelect( DB::raw("DATE_FORMAT( CONVERT_TZ(receipts.date,'+00:00','" . session('timeZone') . "'), '" . Utils::sqlDateFormat() . "') as dateFormatted") );
-        
-        $query->addSelect( DB::raw("DATE_FORMAT( CONVERT_TZ(receipts.date,'+00:00','" . session('timeZone') . "'), '" . Utils::sqlDateTimeFormat() . "') as dateTime") ); 
-        
-        $query->addSelect( "parties.id as partyId");
-        $query->addSelect( "parties.code as partyCode");
-        $query->addSelect( "parties.name as party");
-        $query->addSelect( "emailAddress.description as email");
-        $query->addSelect( "emailAddress.id as emailId");
-        
-        $query->addSelect("receipts.businessBankAccountId");   
-        $query->addSelect("receipts.trustBankAccountId");   
-        $query->addSelect("businessBankAccount.description as businessBankAccountDescription");        
-        $query->addSelect("trustBankAccount.description as trustBankAccountDescription");        
+        $query->addSelect(DB::raw("CASE WHEN receipts.posted = 1 THEN 'Posted' ELSE 'Unposted' END as postedDescription"));
 
-        $query->addSelect( DB::raw("CASE 
+        $query->addSelect('receipts.date');
+        $query->addSelect(DB::raw("DATE_FORMAT( CONVERT_TZ(receipts.date,'+00:00','".session('timeZone')."'), '".Utils::sqlDateFormat()."') as dateFormatted"));
+
+        $query->addSelect(DB::raw("DATE_FORMAT( CONVERT_TZ(receipts.date,'+00:00','".session('timeZone')."'), '".Utils::sqlDateTimeFormat()."') as dateTime"));
+
+        $query->addSelect('parties.id as partyId');
+        $query->addSelect('parties.code as partyCode');
+        $query->addSelect('parties.name as party');
+        $query->addSelect('emailAddress.description as email');
+        $query->addSelect('emailAddress.id as emailId');
+
+        $query->addSelect('receipts.businessBankAccountId');
+        $query->addSelect('receipts.trustBankAccountId');
+        $query->addSelect('businessBankAccount.description as businessBankAccountDescription');
+        $query->addSelect('trustBankAccount.description as trustBankAccountDescription');
+
+        $query->addSelect(DB::raw("CASE 
         WHEN receipts.postTo = 'Business' THEN businessBankAccount.code 
         WHEN receipts.postTo = 'Trust' THEN trustBankAccount.code 
-        ELSE null END as accountCode") );
+        ELSE null END as accountCode"));
 
-        $query->addSelect( DB::raw("CASE 
+        $query->addSelect(DB::raw("CASE 
         WHEN receipts.postTo = 'Business' THEN receipts.businessBankAccountId 
         WHEN receipts.postTo = 'Trust' THEN receipts.trustBankAccountId 
-        ELSE null END as accountId") );
+        ELSE null END as accountId"));
 
-        $query->addSelect( DB::raw("CASE 
+        $query->addSelect(DB::raw("CASE 
         WHEN receipts.postTo = 'Business' THEN businessBankAccount.description 
         WHEN receipts.postTo = 'Trust' THEN trustBankAccount.description 
-        ELSE 'Unknown' END as account") );
-        
-        $query->addSelect( DB::raw("CASE WHEN receipts.posted = 1 THEN 1 ELSE 0 END as readOnly") );
+        ELSE 'Unknown' END as account"));
+
+        $query->addSelect(DB::raw('CASE WHEN receipts.posted = 1 THEN 1 ELSE 0 END as readOnly'));
 
         $query->addSelect(DB::raw("IFNULL( 
-            (SELECT FORMAT( SUM(amount), 2, 'en_" . session('countryCode')  . "') FROM receipt_transactions 
-            WHERE receiptId = receipts.id GROUP BY receiptId), 0.00) as amount") );
+            (SELECT FORMAT( SUM(amount), 2, 'en_".session('countryCode')."') FROM receipt_transactions 
+            WHERE receiptId = receipts.id GROUP BY receiptId), 0.00) as amount"));
 
-        $query->addSelect(DB::raw("IFNULL( 
+        $query->addSelect(DB::raw('IFNULL( 
             (SELECT SUM(amount) FROM receipt_transactions 
-            WHERE receiptId = receipts.id GROUP BY receiptId), 0.00) as amountRaw") );
-
+            WHERE receiptId = receipts.id GROUP BY receiptId), 0.00) as amountRaw'));
     }
-
 
     public function get(Request $request)
     {
-
         $query = DB::table('receipts')
         ->join('parties', 'parties.id', '=', 'receipts.clientId')
         ->join('employees as created', 'created.id', '=', 'receipts.createdById')
         ->leftJoin('accounts as businessBankAccount', 'receipts.businessBankAccountId', '=', 'businessBankAccount.id')
         ->leftJoin('accounts as trustBankAccount', 'receipts.trustBankAccountId', '=', 'trustBankAccount.id')
 
-        ->leftJoin('party_numbers as emailAddress', function ($join)  {
+        ->leftJoin('party_numbers as emailAddress', function ($join) {
             $join->on('parties.id', '=', 'emailAddress.partyId')
-                ->whereRaw('emailAddress.id IN (select max(id) from party_numbers WHERE methodId = ' . session('emailMethodId') . ' AND partyId = parties.id AND defaultFlag = 1 group by methodId)');
-            });
+                ->whereRaw('emailAddress.id IN (select max(id) from party_numbers WHERE methodId = '.session('emailMethodId').' AND partyId = parties.id AND defaultFlag = 1 group by methodId)');
+        });
 
         $this->addColumns($query);
 
-        if ($request->id) $query->where('receipts.id',$request->id);
+        if ($request->id) {
+            $query->where('receipts.id', $request->id);
+        }
 
-        if ($request->partyId) $query->where('receipts.clientId',$request->partyId);
+        if ($request->partyId) {
+            $query->where('receipts.clientId', $request->partyId);
+        }
 
-        if ($request->posted) $query->where('posted',1);
+        if ($request->posted) {
+            $query->where('posted', 1);
+        }
 
         DataTablesHelper::AddCommonWhereClauses($query, $request);
 
         // Utils::LogSqlQuery($query);
 
-        if ($request->dataFormat === "dataTables") {
-
+        if ($request->dataFormat === 'dataTables') {
             $datatables = Datatables::of($query);
 
             // Customize global search function. See: https://yajrabox.com/docs/laravel-datatables/6.0/filter-column
             if ($keyword = $request->get('search')['value']) {
-
-                $datatables->filterColumn('number', function($query, $keyword) {
+                $datatables->filterColumn('number', function ($query, $keyword) {
                     $sql = "CASE WHEN receipts.id < 10000 THEN LPAD(receipts.id,5,'0') ELSE receipts.id END like ?";
                     $query->whereRaw($sql, ["%{$keyword}%"]);
                 })
-                ->filterColumn('date', function($query, $keyword) {
-                    $sql = "DATE_FORMAT( CONVERT_TZ(receipts.date,'+00:00','" . session('timeZone') . "'), '" . Utils::sqlDateFormat() . "') like ?";
+                ->filterColumn('date', function ($query, $keyword) {
+                    $sql = "DATE_FORMAT( CONVERT_TZ(receipts.date,'+00:00','".session('timeZone')."'), '".Utils::sqlDateFormat()."') like ?";
                     $query->whereRaw($sql, ["%{$keyword}%"]);
                 })
-                ->filterColumn('postedDescription', function($query, $keyword) {
+                ->filterColumn('postedDescription', function ($query, $keyword) {
                     $sql = "CASE WHEN receipts.posted = 1 THEN 'Posted' ELSE 'Unposted' END like ?";
                     $query->whereRaw($sql, ["%{$keyword}%"]);
                 })
-                ->filterColumn('account', function($query, $keyword) {
+                ->filterColumn('account', function ($query, $keyword) {
                     $sql = "CASE 
                     WHEN receipts.postTo = 'Business' THEN businessBankAccount.description 
                     WHEN receipts.postTo = 'Trust' THEN trustBankAccount.description 
                     ELSE 'Unknown' END like ?";
                     $query->whereRaw($sql, ["%{$keyword}%"]);
                 })
-                ->filterColumn('amountRaw', function($query, $keyword) {
+                ->filterColumn('amountRaw', function ($query, $keyword) {
                     $sql = "IFNULL( 
-                        (SELECT FORMAT( SUM(amount), 2, 'en_" . session('countryCode')  . "') FROM receipt_transactions 
+                        (SELECT FORMAT( SUM(amount), 2, 'en_".session('countryCode')."') FROM receipt_transactions 
                         WHERE receiptId = receipts.id GROUP BY receiptId), 0.00) like ?";
                     $query->whereRaw($sql, ["%{$keyword}%"]);
                 });
-
-            } else if ( $request->tableFilter ) {
-
-                $datatables->filterColumn('accountCode', function($query, $keyword) {
+            } elseif ($request->tableFilter) {
+                $datatables->filterColumn('accountCode', function ($query, $keyword) {
                     $sql = "CASE 
                     WHEN receipts.postTo = 'Business' THEN businessBankAccount.code 
                     WHEN receipts.postTo = 'Trust' THEN trustBankAccount.code 
                     ELSE null END like ?";
                     $query->whereRaw($sql, ["%{$keyword}%"]);
                 });
-
             }
 
             return $datatables->make(true);
-
-        } else  {
-
+        } else {
             return DataTablesHelper::ReturnData($query, $request);
         }
-
     }
-
 
     public function getPostedInvoices(Request $request)
     {
-        
         $query = DB::table('invoices')
         ->join('matters', 'matters.id', '=', 'invoices.matterId');
 
         $query
         ->leftJoin('matter_parties as clientParty', function ($join) {
             $join->on('matters.id', '=', 'clientParty.matterId')
-                ->where('clientParty.roleId', session('clientRoleId') )
+                ->where('clientParty.roleId', session('clientRoleId'))
                 ->where('clientParty.rank', 1);
-            });
+        });
 
         $query->leftJoin('parties as client', 'clientParty.partyId', '=', 'client.id');
 
-        if ( $request->parentId) $query->where('client.id',$request->parentId);
+        if ($request->parentId) {
+            $query->where('client.id', $request->parentId);
+        }
 
-        if ( $request->matterId) $query->where('invoices.matterId',$request->matterId);
+        if ($request->matterId) {
+            $query->where('invoices.matterId', $request->matterId);
+        }
 
         // To only show Invoices with Balances
-        if ($request->customTableHaving) $query->havingRaw($request->customTableHaving);
+        if ($request->customTableHaving) {
+            $query->havingRaw($request->customTableHaving);
+        }
 
-        $query->where('invoices.posted',1);
+        $query->where('invoices.posted', 1);
 
         $query->orderBy('invoices.id', 'asc');
 
         $query->addSelect('invoices.id'); // Need this for Datatables
 
         $query->addSelect('invoices.id as invoiceId');
-        $query->addSelect( DB::raw("DATE_FORMAT( CONVERT_TZ(invoices.date,'+00:00','" . session('timeZone') . "'), '" . Utils::sqlDateFormat() . "') as invoiceDate") ); 
-        $query->addSelect( DB::raw("CASE WHEN invoices.id < 10000 THEN LPAD(invoices.id,5,'0') ELSE invoices.id END as invoiceNumber") );
-        
+        $query->addSelect(DB::raw("DATE_FORMAT( CONVERT_TZ(invoices.date,'+00:00','".session('timeZone')."'), '".Utils::sqlDateFormat()."') as invoiceDate"));
+        $query->addSelect(DB::raw("CASE WHEN invoices.id < 10000 THEN LPAD(invoices.id,5,'0') ELSE invoices.id END as invoiceNumber"));
+
         $query->addSelect('matters.id as matterId');
         $query->addSelect(DB::raw("CONCAT(matters.fileRef, ' - ', matters.description) as matter"));
 
         $query->addSelect(DB::raw("IFNULL( 
-            (SELECT FORMAT( SUM(amount), 2, 'en_" . session('countryCode')  . "') FROM invoice_totals
-            WHERE invoiceId = invoices.id), 0.00) as balance") );
+            (SELECT FORMAT( SUM(amount), 2, 'en_".session('countryCode')."') FROM invoice_totals
+            WHERE invoiceId = invoices.id), 0.00) as balance"));
 
-        $query->addSelect(DB::raw("IFNULL( 
+        $query->addSelect(DB::raw('IFNULL( 
             (SELECT SUM(amount) FROM invoice_totals
-            WHERE invoiceId = invoices.id), 0.00) as balanceRaw") );
+            WHERE invoiceId = invoices.id), 0.00) as balanceRaw'));
 
-        if ($request->dataFormat === "dataTables") {
-
+        if ($request->dataFormat === 'dataTables') {
             $datatables = Datatables::of($query);
 
-            if ($keyword = $request->get('search')['value'] ) {
-
-                $datatables->filterColumn('invoiceDate', function($query, $keyword) {
-                    $sql = "DATE_FORMAT( CONVERT_TZ(invoices.date,'+00:00','" . session('timeZone') . "'), '" . Utils::sqlDateFormat() . "') like ?";
+            if ($keyword = $request->get('search')['value']) {
+                $datatables->filterColumn('invoiceDate', function ($query, $keyword) {
+                    $sql = "DATE_FORMAT( CONVERT_TZ(invoices.date,'+00:00','".session('timeZone')."'), '".Utils::sqlDateFormat()."') like ?";
                     $query->whereRaw($sql, ["%{$keyword}%"]);
                 })
-                ->filterColumn('invoiceNumber', function($query, $keyword) {
+                ->filterColumn('invoiceNumber', function ($query, $keyword) {
                     $sql = "CASE WHEN invoices.id < 10000 THEN LPAD(invoices.id,5,'0') ELSE invoices.id END like ?";
                     $query->whereRaw($sql, ["%{$keyword}%"]);
                 })
-                ->filterColumn('totalBalance', function($query, $keyword) {
-                    $sql = "IFNULL( 
+                ->filterColumn('totalBalance', function ($query, $keyword) {
+                    $sql = 'IFNULL( 
                     (SELECT SUM(amount) FROM invoice_totals
-                    WHERE invoiceId = invoices.id ), 0.00) like ?";
-                    $query->whereRaw($sql, ["%{$keyword}%"]);
-                });            
-
-            } else if ( $request->tableFilter ) {
-
-                $datatables->filterColumn('totalBalance', function($query, $keyword) {
-                    $sql = "IFNULL( 
-                    (SELECT SUM(amount) FROM invoice_totals
-                    WHERE invoiceId = invoices.id ), 0.00) like ?";
+                    WHERE invoiceId = invoices.id ), 0.00) like ?';
                     $query->whereRaw($sql, ["%{$keyword}%"]);
                 });
-
+            } elseif ($request->tableFilter) {
+                $datatables->filterColumn('totalBalance', function ($query, $keyword) {
+                    $sql = 'IFNULL( 
+                    (SELECT SUM(amount) FROM invoice_totals
+                    WHERE invoiceId = invoices.id ), 0.00) like ?';
+                    $query->whereRaw($sql, ["%{$keyword}%"]);
+                });
             }
 
             return $datatables->make(true);
-
-        } else  {
-
+        } else {
             return DataTablesHelper::ReturnData($query, $request);
         }
-
-    }     
+    }
 
     public function getAllocatedInvoices(Request $request)
     {
-        
         $query = DB::table('receipt_transactions')
         ->join('receipts', 'receipts.id', '=', 'receipt_transactions.receiptId')
         ->join('invoices', 'invoices.id', '=', 'receipt_transactions.invoiceId')
         ->join('matters', 'matters.id', '=', 'invoices.matterId');
 
-        if ($request->parentId) $query->where('receipt_transactions.receiptId', $request->parentId);
+        if ($request->parentId) {
+            $query->where('receipt_transactions.receiptId', $request->parentId);
+        }
 
-        if ($request->matterId) $query->where('matters.id',$request->matterId);
+        if ($request->matterId) {
+            $query->where('matters.id', $request->matterId);
+        }
 
         $query->orderBy('invoices.id', 'asc');
 
         $query->addSelect('receipt_transactions.amount');
 
-        $query->addSelect( DB::raw("CASE WHEN receipts.posted = 1 THEN 1 ELSE 0 END as readOnly") );
-        
-        $query->addSelect( DB::raw("CASE WHEN receipts.id < 10000 THEN LPAD(receipts.id,5,'0') ELSE receipts.id  END as receiptNumber") );
+        $query->addSelect(DB::raw('CASE WHEN receipts.posted = 1 THEN 1 ELSE 0 END as readOnly'));
+
+        $query->addSelect(DB::raw("CASE WHEN receipts.id < 10000 THEN LPAD(receipts.id,5,'0') ELSE receipts.id  END as receiptNumber"));
         $query->addSelect('receipts.id as receiptId');
         $query->addSelect('receipts.method as receiptMethod');
         $query->addSelect('receipts.reference as receiptReference');
@@ -276,46 +268,37 @@ class ReceiptController extends Controller {
         $query->addSelect('receipts.posted as receiptPosted');
 
         $query->addSelect('invoices.id as invoiceId');
-        $query->addSelect( DB::raw("DATE_FORMAT( CONVERT_TZ(invoices.date,'+00:00','" . session('timeZone') . "'), '" . Utils::sqlDateFormat() . "') as invoiceDate") ); 
-        $query->addSelect( DB::raw("CASE WHEN invoices.id < 10000 THEN LPAD(invoices.id,5,'0') ELSE invoices.id END as invoiceNumber") );
+        $query->addSelect(DB::raw("DATE_FORMAT( CONVERT_TZ(invoices.date,'+00:00','".session('timeZone')."'), '".Utils::sqlDateFormat()."') as invoiceDate"));
+        $query->addSelect(DB::raw("CASE WHEN invoices.id < 10000 THEN LPAD(invoices.id,5,'0') ELSE invoices.id END as invoiceNumber"));
 
         $query->addSelect('matters.id as matterId');
-        $query->addSelect( "matters.fileRef as matterFileRef");
-        $query->addSelect( "matters.description as matterDescription");
+        $query->addSelect('matters.fileRef as matterFileRef');
+        $query->addSelect('matters.description as matterDescription');
 
         $query->addSelect(DB::raw("CONCAT(matters.fileRef, ' - ', matters.description) as matter"));
 
-        if ($request->dataFormat === "dataTables") {
-
+        if ($request->dataFormat === 'dataTables') {
             $datatables = Datatables::of($query);
 
-            if ($keyword = $request->get('search')['value'] ) {
-
-                $datatables->filterColumn('invoiceDate', function($query, $keyword) {
-                    $sql = "DATE_FORMAT( CONVERT_TZ(invoices.date,'+00:00','" . session('timeZone') . "'), '" . Utils::sqlDateFormat() . "') like ?";
+            if ($keyword = $request->get('search')['value']) {
+                $datatables->filterColumn('invoiceDate', function ($query, $keyword) {
+                    $sql = "DATE_FORMAT( CONVERT_TZ(invoices.date,'+00:00','".session('timeZone')."'), '".Utils::sqlDateFormat()."') like ?";
                     $query->whereRaw($sql, ["%{$keyword}%"]);
                 })
-                ->filterColumn('invoiceNumber', function($query, $keyword) {
+                ->filterColumn('invoiceNumber', function ($query, $keyword) {
                     $sql = "CASE WHEN invoices.id < 10000 THEN LPAD(invoices.id,5,'0') ELSE invoices.id END like ?";
                     $query->whereRaw($sql, ["%{$keyword}%"]);
                 });
-
             }
 
             return $datatables->make(true);
-            
-        } else  {
-
+        } else {
             return DataTablesHelper::ReturnData($query, $request);
-
         }
-
-
-    }     
+    }
 
     public function getAllocatedMatters(Request $request)
     {
-        
         $query = DB::table('receipt_transactions')
         ->join('matters', 'matters.id', '=', 'receipt_transactions.matterId')
         ->where('receipt_transactions.receiptId', $request->parentId)
@@ -323,17 +306,16 @@ class ReceiptController extends Controller {
 
         $query->addSelect('receipt_transactions.*');
 
-        $query->addSelect( "matters.fileRef as matterFileRef");
-        $query->addSelect( "matters.description as matterDescription");
+        $query->addSelect('matters.fileRef as matterFileRef');
+        $query->addSelect('matters.description as matterDescription');
 
         $query->addSelect(DB::raw("CONCAT(matters.fileRef, ' - ', matters.description) as matter"));
 
         return DataTablesHelper::ReturnData($query, $request);
-    }     
+    }
 
     public function store(Request $request)
     {
-
         $returnData = new \stdClass();
 
         $rules = [
@@ -344,21 +326,17 @@ class ReceiptController extends Controller {
             'dateTime' => new ValidDate,
         ];
 
-        $validator = Validator::make($request->all(), $rules); 
-        
+        $validator = Validator::make($request->all(), $rules);
+
         if ($validator->fails()) {
-
             $returnData->errors = $validator->errors();
-            return json_encode($returnData);            
 
-        }        
+            return json_encode($returnData);
+        }
 
         try {
-
-            return DB::transaction( function() use ($request)
-            {
-
-                $record = ( isset($request->id) ) ? Receipt::findOrFail($request->id) : new Receipt;
+            return DB::transaction(function () use ($request) {
+                $record = (isset($request->id)) ? Receipt::findOrFail($request->id) : new Receipt;
 
                 $record->clientId = $request->clientId;
                 $record->createdById = $request->createdById;
@@ -371,15 +349,13 @@ class ReceiptController extends Controller {
                 $record->businessBankAccountId = $request->businessBankAccountId;
                 $record->trustBankAccountId = $request->trustBankAccountId;
 
-                $record->save();  
+                $record->save();
 
-                if ( isset($request->posted) && $request->posted == 1) {
-
+                if (isset($request->posted) && $request->posted == 1) {
                     $company = Company::first();
                     $amount = 0;
 
-                    foreach(json_decode($request->allocatedInvoices) as $allocatedInvoice) {
-
+                    foreach (json_decode($request->allocatedInvoices) as $allocatedInvoice) {
                         ReceiptTransaction::create([
                             'receiptId' => $request->id,
                             'invoiceId' => $allocatedInvoice->invoiceId,
@@ -388,11 +364,9 @@ class ReceiptController extends Controller {
                         ]);
 
                         $amount += $allocatedInvoice->amount;
-
                     }
 
-                    foreach(json_decode($request->allocatedMatters) as $allocatedMatter) {
-
+                    foreach (json_decode($request->allocatedMatters) as $allocatedMatter) {
                         ReceiptTransaction::create([
                             'receiptId' => $request->id,
                             'matterId' => $allocatedMatter->matterId,
@@ -400,16 +374,14 @@ class ReceiptController extends Controller {
                         ]);
 
                         $amount += $allocatedMatter->amount;
-
                     }
 
                     $batch = Batch::create([
-                        'date' => date("Y-m-d H:i:s"),
+                        'date' => date('Y-m-d H:i:s'),
                         'employeeId' => session('employeeId'),
                         'type' => 'Receipt',
-                        'reference' => 'Receipt: ' . Utils::padNumber($record->id),
+                        'reference' => 'Receipt: '.Utils::padNumber($record->id),
                     ]);
-
 
                     // **********************************************
                     // Debit Bank Account (Type = Asset)
@@ -422,12 +394,8 @@ class ReceiptController extends Controller {
                         'amount' => $amount,
                     ]);
 
-
-                    if ( $record->type == 'Payment' ) {
-
-                        foreach(json_decode($request->allocatedInvoices) as $allocatedInvoice) {
-
-
+                    if ($record->type == 'Payment') {
+                        foreach (json_decode($request->allocatedInvoices) as $allocatedInvoice) {
                             AccountTransaction::create([
                                 'batchId' => $batch->id,
                                 'type' => 'Credit',
@@ -436,65 +404,49 @@ class ReceiptController extends Controller {
                                 'invoiceId' => $allocatedInvoice->invoiceId,
                                 'amount' => $allocatedInvoice->amount,
                             ]);
-
                         }
-
-                    } else if ( $record->type == 'Retainer' || $record->type == 'Deposit' ) {
-
+                    } elseif ($record->type == 'Retainer' || $record->type == 'Deposit') {
                         $trustControlAccount = Account::findOrFail($company->trustControlAccountId);
 
-                        foreach(json_decode($request->allocatedMatters) as $allocatedMatter) {
-
+                        foreach (json_decode($request->allocatedMatters) as $allocatedMatter) {
                             $this->creditMatterTrustAccount($company, $trustControlAccount, $batch->id, $record->id, $allocatedMatter->matterId, $allocatedMatter->amount, null, 1);
-
                         }
-
                     }
-
                 }
 
                 return json_encode($record);
-
             });
-
         } catch (\Illuminate\Database\QueryException $e) {
-
             $validator->errors()->add('general', Utils::MySqlError($e));
 
             $returnData->errors = $validator->errors();
+
             return json_encode($returnData);
-
-
-        } catch(\Exception $e)  {
-
+        } catch (\Exception $e) {
             $validator->errors()->add('general', $e->getMessage());
 
             $returnData->errors = $validator->errors();
+
             return json_encode($returnData);
-
         }
-
     }
 
     protected function creditMatterTrustAccount($company, $trustControlAccount, $batchId, $id, $matterId, $amount, $invoiceId = null, $reservedFlag = 0)
     {
+        $mattertrustAccount = Account::where('matterId', $matterId)->where('parentId', $trustControlAccount->id)->first();
 
-        $mattertrustAccount = Account::where('matterId',$matterId)->where('parentId',$trustControlAccount->id)->first();
-        
-        if (!$mattertrustAccount) {
-
+        if (! $mattertrustAccount) {
             $matter = Matter::findOrFail($matterId);
 
             $mattertrustAccount = Account::create([
-                'code' => $trustControlAccount->code . '-' . $matterId,
-                'description' => 'Trust Account (' . $matter->fileRef . ')',
+                'code' => $trustControlAccount->code.'-'.$matterId,
+                'description' => 'Trust Account ('.$matter->fileRef.')',
                 'category' => 'Liabilities',
                 'type' => 'Current Liability',
                 'matterId' => $matterId,
                 'parentId' => $trustControlAccount->id,
                 'taxRateId' => $company->noTaxRateId,
             ]);
-
         }
 
         // **********************************************
@@ -509,7 +461,5 @@ class ReceiptController extends Controller {
             'reservedFlag' => $reservedFlag,
             'amount' => $amount,
         ]);
-
     }
-
 }

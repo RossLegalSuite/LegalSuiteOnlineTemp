@@ -1,8 +1,8 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 class CreateEmployeesTable extends Migration
 {
@@ -15,8 +15,8 @@ class CreateEmployeesTable extends Migration
     {
         Schema::create('employees', function (Blueprint $table) {
             $table->increments('id');
-            $table->string('name',50);
-            $table->string('email',50)->unique();
+            $table->string('name', 50);
+            $table->string('email', 50)->unique();
             $table->string('password');
             $table->unsignedInteger('employeeGroupId');
             $table->unsignedInteger('allocateToId');
@@ -30,7 +30,6 @@ class CreateEmployeesTable extends Migration
             $table->index(['name']);
 
             $table->foreign('employeeGroupId')->references('id')->on('employee_groups');
-
         });
     }
 

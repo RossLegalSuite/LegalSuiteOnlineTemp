@@ -1,14 +1,12 @@
 <?php
 
-
-use App\Party;
-use App\Matter;
-use App\Custom\PartyHelper;
-use App\Custom\MatterHelper;
 use App\Custom\DataTablesHelper;
-use Illuminate\Http\Request;
+use App\Custom\MatterHelper;
+use App\Custom\PartyHelper;
 use App\Custom\Utils;
-
+use App\Matter;
+use App\Party;
+use Illuminate\Http\Request;
 
 // Route::get('/get-matters1', 'MatterController@getMatters1');
 // Route::post('/get-matters', 'MatterController@getMatters');
@@ -22,8 +20,6 @@ use App\Custom\Utils;
 // Route::post('/matters/store', 'MatterController@store');
 // Route::post('/matters/delete', 'MatterController@destroy');
 
-
 // Route::post('/matter_types', 'MatterTypeController@get');
 // Route::post('/document_sets', 'DocumentSetController@get');
 // Route::post('/branches', 'BranchController@get');
-

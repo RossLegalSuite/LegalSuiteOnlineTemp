@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers\Auth;
 
-use Illuminate\Http\Request;
-use App\Http\Controllers\App\Controller;
-use Illuminate\Support\Facades\Validator;
 use App\Custom\Utils;
+use App\Http\Controllers\App\Controller;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
+
 //use Illuminate\Database\QueryException;
 //use Illuminate\Support\Facades\Hash;
 //use Illuminate\Support\Facades\Artisan;
@@ -13,10 +14,8 @@ use App\Custom\Utils;
 
 class LoginController extends Controller
 {
-
     public function login(Request $request)
     {
-
         $returnData = new \stdClass();
 
         $rules = [
@@ -25,18 +24,17 @@ class LoginController extends Controller
             'password' => 'required',
         ];
 
-        $validator = Validator::make($request->all(), $rules); 
+        $validator = Validator::make($request->all(), $rules);
         if ($validator->fails()) {
-
             $returnData->errors = $validator->errors();
-            return json_encode($returnData);            
 
-        }     
+            return json_encode($returnData);
+        }
 
         $curl = curl_init();
 
-        curl_setopt_array($curl, array(
-            CURLOPT_URL => config('api.url') . "/auth?company={$request->company}&login={$request->login}&password={$request->password}&source=lol&docgencode=LOLNEW",
+        curl_setopt_array($curl, [
+            CURLOPT_URL => config('api.url')."/auth?company={$request->company}&login={$request->login}&password={$request->password}&source=lol&docgencode=LOLNEW",
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_SSL_VERIFYPEER => false,
             CURLOPT_ENCODING => '',
@@ -45,51 +43,43 @@ class LoginController extends Controller
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
             CURLOPT_CUSTOMREQUEST => 'GET',
-            CURLOPT_HTTPHEADER => array(
-                'authorization: ' . config('api.devKey')
-            ),
-        ));
-        
+            CURLOPT_HTTPHEADER => [
+                'authorization: '.config('api.devKey'),
+            ],
+        ]);
+
         //logger('Url',[config('api.url') . "/auth?company={$request->company}&login={$request->login}&password={$request->password}&source=lol",]);
 
-        $response = json_decode( curl_exec($curl) );
+        $response = json_decode(curl_exec($curl));
 
         //logger('$response',[$response]);
-        
-        if ( curl_errno($curl) ) {
-            
-            $returnData->errors = '<p>Could not connect to ' . config('api.url') . '</p><p>Curl Error No: ' . curl_errno($curl) . '</p><p>' . Utils::getCurlError( curl_errno($curl) ) . '</p>'; 
+
+        if (curl_errno($curl)) {
+            $returnData->errors = '<p>Could not connect to '.config('api.url').'</p><p>Curl Error No: '.curl_errno($curl).'</p><p>'.Utils::getCurlError(curl_errno($curl)).'</p>';
             curl_close($curl);
+
             return json_encode($returnData);
-
-        } else if ( isset($response->error) ) {
-
+        } elseif (isset($response->error)) {
             $returnData->errors = $response->error;
 
             curl_close($curl);
 
-            return json_encode($returnData);            
-
-        }     
+            return json_encode($returnData);
+        }
 
         curl_close($curl);
 
-
-        if ( isset($response->errors) ) {
-
+        if (isset($response->errors)) {
             $returnData->errors = $response->errors;
 
-            return json_encode($returnData);            
-
-        } else if ( !isset($response->success) ) {
-
+            return json_encode($returnData);
+        } elseif (! isset($response->success)) {
             $returnData->errors = 'Login via the LegalSuite API was not successful';
 
-            return json_encode($returnData);            
+            return json_encode($returnData);
+        }
 
-        }     
-
-        if ( $response->employee->supervisorflag ) {
+        if ($response->employee->supervisorflag) {
             $employeeGroupCode = 'supervisor';
         } else {
             $employeeGroupCode = 'user';
@@ -151,7 +141,6 @@ class LoginController extends Controller
         GLO:SecMatterArchivedFlag  = SG:MatterArchivedFlag
         GLO:SecFinancialAlertsFlag = SG:FinancialAlertsFlag
         */
-
     }
 
     public function logout()
@@ -162,5 +151,4 @@ class LoginController extends Controller
 
         return route('welcome');
     }
-
 }
