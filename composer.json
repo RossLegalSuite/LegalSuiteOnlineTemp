@@ -15,12 +15,10 @@
         "laravel/framework": "^6.0",
         "laravel/helpers": "^1.1",
         "laravel/tinker": "^1.0",
-        "league/flysystem-aws-s3-v3": "~1.0",
-        "league/flysystem-cached-adapter": "~1.0",
+        "league/flysystem-aws-s3-v3": "^3.0",
         "maatwebsite/excel": "^3.1",
         "mikehaertl/php-pdftk": "^0.8.0",
         "php-imap/php-imap": "^4.1",
-        
         "phpoffice/phpword": "^0.17.0",
         "pragmarx/version": "^1.2",
         "yajra/laravel-datatables-oracle": "~9.0"
