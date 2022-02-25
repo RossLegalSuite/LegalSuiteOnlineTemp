@@ -2,12 +2,11 @@
 
 namespace App\Http\Controllers\App;
 
-
-use Illuminate\Http\Request;
 use App\Custom\Utils;
+use Illuminate\Http\Request;
 
-class LolSettingsController extends Controller {
-
+class LolSettingsController extends Controller
+{
     // public function get(Request $request)
     // {
 
@@ -18,23 +17,21 @@ class LolSettingsController extends Controller {
     //         $response = Utils::SetCurlParams($apiUrl);
 
     //         return json_encode($response);
-    
+
     //     } catch(\Exception $e)  {
-    
+
     //         $returnData['errors'] = $e->getMessage();
-            
+
     //         return json_encode($returnData);
-    
+
     //     }
 
     // }
-
 
     // public function store(Request $request)
     // {
 
     //     $returnData = new \stdClass();
-
 
     //     try {
 
@@ -50,6 +47,4 @@ class LolSettingsController extends Controller {
     //     }
 
     // }
-
-
 }

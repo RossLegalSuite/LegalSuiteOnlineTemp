@@ -4,7 +4,6 @@ use Illuminate\Database\Migrations\Migration;
 
 class CreateTransferAvailableFunction extends Migration
 {
-
     public function up()
     {
         DB::unprepared('
@@ -46,14 +45,10 @@ class CreateTransferAvailableFunction extends Migration
         //     LEFT JOIN receipts ON receipt_transactions.receiptId = receipts.id
         //     WHERE receipt_transactions.matterId = id AND receipts.type = "Trust" AND receipt_transactions.invoiceId IS NOT NULL
         //     GROUP BY receipt_transactions.matterId), 0));
-
-
     }
 
     public function down()
     {
-
         DB::unprepared('DROP FUNCTION `transferAvailable`');
-
     }
 }

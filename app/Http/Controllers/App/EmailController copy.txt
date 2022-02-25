@@ -251,7 +251,7 @@ class EmailController extends Controller {
     }
     
     private function get_mime_type($structure) {
-        $primaryMimetype = array("TEXT", "MULTIPART", "MESSAGE", "APPLICATION", "AUDIO", "IMAGE", "VIDEO", "OTHER");
+        $primaryMimetype = ["TEXT", "MULTIPART", "MESSAGE", "APPLICATION", "AUDIO", "IMAGE", "VIDEO", "OTHER"];
     
         if ($structure->subtype) {
             return $primaryMimetype[(int)$structure->type] . "/" . $structure->subtype;
@@ -398,7 +398,7 @@ class EmailController extends Controller {
 
             if($emailMessages) {
 
-                $emails = array();
+                $emails = [];
                 
                 /* Put the newest emails on top */
                 rsort($emailMessages);
@@ -447,7 +447,7 @@ class EmailController extends Controller {
                 'ssl'      => isset($request->incomingEncryption) ? $request->incomingEncryption : null,
             ]);
 
-            $folderNames = array();
+            $folderNames = [];
 
             $folders = new RecursiveIteratorIterator(
                 $mail->getFolders(),
@@ -523,7 +523,7 @@ class EmailController extends Controller {
 
             if ( isset($request->getFolders) ) {
 
-                $folderNames = array();
+                $folderNames = [];
 
                 $folders = new RecursiveIteratorIterator(
                     $mail->getFolders(),
@@ -547,7 +547,7 @@ class EmailController extends Controller {
 
             } else {
 
-                $emails = array();
+                $emails = [];
                 $email = new \stdClass();
 
                 $mail->selectFolder('INBOX');

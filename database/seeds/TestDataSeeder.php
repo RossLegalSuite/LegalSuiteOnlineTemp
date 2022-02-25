@@ -1,24 +1,22 @@
 <?php
 
-use Illuminate\Database\Seeder;
-use App\Models\Party;
-use App\Models\Creditor;
-use App\Models\PartyNumber;
-use App\Models\CreditorNumber;
-use App\Models\Matter;
-use App\Models\MatterParty;
-use App\Models\MatterEmployee;
-use App\Models\FeeNote;
-use App\Models\Disbursement;
+use App\Models\Branch;
 use App\Models\Company;
 use App\Models\CompanyNumber;
+use App\Models\Creditor;
+use App\Models\CreditorNumber;
+use App\Models\Disbursement;
 use App\Models\Employee;
-use App\Models\Branch;
-
+use App\Models\FeeNote;
+use App\Models\Matter;
+use App\Models\MatterEmployee;
+use App\Models\MatterParty;
+use App\Models\Party;
+use App\Models\PartyNumber;
+use Illuminate\Database\Seeder;
 
 class TestDataSeeder extends Seeder
 {
-
     public function run()
     {
 
@@ -55,19 +53,19 @@ class TestDataSeeder extends Seeder
         $number->defaultFlag = 1;
         $number->description = 'info@acme.com';
         $number->save();
-        
+
         $number = new CompanyNumber;
         $number->methodId = 3;
         $number->defaultFlag = 1;
         $number->description = '(+27) 31 567 1234';
         $number->save();
-        
+
         $number = new CompanyNumber;
         $number->methodId = 5;
         $number->defaultFlag = 1;
         $number->description = 'https://twitter.com/acme';
         $number->save();
-        
+
         $number = new CompanyNumber;
         $number->methodId = 6;
         $number->defaultFlag = 1;
@@ -77,17 +75,16 @@ class TestDataSeeder extends Seeder
         // Add an employee
         $employee = new Employee;
         $employee->name = 'Michael (Manager)';
-        $employee->password = '$2y$10$lqR1rkbbbLlnMec/YZlFJ.3yZzApdJHFaNKS3hkvfB0cTRSlZHYei';//secret
+        $employee->password = '$2y$10$lqR1rkbbbLlnMec/YZlFJ.3yZzApdJHFaNKS3hkvfB0cTRSlZHYei'; //secret
         $employee->email = 'manager@acme.co.za';
         $employee->employeeGroupId = 2;
         $employee->allocateToId = 1;
         $employee->save();
-        
 
         // Add an employee
         $employee = new Employee;
         $employee->name = 'Andrew (Accountant)';
-        $employee->password = '$2y$10$lqR1rkbbbLlnMec/YZlFJ.3yZzApdJHFaNKS3hkvfB0cTRSlZHYei';//secret
+        $employee->password = '$2y$10$lqR1rkbbbLlnMec/YZlFJ.3yZzApdJHFaNKS3hkvfB0cTRSlZHYei'; //secret
         $employee->email = 'accountant@acme.co.za';
         $employee->employeeGroupId = 3;
         $employee->allocateToId = 1;
@@ -96,13 +93,11 @@ class TestDataSeeder extends Seeder
         // Add an employee
         $employee = new Employee;
         $employee->name = 'Larry (User)';
-        $employee->password = '$2y$10$lqR1rkbbbLlnMec/YZlFJ.3yZzApdJHFaNKS3hkvfB0cTRSlZHYei';//secret
+        $employee->password = '$2y$10$lqR1rkbbbLlnMec/YZlFJ.3yZzApdJHFaNKS3hkvfB0cTRSlZHYei'; //secret
         $employee->email = 'user@acme.co.za';
         $employee->employeeGroupId = 4;
         $employee->allocateToId = 1;
         $employee->save();
-
-
 
         $creditor = new Creditor;
 
@@ -116,21 +111,21 @@ class TestDataSeeder extends Seeder
         $creditor->salutation = 'Dear Joe';
         $creditor->vatNumber = '123456-789';
         $creditor->defaultExpenseId = 21;
-        
+
         $creditor->physicalLine1 = '29th Floor Acme Building';
         $creditor->physicalLine2 = '123 Main Road';
         $creditor->physicalLine3 = 'Durban';
         $creditor->physicalCode = '4000';
-        
+
         $creditor->postalLine1 = 'PO Box 5562';
         $creditor->postalLine2 = 'Durban';
         $creditor->postalCode = '4001';
-        
+
         $creditor->postalProvinceId = 1;
         $creditor->physicalProvinceId = 1;
         $creditor->postalCountryId = 1;
         $creditor->physicalCountryId = 1;
-        
+
         $creditor->save();
 
         // Add an email address
@@ -141,9 +136,8 @@ class TestDataSeeder extends Seeder
         $creditorNumber->description = 'joe@advocates.co.za';
         $creditorNumber->save();
 
-        
         $creditor = new Creditor;
-        
+
         $creditor->code = 'WAL1';
         $creditor->type = 'Business';
         $creditor->name = 'Waltons Stationery (Pty) Ltd';
@@ -151,22 +145,22 @@ class TestDataSeeder extends Seeder
         $creditor->salutation = 'Dear Sir/Madam';
         $creditor->vatNumber = '1223676-789';
         $creditor->defaultExpenseId = 46;
-        
+
         $creditor->physicalLine1 = '123 Main Road';
         $creditor->physicalLine2 = 'Durban';
         $creditor->physicalCode = '4000';
-        
+
         $creditor->postalLine1 = 'PO Box 5562';
         $creditor->postalLine2 = 'Cape Town';
         $creditor->postalCode = '4001';
-        
+
         $creditor->postalProvinceId = 1;
         $creditor->physicalProvinceId = 1;
         $creditor->postalCountryId = 1;
         $creditor->physicalCountryId = 1;
-        
+
         $creditor->save();
-        
+
         // Add an email address
         $creditorNumber = new CreditorNumber;
         $creditorNumber->creditorId = $creditor->id;
@@ -175,10 +169,8 @@ class TestDataSeeder extends Seeder
         $creditorNumber->description = 'admin@waltons.co.za';
         $creditorNumber->save();
 
-
-
         $creditor = new Creditor;
-        
+
         $creditor->code = 'SHE1';
         $creditor->type = 'Business';
         $creditor->name = 'Sheriff - Johannesburg';
@@ -186,24 +178,24 @@ class TestDataSeeder extends Seeder
         $creditor->salutation = 'Dear Sir/Madam';
         $creditor->vatNumber = '5687676-789';
         $creditor->defaultExpenseId = 21;
-        
+
         $creditor->physicalLine1 = '123 Eloff Street';
         $creditor->physicalLine2 = 'Johannesburg';
         $creditor->physicalCode = '2001';
-        
+
         $creditor->postalLine1 = 'PO Box 5562';
         $creditor->postalLine2 = 'Johannesburg';
         $creditor->postalCode = '2002';
-        
+
         $creditor->postalProvinceId = 1;
         $creditor->physicalProvinceId = 1;
         $creditor->postalCountryId = 1;
         $creditor->physicalCountryId = 1;
-        
+
         $creditor->save();
-        
+
         $creditor = new Creditor;
-        
+
         $creditor->code = 'SHE2';
         $creditor->type = 'Business';
         $creditor->name = 'Sheriff - Cape Town';
@@ -211,46 +203,46 @@ class TestDataSeeder extends Seeder
         $creditor->salutation = 'Dear Sir/Madam';
         $creditor->vatNumber = '5687676-789';
         $creditor->defaultExpenseId = 21;
-        
+
         $creditor->physicalLine1 = '43 Strand Street';
         $creditor->physicalLine2 = 'Cape Town';
         $creditor->physicalCode = '2001';
-        
+
         $creditor->postalLine1 = 'PO Box 5562';
         $creditor->postalLine2 = 'Cape Town';
         $creditor->postalCode = '2002';
-        
+
         $creditor->postalProvinceId = 1;
         $creditor->physicalProvinceId = 1;
         $creditor->postalCountryId = 1;
         $creditor->physicalCountryId = 1;
-        
+
         $creditor->save();
 
         $creditor = new Creditor;
-        
+
         $creditor->code = 'TEL2';
         $creditor->type = 'Business';
         $creditor->name = 'Telkom';
         $creditor->salutation = 'Dear Sir/Madam';
         $creditor->vatNumber = '5687676-789';
         $creditor->defaultExpenseId = 47;
-        
+
         $creditor->physicalLine1 = '43 Strand Street';
         $creditor->physicalLine2 = 'Cape Town';
         $creditor->physicalCode = '2001';
-        
+
         $creditor->postalLine1 = 'PO Box 5562';
         $creditor->postalLine2 = 'Cape Town';
         $creditor->postalCode = '2002';
-        
+
         $creditor->postalProvinceId = 1;
         $creditor->physicalProvinceId = 1;
         $creditor->postalCountryId = 1;
         $creditor->physicalCountryId = 1;
-        
+
         $creditor->save();
-        
+
         // Add an email address
         $creditorNumber = new CreditorNumber;
         $creditorNumber->creditorId = $creditor->id;
@@ -259,8 +251,6 @@ class TestDataSeeder extends Seeder
         $creditorNumber->description = 'accounts@telkom.co.za';
         $creditorNumber->save();
 
-
-        
         $party = new Party;
 
         $party->code = 'BLO1';
@@ -301,12 +291,10 @@ class TestDataSeeder extends Seeder
         $partyNumber->description = '+27824353454';
         $partyNumber->save();
 
-
-
         $matter = new Matter;
 
-        $matter->fileRef = $party->code . '/0001';
-        $matter->instructed = date("Y-m-d");
+        $matter->fileRef = $party->code.'/0001';
+        $matter->instructed = date('Y-m-d');
         $matter->description = 'Buy & Sell Agreement';
         $matter->feeSheetId = 1;
         $matter->branchId = 1;
@@ -316,25 +304,25 @@ class TestDataSeeder extends Seeder
         $matter->documentSetId = 1;
 
         $matter->save();
-        
-        //Client MatterParty        
+
+        //Client MatterParty
         $matterParty = new MatterParty;
-        
+
         $matterParty->partyId = $party->id;
         $matterParty->matterId = $matter->id;
         $matterParty->roleId = 1;
         $matterParty->rank = 1;
         $matterParty->reference = '12345/678';
-        
+
         $matterParty->save();
 
         $matterEmployee = new MatterEmployee;
-        
+
         $matterEmployee->employeeId = 1;
         $matterEmployee->matterId = $matter->id;
         $matterEmployee->roleId = 1;
         $matterEmployee->rank = 1;
-        
+
         $matterEmployee->save();
 
         $party = new Party;
@@ -375,7 +363,7 @@ class TestDataSeeder extends Seeder
         $partyNumber->defaultFlag = 1;
         $partyNumber->description = 'rick@legalsuite.co.za';
         $partyNumber->save();
-        
+
         // Add a cell phone number
         $partyNumber = new PartyNumber;
         $partyNumber->partyId = $party->id;
@@ -383,13 +371,12 @@ class TestDataSeeder extends Seeder
         $partyNumber->defaultFlag = 1;
         $partyNumber->description = '+27833011942';
         $partyNumber->save();
-        
 
         $matter = new Matter;
 
         //$matter->clientId = $party->id;
-        $matter->fileRef = $party->code . '/0001';
-        $matter->instructed = date("Y-m-d");
+        $matter->fileRef = $party->code.'/0001';
+        $matter->instructed = date('Y-m-d');
         $matter->description = 'Sale Agreement';
         $matter->feeSheetId = 1;
         $matter->branchId = 1;
@@ -400,7 +387,7 @@ class TestDataSeeder extends Seeder
 
         $matter->save();
 
-        //Client MatterParty        
+        //Client MatterParty
         $matterParty = new MatterParty;
 
         $matterParty->partyId = $party->id;
@@ -408,24 +395,22 @@ class TestDataSeeder extends Seeder
         $matterParty->roleId = 1;
         $matterParty->rank = 1;
         $matterParty->reference = '12345/678';
-        
+
         $matterParty->save();
 
         $matterEmployee = new MatterEmployee;
-        
+
         $matterEmployee->employeeId = 1;
         $matterEmployee->matterId = $matter->id;
         $matterEmployee->roleId = 1;
         $matterEmployee->rank = 1;
-        
-        $matterEmployee->save();
 
-        
+        $matterEmployee->save();
 
         $matter = new Matter;
 
-        $matter->fileRef = $party->code . '/0002';
-        $matter->instructed = date("Y-m-d");
+        $matter->fileRef = $party->code.'/0002';
+        $matter->instructed = date('Y-m-d');
         $matter->description = 'Transfer: Lot 123 Durban';
         $matter->feeSheetId = 1;
         $matter->branchId = 1;
@@ -436,33 +421,30 @@ class TestDataSeeder extends Seeder
 
         $matter->save();
 
-        //Client MatterParty        
+        //Client MatterParty
         $matterParty = new MatterParty;
-        
+
         $matterParty->partyId = $party->id;
         $matterParty->matterId = $matter->id;
         $matterParty->roleId = 1;
         $matterParty->rank = 1;
         $matterParty->reference = '';
-        
+
         $matterParty->save();
 
-
         $matterEmployee = new MatterEmployee;
-        
+
         $matterEmployee->employeeId = 1;
         $matterEmployee->matterId = $matter->id;
         $matterEmployee->roleId = 1;
         $matterEmployee->rank = 1;
-        
+
         $matterEmployee->save();
-
-
 
         $matter = new Matter;
 
-        $matter->fileRef = $party->code . '/0003';
-        $matter->instructed = date("Y-m-d");
+        $matter->fileRef = $party->code.'/0003';
+        $matter->instructed = date('Y-m-d');
         $matter->description = 'Bond Registration: First National Bank';
         $matter->feeSheetId = 1;
         $matter->branchId = 1;
@@ -473,27 +455,25 @@ class TestDataSeeder extends Seeder
 
         $matter->save();
 
-
-        //Client MatterParty        
+        //Client MatterParty
         $matterParty = new MatterParty;
-        
+
         $matterParty->partyId = $party->id;
         $matterParty->matterId = $matter->id;
         $matterParty->roleId = 1;
         $matterParty->rank = 1;
         $matterParty->reference = 'FNB123/567';
-        
+
         $matterParty->save();
 
         $matterEmployee = new MatterEmployee;
-        
+
         $matterEmployee->employeeId = 1;
         $matterEmployee->matterId = $matter->id;
         $matterEmployee->roleId = 1;
         $matterEmployee->rank = 1;
-        
-        $matterEmployee->save();
 
+        $matterEmployee->save();
 
         $party = new Party;
 
@@ -533,7 +513,7 @@ class TestDataSeeder extends Seeder
         $partyNumber->defaultFlag = 1;
         $partyNumber->description = 'anrie@legalsuite.co.za';
         $partyNumber->save();
-        
+
         // Add a cell phone number
         $partyNumber = new PartyNumber;
         $partyNumber->partyId = $party->id;
@@ -582,7 +562,7 @@ class TestDataSeeder extends Seeder
         $partyNumber->defaultFlag = 1;
         $partyNumber->description = 'ross@legalsuite.co.za';
         $partyNumber->save();
-        
+
         // Add a cell phone number
         $partyNumber = new PartyNumber;
         $partyNumber->partyId = $party->id;
@@ -590,7 +570,6 @@ class TestDataSeeder extends Seeder
         $partyNumber->defaultFlag = 1;
         $partyNumber->description = '+2745324234';
         $partyNumber->save();
-
 
         $party = new Party;
 
@@ -627,7 +606,7 @@ class TestDataSeeder extends Seeder
         $partyNumber->defaultFlag = 1;
         $partyNumber->description = 'info@acme.co.za';
         $partyNumber->save();
-        
+
         // Add a cell phone number
         $partyNumber = new PartyNumber;
         $partyNumber->partyId = $party->id;
@@ -638,8 +617,8 @@ class TestDataSeeder extends Seeder
 
         $matter = new Matter;
 
-        $matter->fileRef = $party->code . '/0001';
-        $matter->instructed = date("Y-m-d");
+        $matter->fileRef = $party->code.'/0001';
+        $matter->instructed = date('Y-m-d');
         $matter->description = 'Shareholders Agreement & Drafting of Merger Documents for Listing';
         $matter->feeSheetId = 1;
         $matter->branchId = 1;
@@ -650,40 +629,36 @@ class TestDataSeeder extends Seeder
 
         $matter->save();
 
-
-        //Client MatterParty        
+        //Client MatterParty
         $matterParty = new MatterParty;
-        
+
         $matterParty->partyId = $party->id;
         $matterParty->matterId = $matter->id;
         $matterParty->roleId = 1;
         $matterParty->rank = 1;
         $matterParty->reference = '';
-        
+
         $matterParty->save();
 
         $matterEmployee = new MatterEmployee;
-        
+
         $matterEmployee->employeeId = 1;
         $matterEmployee->matterId = $matter->id;
         $matterEmployee->roleId = 1;
         $matterEmployee->rank = 1;
-        
-        $matterEmployee->save();
 
+        $matterEmployee->save();
 
         //Add a contact Person
         $matterParty = new MatterParty;
-        
+
         $matterParty->partyId = $rossId;
         $matterParty->matterId = $matter->id;
         $matterParty->roleId = 2;
         $matterParty->rank = 1;
         $matterParty->reference = '';
-        
+
         $matterParty->save();
-
-
 
         // Add an branch
         $branch = new Branch;
@@ -705,302 +680,301 @@ class TestDataSeeder extends Seeder
 
         $feeNote = new FeeNote;
 
-        
-        $feeNote->matterId = $faker->numberBetween(1,5);
+        $feeNote->matterId = $faker->numberBetween(1, 5);
         $feeNote->allocatedToId = $feeNote->createdById = 1;
-        $feeNote->date = date("Y-m-d H:i:s");
+        $feeNote->date = date('Y-m-d H:i:s');
         $feeNote->description = 'Perusing documents';
         $feeNote->taxRateId = 5;
-        $amount = $faker->randomFloat(2,0,10000);
+        $amount = $faker->randomFloat(2, 0, 10000);
         $taxAmount = $amount * 0.15;
         $feeNote->amount = $amount;
         $feeNote->taxAmount = $taxAmount;
-        
+
         $feeNote->save();
 
         $feeNote = new FeeNote;
 
-        $feeNote->matterId = $faker->numberBetween(1,5);
+        $feeNote->matterId = $faker->numberBetween(1, 5);
         $feeNote->allocatedToId = $feeNote->createdById = 1;
-        $feeNote->date = date("Y-m-d H:i:s");
+        $feeNote->date = date('Y-m-d H:i:s');
         $feeNote->description = 'Drafting agreement';
         $feeNote->taxRateId = 5;
         $feeNote->amount = 1000;
         $feeNote->taxAmount = 150;
-        
+
         $feeNote->save();
-        
+
         $feeNote = new FeeNote;
-        $feeNote->matterId = $faker->numberBetween(1,5);
+        $feeNote->matterId = $faker->numberBetween(1, 5);
         $feeNote->allocatedToId = $feeNote->createdById = 1;
-        $feeNote->date = date("Y-m-d H:i:s");
+        $feeNote->date = date('Y-m-d H:i:s');
         $feeNote->description = 'Fee for persuing document';
         $feeNote->taxRateId = 5;
-        $amount = $faker->randomFloat(2,0,10000);
+        $amount = $faker->randomFloat(2, 0, 10000);
         $taxAmount = $amount * 0.15;
         $feeNote->amount = $amount;
         $feeNote->taxAmount = $taxAmount;
         $feeNote->save();
 
         $feeNote = new FeeNote;
-        $feeNote->matterId = $faker->numberBetween(1,5);
+        $feeNote->matterId = $faker->numberBetween(1, 5);
         $feeNote->allocatedToId = $feeNote->createdById = 1;
-        $feeNote->date = date("Y-m-d H:i:s");
+        $feeNote->date = date('Y-m-d H:i:s');
         $feeNote->description = 'Fee for persuing document';
         $feeNote->taxRateId = 5;
-        $amount = $faker->randomFloat(2,0,10000);
+        $amount = $faker->randomFloat(2, 0, 10000);
         $taxAmount = $amount * 0.15;
         $feeNote->amount = $amount;
         $feeNote->taxAmount = $taxAmount;
         $feeNote->save();
 
         $feeNote = new FeeNote;
-        $feeNote->matterId = $faker->numberBetween(1,5);
+        $feeNote->matterId = $faker->numberBetween(1, 5);
         $feeNote->allocatedToId = $feeNote->createdById = 2;
-        $feeNote->date = date("Y-m-d H:i:s");
+        $feeNote->date = date('Y-m-d H:i:s');
         $feeNote->description = 'Fee for persuing document';
         $feeNote->taxRateId = 5;
-        $amount = $faker->randomFloat(2,0,10000);
+        $amount = $faker->randomFloat(2, 0, 10000);
         $taxAmount = $amount * 0.15;
         $feeNote->amount = $amount;
         $feeNote->taxAmount = $taxAmount;
         $feeNote->save();
 
         $feeNote = new FeeNote;
-        $feeNote->matterId = $faker->numberBetween(1,5);
+        $feeNote->matterId = $faker->numberBetween(1, 5);
         $feeNote->allocatedToId = $feeNote->createdById = 3;
-        $feeNote->date = date("Y-m-d H:i:s");
+        $feeNote->date = date('Y-m-d H:i:s');
         $feeNote->description = 'Fee for persuing document';
         $feeNote->taxRateId = 5;
-        $amount = $faker->randomFloat(2,0,10000);
+        $amount = $faker->randomFloat(2, 0, 10000);
         $taxAmount = $amount * 0.15;
         $feeNote->amount = $amount;
         $feeNote->taxAmount = $taxAmount;
         $feeNote->save();
 
         $feeNote = new FeeNote;
-        $feeNote->matterId = $faker->numberBetween(1,5);
+        $feeNote->matterId = $faker->numberBetween(1, 5);
         $feeNote->allocatedToId = $feeNote->createdById = 1;
-        $feeNote->date = date("Y-m-d H:i:s");
+        $feeNote->date = date('Y-m-d H:i:s');
         $feeNote->description = 'Fee for persuing document';
         $feeNote->taxRateId = 5;
-        $amount = $faker->randomFloat(2,0,10000);
+        $amount = $faker->randomFloat(2, 0, 10000);
         $taxAmount = $amount * 0.15;
         $feeNote->amount = $amount;
         $feeNote->taxAmount = $taxAmount;
         $feeNote->save();
 
         $feeNote = new FeeNote;
-        $feeNote->matterId = $faker->numberBetween(1,5);
+        $feeNote->matterId = $faker->numberBetween(1, 5);
         $feeNote->allocatedToId = $feeNote->createdById = 1;
-        $feeNote->date = date("Y-m-d H:i:s");
+        $feeNote->date = date('Y-m-d H:i:s');
         $feeNote->description = 'Fee for persuing document';
         $feeNote->taxRateId = 5;
-        $amount = $faker->randomFloat(2,0,10000);
+        $amount = $faker->randomFloat(2, 0, 10000);
         $taxAmount = $amount * 0.15;
         $feeNote->amount = $amount;
         $feeNote->taxAmount = $taxAmount;
         $feeNote->save();
 
         $feeNote = new FeeNote;
-        $feeNote->matterId = $faker->numberBetween(1,5);
+        $feeNote->matterId = $faker->numberBetween(1, 5);
         $feeNote->allocatedToId = $feeNote->createdById = 1;
-        $feeNote->date = date("Y-m-d H:i:s");
+        $feeNote->date = date('Y-m-d H:i:s');
         $feeNote->description = 'Fee for persuing document';
         $feeNote->taxRateId = 5;
-        $amount = $faker->randomFloat(2,0,10000);
+        $amount = $faker->randomFloat(2, 0, 10000);
         $taxAmount = $amount * 0.15;
         $feeNote->amount = $amount;
         $feeNote->taxAmount = $taxAmount;
         $feeNote->save();
 
         $feeNote = new FeeNote;
-        $feeNote->matterId = $faker->numberBetween(1,5);
+        $feeNote->matterId = $faker->numberBetween(1, 5);
         $feeNote->allocatedToId = $feeNote->createdById = 1;
-        $feeNote->date = date("Y-m-d H:i:s");
+        $feeNote->date = date('Y-m-d H:i:s');
         $feeNote->description = 'Fee for persuing document';
         $feeNote->taxRateId = 5;
-        $amount = $faker->randomFloat(2,0,10000);
+        $amount = $faker->randomFloat(2, 0, 10000);
         $taxAmount = $amount * 0.15;
         $feeNote->amount = $amount;
         $feeNote->taxAmount = $taxAmount;
         $feeNote->save();
 
         $feeNote = new FeeNote;
-        $feeNote->matterId = $faker->numberBetween(1,5);
+        $feeNote->matterId = $faker->numberBetween(1, 5);
         $feeNote->allocatedToId = $feeNote->createdById = 1;
-        $feeNote->date = date("Y-m-d H:i:s");
+        $feeNote->date = date('Y-m-d H:i:s');
         $feeNote->description = 'Drafting long agreement';
         $feeNote->taxRateId = 5;
-        $amount = $faker->randomFloat(2,0,10000);
+        $amount = $faker->randomFloat(2, 0, 10000);
         $taxAmount = $amount * 0.15;
         $feeNote->amount = $amount;
         $feeNote->taxAmount = $taxAmount;
         $feeNote->save();
 
         $feeNote = new FeeNote;
-        $feeNote->matterId = $faker->numberBetween(1,5);
+        $feeNote->matterId = $faker->numberBetween(1, 5);
         $feeNote->allocatedToId = $feeNote->createdById = 2;
-        $feeNote->date = date("Y-m-d H:i:s");
+        $feeNote->date = date('Y-m-d H:i:s');
         $feeNote->description = 'Drafting long agreement';
         $feeNote->taxRateId = 5;
-        $amount = $faker->randomFloat(2,0,10000);
+        $amount = $faker->randomFloat(2, 0, 10000);
         $taxAmount = $amount * 0.15;
         $feeNote->amount = $amount;
         $feeNote->taxAmount = $taxAmount;
         $feeNote->save();
 
         $feeNote = new FeeNote;
-        $feeNote->matterId = $faker->numberBetween(1,5);
+        $feeNote->matterId = $faker->numberBetween(1, 5);
         $feeNote->allocatedToId = $feeNote->createdById = 1;
-        $feeNote->date = date("Y-m-d H:i:s");
+        $feeNote->date = date('Y-m-d H:i:s');
         $feeNote->description = 'Drafting long agreement';
         $feeNote->taxRateId = 5;
-        $amount = $faker->randomFloat(2,0,10000);
+        $amount = $faker->randomFloat(2, 0, 10000);
         $taxAmount = $amount * 0.15;
         $feeNote->amount = $amount;
         $feeNote->taxAmount = $taxAmount;
         $feeNote->save();
 
         $feeNote = new FeeNote;
-        $feeNote->matterId = $faker->numberBetween(1,5);
+        $feeNote->matterId = $faker->numberBetween(1, 5);
         $feeNote->allocatedToId = $feeNote->createdById = 3;
-        $feeNote->date = date("Y-m-d H:i:s");
+        $feeNote->date = date('Y-m-d H:i:s');
         $feeNote->description = 'Drafting long agreement';
         $feeNote->taxRateId = 5;
-        $amount = $faker->randomFloat(2,0,10000);
+        $amount = $faker->randomFloat(2, 0, 10000);
         $taxAmount = $amount * 0.15;
         $feeNote->amount = $amount;
         $feeNote->taxAmount = $taxAmount;
         $feeNote->save();
 
         $feeNote = new FeeNote;
-        $feeNote->matterId = $faker->numberBetween(1,5);
+        $feeNote->matterId = $faker->numberBetween(1, 5);
         $feeNote->allocatedToId = $feeNote->createdById = 4;
-        $feeNote->date = date("Y-m-d H:i:s");
+        $feeNote->date = date('Y-m-d H:i:s');
         $feeNote->description = 'Drafting long agreement';
         $feeNote->taxRateId = 5;
-        $amount = $faker->randomFloat(2,0,10000);
+        $amount = $faker->randomFloat(2, 0, 10000);
         $taxAmount = $amount * 0.15;
         $feeNote->amount = $amount;
         $feeNote->taxAmount = $taxAmount;
         $feeNote->save();
 
         $feeNote = new FeeNote;
-        $feeNote->matterId = $faker->numberBetween(1,5);
+        $feeNote->matterId = $faker->numberBetween(1, 5);
         $feeNote->allocatedToId = $feeNote->createdById = 1;
-        $feeNote->date = date("Y-m-d H:i:s");
+        $feeNote->date = date('Y-m-d H:i:s');
         $feeNote->description = 'Drafting long agreement';
         $feeNote->taxRateId = 5;
-        $amount = $faker->randomFloat(2,0,10000);
+        $amount = $faker->randomFloat(2, 0, 10000);
         $taxAmount = $amount * 0.15;
         $feeNote->amount = $amount;
         $feeNote->taxAmount = $taxAmount;
         $feeNote->save();
 
         $feeNote = new FeeNote;
-        $feeNote->matterId = $faker->numberBetween(1,5);
+        $feeNote->matterId = $faker->numberBetween(1, 5);
         $feeNote->allocatedToId = $feeNote->createdById = 1;
-        $feeNote->date = date("Y-m-d H:i:s");
+        $feeNote->date = date('Y-m-d H:i:s');
         $feeNote->description = 'Drafting long agreement';
         $feeNote->taxRateId = 5;
-        $amount = $faker->randomFloat(2,0,10000);
+        $amount = $faker->randomFloat(2, 0, 10000);
         $taxAmount = $amount * 0.15;
         $feeNote->amount = $amount;
         $feeNote->taxAmount = $taxAmount;
         $feeNote->save();
 
         $feeNote = new FeeNote;
-        $feeNote->matterId = $faker->numberBetween(1,5);
+        $feeNote->matterId = $faker->numberBetween(1, 5);
         $feeNote->allocatedToId = $feeNote->createdById = 1;
-        $feeNote->date = date("Y-m-d H:i:s");
+        $feeNote->date = date('Y-m-d H:i:s');
         $feeNote->description = 'Drafting long agreement';
         $feeNote->taxRateId = 5;
-        $amount = $faker->randomFloat(2,0,10000);
+        $amount = $faker->randomFloat(2, 0, 10000);
         $taxAmount = $amount * 0.15;
         $feeNote->amount = $amount;
         $feeNote->taxAmount = $taxAmount;
         $feeNote->save();
 
         $feeNote = new FeeNote;
-        $feeNote->matterId = $faker->numberBetween(1,5);
+        $feeNote->matterId = $faker->numberBetween(1, 5);
         $feeNote->allocatedToId = $feeNote->createdById = 1;
-        $feeNote->date = date("Y-m-d H:i:s");
+        $feeNote->date = date('Y-m-d H:i:s');
         $feeNote->description = 'Drafting long agreement';
         $feeNote->taxRateId = 5;
-        $amount = $faker->randomFloat(2,0,10000);
+        $amount = $faker->randomFloat(2, 0, 10000);
         $taxAmount = $amount * 0.15;
         $feeNote->amount = $amount;
         $feeNote->taxAmount = $taxAmount;
         $feeNote->save();
 
         $feeNote = new FeeNote;
-        $feeNote->matterId = $faker->numberBetween(1,5);
+        $feeNote->matterId = $faker->numberBetween(1, 5);
         $feeNote->allocatedToId = $feeNote->createdById = 1;
-        $feeNote->date = date("Y-m-d H:i:s");
+        $feeNote->date = date('Y-m-d H:i:s');
         $feeNote->description = 'Telephonic Consultation (12 mins)';
         $feeNote->taxRateId = 5;
-        $amount = $faker->randomFloat(2,0,10000);
+        $amount = $faker->randomFloat(2, 0, 10000);
         $taxAmount = $amount * 0.15;
         $feeNote->amount = $amount;
         $feeNote->taxAmount = $taxAmount;
         $feeNote->save();
 
         $feeNote = new FeeNote;
-        $feeNote->matterId = $faker->numberBetween(1,5);
+        $feeNote->matterId = $faker->numberBetween(1, 5);
         $feeNote->allocatedToId = $feeNote->createdById = 2;
-        $feeNote->date = date("Y-m-d H:i:s");
+        $feeNote->date = date('Y-m-d H:i:s');
         $feeNote->description = 'Telephonic Consultation (12 mins)';
         $feeNote->taxRateId = 5;
-        $amount = $faker->randomFloat(2,0,10000);
+        $amount = $faker->randomFloat(2, 0, 10000);
         $taxAmount = $amount * 0.15;
         $feeNote->amount = $amount;
         $feeNote->taxAmount = $taxAmount;
         $feeNote->save();
 
         $feeNote = new FeeNote;
-        $feeNote->matterId = $faker->numberBetween(1,5);
+        $feeNote->matterId = $faker->numberBetween(1, 5);
         $feeNote->allocatedToId = $feeNote->createdById = 3;
-        $feeNote->date = date("Y-m-d H:i:s");
+        $feeNote->date = date('Y-m-d H:i:s');
         $feeNote->description = 'Telephonic Consultation (12 mins)';
         $feeNote->taxRateId = 5;
-        $amount = $faker->randomFloat(2,0,10000);
+        $amount = $faker->randomFloat(2, 0, 10000);
         $taxAmount = $amount * 0.15;
         $feeNote->amount = $amount;
         $feeNote->taxAmount = $taxAmount;
         $feeNote->save();
 
         $feeNote = new FeeNote;
-        $feeNote->matterId = $faker->numberBetween(1,5);
+        $feeNote->matterId = $faker->numberBetween(1, 5);
         $feeNote->allocatedToId = $feeNote->createdById = 4;
-        $feeNote->date = date("Y-m-d H:i:s");
+        $feeNote->date = date('Y-m-d H:i:s');
         $feeNote->description = 'Telephonic Consultation (12 mins)';
         $feeNote->taxRateId = 5;
-        $amount = $faker->randomFloat(2,0,10000);
+        $amount = $faker->randomFloat(2, 0, 10000);
         $taxAmount = $amount * 0.15;
         $feeNote->amount = $amount;
         $feeNote->taxAmount = $taxAmount;
         $feeNote->save();
 
         $feeNote = new FeeNote;
-        $feeNote->matterId = $faker->numberBetween(1,5);
+        $feeNote->matterId = $faker->numberBetween(1, 5);
         $feeNote->allocatedToId = $feeNote->createdById = 1;
-        $feeNote->date = date("Y-m-d H:i:s");
+        $feeNote->date = date('Y-m-d H:i:s');
         $feeNote->description = 'Telephonic Consultation (12 mins)';
         $feeNote->taxRateId = 5;
-        $amount = $faker->randomFloat(2,0,10000);
+        $amount = $faker->randomFloat(2, 0, 10000);
         $taxAmount = $amount * 0.15;
         $feeNote->amount = $amount;
         $feeNote->taxAmount = $taxAmount;
         $feeNote->save();
 
         $feeNote = new FeeNote;
-        $feeNote->matterId = $faker->numberBetween(1,5);
+        $feeNote->matterId = $faker->numberBetween(1, 5);
         $feeNote->allocatedToId = $feeNote->createdById = 1;
-        $feeNote->date = date("Y-m-d H:i:s");
+        $feeNote->date = date('Y-m-d H:i:s');
         $feeNote->description = 'Telephonic Consultation (12 mins)';
         $feeNote->taxRateId = 5;
-        $amount = $faker->randomFloat(2,0,10000);
+        $amount = $faker->randomFloat(2, 0, 10000);
         $taxAmount = $amount * 0.15;
         $feeNote->amount = $amount;
         $feeNote->taxAmount = $taxAmount;
@@ -1009,7 +983,7 @@ class TestDataSeeder extends Seeder
         $feeNote = new FeeNote;
         $feeNote->matterId = 5;
         $feeNote->allocatedToId = $feeNote->createdById = 1;
-        $feeNote->date = date("Y-m-d H:i:s");
+        $feeNote->date = date('Y-m-d H:i:s');
         $feeNote->description = 'Telephonic Consultation (12 mins)';
         $feeNote->taxRateId = 5;
         $amount = 200;

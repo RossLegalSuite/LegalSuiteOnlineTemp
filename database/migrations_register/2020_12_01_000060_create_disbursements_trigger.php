@@ -4,7 +4,6 @@ use Illuminate\Database\Migrations\Migration;
 
 class CreateDisbursementsTrigger extends Migration
 {
-
     public function up()
     {
         DB::unprepared('
@@ -21,13 +20,10 @@ class CreateDisbursementsTrigger extends Migration
                 END IF;
             END
         ');
-
     }
 
     public function down()
     {
-
         DB::unprepared('DROP TRIGGER `Disbursements_Prevent_Deletion`');
-
     }
 }

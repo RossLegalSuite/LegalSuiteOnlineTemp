@@ -4,7 +4,6 @@ use Illuminate\Database\Migrations\Migration;
 
 class CreateGetNextFilerefFunction extends Migration
 {
-
     public function up()
     {
         DB::unprepared('
@@ -55,15 +54,10 @@ class CreateGetNextFilerefFunction extends Migration
 
         END
         ');
-
-
-
     }
 
     public function down()
     {
-
         DB::unprepared('DROP FUNCTION `nextFileRef`');
-
     }
 }

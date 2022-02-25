@@ -1,8 +1,8 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 class CreateEmployeeRolesTable extends Migration
 {
@@ -18,7 +18,6 @@ class CreateEmployeeRolesTable extends Migration
             $table->string('description')->unique();
             $table->string('code')->unique();
         });
-
     }
 
     /**

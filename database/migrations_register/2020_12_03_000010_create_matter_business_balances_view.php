@@ -8,7 +8,7 @@ class CreateMatterBusinessBalancesView extends Migration
     {
         // Note: Using RIGHT JOIN matter_parties in case there is a Matter with no Client
 
-        DB::statement("
+        DB::statement('
         CREATE VIEW matter_business_balances AS
         (
             SELECT client.id as clientId, client.code as clientCode, client.name as clientName,
@@ -27,12 +27,11 @@ class CreateMatterBusinessBalancesView extends Migration
             RIGHT JOIN matter_parties AS clientParty ON matters.id = clientParty.matterId and clientParty.roleId = 1 and clientParty.rank = 1 
             LEFT JOIN parties AS client ON clientParty.partyId = client.id  
             
-            )");
-        }
+            )');
+    }
 
     public function down()
     {
         DB::statement('DROP VIEW IF EXISTS matter_business_balances');
     }
-    
 }

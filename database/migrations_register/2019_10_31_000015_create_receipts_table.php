@@ -1,8 +1,8 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 class CreateReceiptsTable extends Migration
 {
@@ -19,7 +19,7 @@ class CreateReceiptsTable extends Migration
             $table->unsignedInteger('clientId');
 
             $table->dateTime('date');
-            $table->enum('method', ['EFT', 'Credit Card', 'Direct Deposit', 'Cash', 'Debit Card', 'Cheque', 'Money Transfer', 'Other' ]);
+            $table->enum('method', ['EFT', 'Credit Card', 'Direct Deposit', 'Cash', 'Debit Card', 'Cheque', 'Money Transfer', 'Other']);
             $table->string('reference')->nullable();
 
             $table->enum('type', ['Payment', 'Retainer', 'Deposit']);
@@ -28,18 +28,17 @@ class CreateReceiptsTable extends Migration
             $table->unsignedInteger('businessBankAccountId')->nullable();
             $table->unsignedInteger('trustBankAccountId')->nullable();
 
-
             $table->boolean('posted')->default(0);
 
             $table->index(['date']);
-            
+
             $table->foreign('createdById')
             ->references('id')->on('employees')
             ->onDelete('restrict');
 
             $table->foreign('clientId')
             ->references('id')->on('parties')
-            ->onDelete('restrict');            
+            ->onDelete('restrict');
 
             $table->foreign('businessBankAccountId')
             ->references('id')->on('accounts')
@@ -48,9 +47,7 @@ class CreateReceiptsTable extends Migration
             $table->foreign('trustBankAccountId')
             ->references('id')->on('accounts')
             ->onDelete('restrict');
-
-
-        });    
+        });
     }
 
     /**

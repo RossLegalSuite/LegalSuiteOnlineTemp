@@ -4,7 +4,6 @@ use Illuminate\Database\Migrations\Migration;
 
 class CreateClientRoleTrigger extends Migration
 {
-
     public function up()
     {
         DB::unprepared('
@@ -18,13 +17,10 @@ class CreateClientRoleTrigger extends Migration
                 END IF;
             END
         ');
-
     }
 
     public function down()
     {
-
         DB::unprepared('DROP TRIGGER `Client_Role_Prevent_Deletion`');
-
     }
 }

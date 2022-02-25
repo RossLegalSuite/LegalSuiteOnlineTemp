@@ -1,8 +1,8 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 class CreateCountriesTable extends Migration
 {
@@ -15,10 +15,10 @@ class CreateCountriesTable extends Migration
     {
         Schema::create('countries', function (Blueprint $table) {
             $table->increments('id');
-            $table->string('code',10)->unique();
+            $table->string('code', 10)->unique();
             $table->string('description')->unique();
-            $table->string('currency_code',10)->nullable();
-            $table->string('currency_name',50)->nullable();
+            $table->string('currency_code', 10)->nullable();
+            $table->string('currency_name', 50)->nullable();
             $table->timestamps();
         });
     }

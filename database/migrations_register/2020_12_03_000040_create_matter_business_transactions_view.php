@@ -6,7 +6,6 @@ class CreateMatterBusinessTransactionsView extends Migration
 {
     public function up()
     {
-
         DB::statement("
         CREATE OR REPLACE VIEW matter_business_transactions AS 
         SELECT date, 
@@ -32,13 +31,13 @@ class CreateMatterBusinessTransactionsView extends Migration
 
         // Old one - not being referenced in the program!! May be useful?
         // DB::statement("
-        // CREATE VIEW matter_business_transactions AS 
+        // CREATE VIEW matter_business_transactions AS
         // SELECT invoiceId, matterId, 'Debits' as type, SUM(amount + taxAmount) AS amount
         // FROM matter_debits
         // WHERE matter_debits.invoiceId IS NOT NULL
         // GROUP BY matter_debits.matterId
         // UNION ALL
-        // SELECT invoices.id, invoices.matterId, 'Credits' as type, SUM(-receipt_transactions.amount) AS amount FROM receipt_transactions 
+        // SELECT invoices.id, invoices.matterId, 'Credits' as type, SUM(-receipt_transactions.amount) AS amount FROM receipt_transactions
         // JOIN invoices ON invoices.id = receipt_transactions.invoiceId
         // JOIN matters ON matters.id = invoices.matterId
         // GROUP BY invoices.matterId
@@ -49,5 +48,4 @@ class CreateMatterBusinessTransactionsView extends Migration
     {
         DB::statement('DROP VIEW IF EXISTS matter_business_transactions');
     }
-    
 }

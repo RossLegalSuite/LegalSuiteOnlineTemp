@@ -1,8 +1,8 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 class CreateJournalTransactionsTable extends Migration
 {
@@ -18,8 +18,7 @@ class CreateJournalTransactionsTable extends Migration
             $table->foreign('journalId')->references('id')->on('journals');
 
             $table->foreign('accountId')->references('id')->on('accounts');
-
-        });    
+        });
     }
 
     public function down()

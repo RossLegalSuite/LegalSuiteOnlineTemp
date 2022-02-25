@@ -6,7 +6,6 @@ class CreateMatterDebitsView extends Migration
 {
     public function up()
     {
-
         DB::statement("
             CREATE OR REPLACE VIEW matter_debits AS 
             SELECT 
@@ -53,5 +52,4 @@ class CreateMatterDebitsView extends Migration
     {
         DB::statement('DROP VIEW IF EXISTS matter_debits');
     }
-    
 }

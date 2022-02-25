@@ -4,7 +4,6 @@ use Illuminate\Database\Migrations\Migration;
 
 class CreateMatterOwnerTrigger extends Migration
 {
-
     public function up()
     {
         DB::unprepared('
@@ -22,13 +21,10 @@ class CreateMatterOwnerTrigger extends Migration
                 END IF;
             END;
         ');
-
     }
 
     public function down()
     {
-
         DB::unprepared('DROP TRIGGER `Matter_Owner_Prevent_Deletion`');
-
     }
 }

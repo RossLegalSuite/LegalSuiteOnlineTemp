@@ -1,73 +1,92 @@
 <?php
 
+use App\Http\Controllers\App\Auth;
+use App\Http\Controllers\App\ContactMethodController;
+use App\Http\Controllers\App\CountryController;
+use App\Http\Controllers\App\EmployeeController;
+use App\Http\Controllers\App\HomeController;
+use App\Http\Controllers\App\MarriageTypeController;
+use App\Http\Controllers\App\MatterController;
+use App\Http\Controllers\App\PartyController;
+use App\Http\Controllers\App\PartyEntityController;
+use App\Http\Controllers\App\PartyNumberController;
+use App\Http\Controllers\App\PartyRoleController;
+use App\Http\Controllers\App\PartyTypeController;
+use App\Http\Controllers\App\ProvinceController;
+use Illuminate\Support\Facades\Route;
+
 //logger('web.php session->all()',[session()->all()]);
 
+Route::get('/', function () {
+    return view('welcome');
+})->name('welcome')->middleware('loggedout');
 
-Route::get('/', function () {return view('welcome');})->name('welcome')->middleware('loggedout');
+Route::get('/login', [Auth\LoginController::class, 'showLoginForm'])->middleware('loggedout');
+Route::post('/login', [Auth\LoginController::class, 'login'])->name('login');
+Route::post('/logout', [Auth\LoginController::class, 'logout'])->name('logout')->middleware('loggedin');
 
-Route::get('/login', 'Auth\LoginController@showLoginForm')->middleware('loggedout');
-Route::post('/login', 'Auth\LoginController@login')->name('login');
-Route::post('/logout', 'Auth\LoginController@logout')->name('logout')->middleware('loggedin');
+Route::get('/register', [Auth\RegisterController::class, 'showRegistrationForm'])->middleware('loggedout');
+Route::post('/register', [Auth\RegisterController::class, 'register'])->name('register');
 
-Route::get('/register', 'Auth\RegisterController@showRegistrationForm')->middleware('loggedout');
-Route::post('/register', 'Auth\RegisterController@register')->name('register');
+Route::get('/home', [HomeController::class, 'index'])->name('home')->middleware('loggedin');
+Route::get('/filofax', [HomeController::class, 'filofax'])->middleware('loggedin');
 
-Route::get('/home', 'HomeController@index')->name('home')->middleware('loggedin');
-Route::get('/filofax', 'HomeController@filofax')->middleware('loggedin');
-
-
-Route::resource('employees', 'EmployeeController')->except(['index']);
-Route::post('/get-employees', 'EmployeeController@getEmployees');
+Route::resource('employees', EmployeeController::class)->except(['index']);
+Route::post('/get-employees', [EmployeeController::class, 'getEmployees']);
 
 //PARTIES
-Route::get('/parties', 'PartyController@index');
-Route::post('/get-parties', 'PartyController@getParties');
-Route::get('/parties/{id}', 'PartyController@getParty');
-//Route::get('/parties/create', 'PartyController@create');
-Route::post('/parties/store', 'PartyController@store');
-//Route::post('/parties/create', 'PartyController@store');
-//Route::get('/parties/{party}/edit', 'PartyController@edit');
-//Route::patch('/parties/{party}/edit', 'PartyController@store');
-Route::delete('/parties/{party}', 'PartyController@destroy');
-Route::post('/parties/storePartyNumbers', 'PartyController@storePartyNumbers');
+Route::get('/parties', [PartyController::class, 'index']);
+Route::post('/get-parties', [PartyController::class, 'getParties']);
+Route::get('/parties/{id}', [PartyController::class, 'getParty']);
+//Route::get('/parties/create', [PartyController::class, 'create']);
+Route::post('/parties/store', [PartyController::class, 'store']);
+//Route::post('/parties/create', [PartyController::class, 'store']);
+//Route::get('/parties/{party}/edit', [PartyController::class, 'edit']);
+//Route::patch('/parties/{party}/edit', [PartyController::class, 'store']);
+Route::delete('/parties/{party}', [PartyController::class, 'destroy']);
+Route::post('/parties/storePartyNumbers', [PartyController::class, 'storePartyNumbers']);
 
 //MATTERS
-Route::get('/matters', 'MatterController@index');
-Route::post('/get-matters', 'MatterController@getMatters');
-Route::get('/matters/create', 'MatterController@create');
-Route::post('/matters/create', 'MatterController@store');
-Route::get('/matters/{party}/edit', 'MatterController@edit');
-Route::patch('/matters/{party}/edit', 'MatterController@store');
-Route::delete('/matters/{party}', 'MatterController@destroy');
+Route::get('/matters', [MatterController::class, 'index']);
+Route::post('/get-matters', [MatterController::class, 'getMatters']);
+Route::get('/matters/create', [MatterController::class, 'create']);
+Route::post('/matters/create', [MatterController::class, 'store']);
+Route::get('/matters/{party}/edit', [MatterController::class, 'edit']);
+Route::patch('/matters/{party}/edit', [MatterController::class, 'store']);
+Route::delete('/matters/{party}', [MatterController::class, 'destroy']);
 
+Route::resource('party_roles', PartyRoleController::class)->except(['index']);
+Route::post('/getPartyRoles', [PartyRoleController::class, 'getPartyRoles']);
 
-Route::resource('party_roles', 'PartyRoleController')->except(['index']);
-Route::post('/getPartyRoles', 'PartyRoleController@getPartyRoles');
+Route::resource('party_entities', PartyEntityController::class)->except(['index']);
+Route::post('/getPartyEntities', [PartyEntityController::class, 'getPartyEntities']);
 
-Route::resource('party_entities', 'PartyEntityController')->except(['index']);
-Route::post('/getPartyEntities', 'PartyEntityController@getPartyEntities');
+Route::resource('party_types', PartyTypeController::class)->except(['index']);
+Route::post('/getPartyTypes', [PartyTypeController::class, 'getPartyTypes']);
 
-Route::resource('party_types', 'PartyTypeController')->except(['index']);
-Route::post('/getPartyTypes', 'PartyTypeController@getPartyTypes');
+Route::resource('marriage_types', MarriageTypeController::class)->except(['index']);
+Route::post('/getMarriageTypes', [MarriageTypeController::class, 'getMarriageTypes']);
 
-Route::resource('marriage_types', 'MarriageTypeController')->except(['index']);
-Route::post('/getMarriageTypes', 'MarriageTypeController@getMarriageTypes');
+Route::resource('countries', CountryController::class)->except(['index']);
+Route::post('/getCountries', [CountryController::class, 'getCountries']);
 
-Route::resource('countries', 'CountryController')->except(['index']);
-Route::post('/getCountries', 'CountryController@getCountries');
+Route::resource('provinces', ProvinceController::class)->except(['index']);
+Route::post('/getProvinces', [ProvinceController::class, 'getProvinces']);
 
-Route::resource('provinces', 'ProvinceController')->except(['index']);
-Route::post('/getProvinces', 'ProvinceController@getProvinces');
+Route::resource('contact_methods', ContactMethodController::class)->except(['index']);
+Route::post('/getContactMethods', [ContactMethodController::class, 'getContactMethods']);
 
-Route::resource('contact_methods', 'ContactMethodController')->except(['index']);
-Route::post('/getContactMethods', 'ContactMethodController@getContactMethods');
+Route::resource('party_numbers', PartyNumberController::class)->except(['index']);
+Route::post('/getPartyNumbers', [PartyNumberController::class, 'getPartyNumbers']);
+Route::post('/storePartyNumber', [PartyNumberController::class, 'storePartyNumber']);
+Route::post('/deletePartyNumber', [PartyNumberController::class, 'deletePartyNumber']);
 
-Route::resource('party_numbers', 'PartyNumberController')->except(['index']);
-Route::post('/getPartyNumbers', 'PartyNumberController@getPartyNumbers');
-Route::post('/storePartyNumber', 'PartyNumberController@storePartyNumber');
-Route::post('/deletePartyNumber', 'PartyNumberController@deletePartyNumber');
-
-Route::get('/chat', function () { return view('chat'); } );
-Route::get('/mail', function () { return view('mail'); } );
-Route::get('/dual-register', function () { return view('dual-register'); } );
-
+Route::get('/chat', function () {
+    return view('chat');
+});
+Route::get('/mail', function () {
+    return view('mail');
+});
+Route::get('/dual-register', function () {
+    return view('dual-register');
+});

@@ -1,8 +1,8 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 class CreateReceiptTransactionsTable extends Migration
 {
@@ -14,7 +14,6 @@ class CreateReceiptTransactionsTable extends Migration
     public function up()
     {
         Schema::create('receipt_transactions', function (Blueprint $table) {
-
             $table->increments('id');
             $table->unsignedInteger('receiptId');
             $table->unsignedInteger('invoiceId')->nullable();
@@ -31,9 +30,8 @@ class CreateReceiptTransactionsTable extends Migration
 
             $table->foreign('receiptId')
             ->references('id')->on('receipts')
-            ->onDelete('restrict');            
-
-        });    
+            ->onDelete('restrict');
+        });
     }
 
     /**

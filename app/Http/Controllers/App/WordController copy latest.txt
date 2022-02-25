@@ -35,11 +35,11 @@ class WordController extends Controller {
 
     //protected $saveMainPart;
 
-    protected $user = array();
-    protected $company = array();
-    protected $matter = array();
-    protected $party = array();
-    protected $employee = array();
+    protected $user = [];
+    protected $company = [];
+    protected $matter = [];
+    protected $party = [];
+    protected $employee = [];
 
     //Route::post('saveAsHtml', 'WordController@saveAsHtml'); //See: php-snippets.txt
     //Route::post('create', 'WordController@create'); //See: php-snippets.txt for example to create a Word Document
@@ -97,10 +97,10 @@ class WordController extends Controller {
 
     protected function getBasicData() {
 
-        $this->user = array(
+        $this->user = [
             'user-&gt;name' => session('employeeName'), 
             'user-&gt;email' => session('employeeEmail') 
-        );
+        ];
 
         $companyRequest = new Request;
         $companyRequest->dataFormat = 'mergeArray';
@@ -644,8 +644,8 @@ EOD;
     protected function convertSmartQuotes($string) 
     { 
 
-        $search = array('‘', '’', '“', '”');
-        $replace = array("'", "'",'"', '"');
+        $search = ['‘', '’', '“', '”'];
+        $replace = ["'", "'",'"', '"'];
 
         $string = str_replace($search, $replace, $string); 
 

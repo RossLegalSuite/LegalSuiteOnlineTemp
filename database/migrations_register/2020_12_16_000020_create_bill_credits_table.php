@@ -1,8 +1,8 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 class CreateBillCreditsTable extends Migration
 {
@@ -14,7 +14,6 @@ class CreateBillCreditsTable extends Migration
     public function up()
     {
         Schema::create('bill_credits', function (Blueprint $table) {
-
             $table->increments('id');
 
             $table->dateTime('date');
@@ -24,14 +23,12 @@ class CreateBillCreditsTable extends Migration
 
             $table->foreign('paymentId')
             ->references('id')->on('payments')
-            ->onDelete('restrict');            
+            ->onDelete('restrict');
 
             $table->foreign('billId')
             ->references('id')->on('bills')
             ->onDelete('restrict');
-            
-
-        });    
+        });
     }
 
     /**

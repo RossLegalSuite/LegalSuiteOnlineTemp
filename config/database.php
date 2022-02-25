@@ -52,7 +52,6 @@ return [
             'engine' => null,
         ],
 
-
         // 'mysql' => [
         //     'driver' => 'mysql',
         //     'url' => env('DATABASE_URL'),
@@ -69,8 +68,6 @@ return [
         //     'strict' => true,
         //     'engine' => null,
         // ],
-
-
 
     ],
 

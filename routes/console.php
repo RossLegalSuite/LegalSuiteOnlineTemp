@@ -17,7 +17,6 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->describe('Display an inspiring quote');
 
-
 // Increment the verion number in \config\version.yml
 // See: https://github.com/antonioribeiro/version
 
@@ -41,4 +40,3 @@ Artisan::command('increment:patch', function () {
     Artisan::call('version:timestamp');
     Artisan::call('version:patch');
 })->describe('Increase patch version number');
-

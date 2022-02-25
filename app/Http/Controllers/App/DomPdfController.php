@@ -2,16 +2,13 @@
 
 namespace App\Http\Controllers\App;
 
-
-use PDF;
 use Illuminate\Http\Request;
+use PDF;
 
-
-class DomPdfController extends Controller {
-
+class DomPdfController extends Controller
+{
     public function create(Request $request)
     {
-
         $returnData = new \stdClass();
 
         $html = <<<EOT
@@ -35,8 +32,5 @@ EOT;
         $returnData->response = PDF::loadHTML($html)->save('aaaa1-test.pdf');
 
         return json_encode($returnData);
-        
-
     }
-
 }

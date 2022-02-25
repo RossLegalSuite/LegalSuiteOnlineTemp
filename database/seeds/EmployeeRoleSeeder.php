@@ -2,10 +2,8 @@
 
 use Illuminate\Database\Seeder;
 
-
 class EmployeeRoleSeeder extends Seeder
 {
-
     public function run()
     {
         DB::table('employee_roles')->insert(['code' => 'owner', 'description' => 'Owner']);
@@ -17,6 +15,5 @@ class EmployeeRoleSeeder extends Seeder
         DB::table('employee_roles')->insert(['code' => 'complianceOfficer', 'description' => 'Compliance Officer']);
         DB::table('employee_roles')->insert(['code' => 'manager', 'description' => 'Manager']);
         DB::table('employee_roles')->insert(['code' => 'other', 'description' => 'Other']);
-
     }
 }

@@ -2,34 +2,25 @@
 
 namespace App\Http\Controllers\App;
 
-
-use Illuminate\Http\Request;
 use App\Custom\Utils;
+use Illuminate\Http\Request;
 
-
-class ColDebitController extends Controller {
-
-
+class ColDebitController extends Controller
+{
     public function get(Request $request)
     {
         $returnData = new \stdClass();
 
         try {
-
-            $apiUrl = "/matter/getdebtorsaccount?matterid=" . $request->matterId;
+            $apiUrl = '/matter/getdebtorsaccount?matterid='.$request->matterId;
 
             $response = Utils::SetCurlParams($apiUrl);
 
             return json_encode($response);
-
-        } catch(\Exception $e)  {
-
+        } catch (\Exception $e) {
             $returnData->errors = $e->getMessage();
+
             return json_encode($returnData);
-
         }
-
     }
-
-
 }

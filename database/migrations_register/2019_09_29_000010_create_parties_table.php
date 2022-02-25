@@ -1,8 +1,8 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 class CreatePartiesTable extends Migration
 {
@@ -15,30 +15,30 @@ class CreatePartiesTable extends Migration
     {
         Schema::create('parties', function (Blueprint $table) {
             $table->increments('id');
-            $table->string('code',50)->unique();
+            $table->string('code', 50)->unique();
             $table->unsignedInteger('entityId');
             $table->unsignedInteger('typeId');
-            
+
             $table->string('name');
             $table->string('firstName')->nullable();
             $table->string('lastName')->nullable();
-            $table->string('title',50)->nullable();
+            $table->string('title', 50)->nullable();
             $table->string('friendlyName')->nullable();
             $table->string('salutation');
-            $table->string('idNumber',50)->nullable();
-            $table->enum('idType', ['I', 'P', 'S', 'D', 'B', 'X', 'A','T', 'O'])->default('I');
+            $table->string('idNumber', 50)->nullable();
+            $table->enum('idType', ['I', 'P', 'S', 'D', 'B', 'X', 'A', 'T', 'O'])->default('I');
             $table->date('birthDate')->nullable();
             $table->unsignedInteger('marriageId')->nullable();
             $table->string('physicalLine1')->nullable();
             $table->string('physicalLine2')->nullable();
             $table->string('physicalLine3')->nullable();
-            $table->string('physicalCode',50)->nullable();
+            $table->string('physicalCode', 50)->nullable();
             $table->unsignedInteger('physicalProvinceId');
             $table->unsignedInteger('physicalCountryId');
             $table->string('postalLine1')->nullable();
             $table->string('postalLine2')->nullable();
             $table->string('postalLine3')->nullable();
-            $table->string('postalCode',50)->nullable();
+            $table->string('postalCode', 50)->nullable();
             $table->unsignedInteger('postalProvinceId');
             $table->unsignedInteger('postalCountryId');
 
@@ -46,7 +46,6 @@ class CreatePartiesTable extends Migration
             $table->string('vatNumber')->nullable();
 
             $table->index(['name']);
-
 
             $table->foreign('entityId')->references('id')->on('party_entities');
 
@@ -61,7 +60,6 @@ class CreatePartiesTable extends Migration
             $table->foreign('postalProvinceId')->references('id')->on('provinces');
 
             $table->foreign('marriageId')->references('id')->on('marriage_types');
-
         });
     }
 
@@ -75,5 +73,3 @@ class CreatePartiesTable extends Migration
         Schema::dropIfExists('parties');
     }
 }
-
-

@@ -1,9 +1,7 @@
 <?php
 
-return array(
+return [
 
     'cdnUrl' => env('CDN_URL'),
 
-);
-
-
+];

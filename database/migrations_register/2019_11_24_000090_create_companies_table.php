@@ -1,8 +1,8 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 class CreateCompaniesTable extends Migration
 {
@@ -49,15 +49,15 @@ class CreateCompaniesTable extends Migration
             $table->string('incomingPort')->nullable();
             $table->string('incomingEncryption')->nullable();
 
-            $table->string('dateFormat',50);
-            $table->string('timeZone',10);
-            $table->string('countryCode',10);
-            $table->string('currencyCode',10);
-            $table->string('currencySymbol',10);
-            $table->string('paperSize',10)->default('A4');
+            $table->string('dateFormat', 50);
+            $table->string('timeZone', 10);
+            $table->string('countryCode', 10);
+            $table->string('currencyCode', 10);
+            $table->string('currencySymbol', 10);
+            $table->string('paperSize', 10)->default('A4');
 
             $table->unsignedInteger('yearEndDay')->default(31);
-            $table->enum('yearEndMonth', ['January', 'February', 'March', 'April', 'May','June', 'July', 'August', 'September', 'October', 'November', 'December'])->default('December');
+            $table->enum('yearEndMonth', ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'])->default('December');
 
             $table->boolean('salesTaxFlag')->default(1);
             $table->enum('salesTaxType', ['Vat', 'Gst'])->default('Vat');
@@ -65,7 +65,7 @@ class CreateCompaniesTable extends Migration
             $table->string('taxAuthority')->default('Tax Authorities');
             $table->enum('salesTaxMethod', ['Cash', 'Accrual'])->default('Cash');
             $table->enum('salesTaxFrequency', ['Monthly', 'Bi-Monthly', 'Quarterly', '4-Monthly', 'Bi-Annually', 'Annually'])->default('Monthly');
-            $table->enum('salesTaxStartMonth', ['January', 'February', 'March', 'April', 'May','June', 'July', 'August', 'September', 'October', 'November', 'December'])->default('January');
+            $table->enum('salesTaxStartMonth', ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'])->default('January');
 
             $table->string('unpostedFeeTextColor')->default('#000');
             $table->string('unpostedFeeBackgroundColor')->default('#FFF');
@@ -98,7 +98,6 @@ class CreateCompaniesTable extends Migration
             $table->string('expensesTextColor')->default('#000');
             $table->string('equityTextColor')->default('#000');
 
-
             $table->unsignedInteger('noTaxRateId');
             $table->unsignedInteger('salesTaxRateId');
             $table->unsignedInteger('purchasesTaxRateId');
@@ -120,7 +119,6 @@ class CreateCompaniesTable extends Migration
             $table->unsignedInteger('interestReceivedAccountId');
             $table->unsignedInteger('purchasesAccountId');
 
-
             // Set foreign keys as well below
             $table->unsignedInteger('reportTemplateId')->nullable();
             $table->unsignedInteger('invoiceTemplateId')->nullable();
@@ -128,7 +126,7 @@ class CreateCompaniesTable extends Migration
             $table->unsignedInteger('statementTemplateId')->nullable();
             $table->unsignedInteger('creditNoteTemplateId')->nullable();
             $table->unsignedInteger('receiptTemplateId')->nullable();
-            
+
             $table->unsignedInteger('documentEmailTemplateId')->nullable();
             $table->unsignedInteger('reportEmailTemplateId')->nullable();
             $table->unsignedInteger('partiesEmailTemplateId')->nullable();
@@ -170,7 +168,6 @@ class CreateCompaniesTable extends Migration
             $table->foreign('incomeStatementTemplateId')->references('id')->on('templates')->onDelete('restrict');
             $table->foreign('balanceSheetTemplateId')->references('id')->on('templates')->onDelete('restrict');
 
-
             $table->foreign('purchasesTaxRateId')->references('id')->on('tax_rates')->onDelete('restrict');
 
             $table->foreign('businessBankAccountId')->references('id')->on('accounts')->onDelete('restrict');
@@ -182,7 +179,7 @@ class CreateCompaniesTable extends Migration
             $table->foreign('creditorsControlAccountId')->references('id')->on('accounts')->onDelete('restrict');
 
             $table->foreign('debtorsControlAccountId')->references('id')->on('accounts')->onDelete('restrict');
-            
+
             $table->foreign('disbursementsControlAccountId')->references('id')->on('accounts')->onDelete('restrict');
 
             $table->foreign('equityAccountId')->references('id')->on('accounts')->onDelete('restrict');
@@ -196,11 +193,6 @@ class CreateCompaniesTable extends Migration
             $table->foreign('interestReceivedAccountId')->references('id')->on('accounts')->onDelete('restrict');
 
             $table->foreign('purchasesAccountId')->references('id')->on('accounts')->onDelete('restrict');
-
-
-
-
-
         });
     }
 

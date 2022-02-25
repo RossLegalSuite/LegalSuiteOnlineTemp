@@ -1,10 +1,8 @@
 <?php
 
-
-
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 class CreateMatterEmployeesTable extends Migration
 {
@@ -25,7 +23,7 @@ class CreateMatterEmployeesTable extends Migration
             $table->foreign('matterId')
             ->references('id')->on('matters')
             ->onDelete('cascade');
-            
+
             $table->foreign('employeeId')
             ->references('id')->on('employees')
             ->onDelete('restrict');
@@ -35,11 +33,8 @@ class CreateMatterEmployeesTable extends Migration
             ->onDelete('restrict');
 
             $table->unique(['matterId', 'employeeId', 'roleId']);
-            
+
             $table->index(['matterId', 'employeeId', 'roleId', 'rank']);
-
-
-
         });
     }
 

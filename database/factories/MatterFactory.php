@@ -2,8 +2,8 @@
 
 /** @var \Illuminate\Database\Eloquent\Factory $factory */
 use App\Matter;
-use Illuminate\Support\Str;
 use Faker\Generator as Faker;
+use Illuminate\Support\Str;
 
 /*
 |--------------------------------------------------------------------------
@@ -19,11 +19,11 @@ use Faker\Generator as Faker;
 $factory->define(Matter::class, function (Faker $faker) {
     return [
 
-        'fileRef' => Str::upper( $faker->word) . '/' . $faker->randomNumber(7),
+        'fileRef' => Str::upper($faker->word()).'/'.$faker->randomNumber(7),
         'description' => $faker->realText(100),
         'instructed' => now(),
-        'matterTypeId' => $faker->numberBetween(1,4),
-        'documentSetId' => $faker->numberBetween(1,4),
+        'matterTypeId' => $faker->numberBetween(1, 4),
+        'documentSetId' => $faker->numberBetween(1, 4),
         'branchId' => 1,
         'revenueAccountId' => 15,
         'trustBankAccountId' => 2,

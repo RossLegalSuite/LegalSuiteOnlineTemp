@@ -2,9 +2,9 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Mail\Mailer;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\ServiceProvider;
 use Swift_Mailer;
 use Swift_SmtpTransport;
 
@@ -42,7 +42,7 @@ class AppServiceProvider extends ServiceProvider
             $mailer->alwaysReplyTo($from_email, $from_name);
 
             return $mailer;
-        });    
+        });
     }
 
     /**
@@ -52,10 +52,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-
         Schema::defaultStringLength(191);
         // $this->app->bind(
-        //     \LifeOnScreen\LaravelQuickBooks\QuickBooksTokenHandlerInterface::class, 
+        //     \LifeOnScreen\LaravelQuickBooks\QuickBooksTokenHandlerInterface::class,
         //     \App\QuickBooks\TokenHandler::class
         // );
     }

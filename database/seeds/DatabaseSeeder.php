@@ -26,7 +26,7 @@ class DatabaseSeeder extends Seeder
         $this->call(ReportSeeder::class);
 
         //Done in RegisterController
-        //$this->call(EmployeeGroupSeeder::class); 
+        //$this->call(EmployeeGroupSeeder::class);
 
         if (App::environment('local')) {
             $this->call(TestDataSeeder::class);

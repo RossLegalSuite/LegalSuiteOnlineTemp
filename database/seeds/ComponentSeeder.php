@@ -1,18 +1,15 @@
 <?php
 
-use Illuminate\Database\Seeder;
 use App\Models\Component;
-
+use Illuminate\Database\Seeder;
 
 class ComponentSeeder extends Seeder
 {
-
     public function run()
     {
+        $templatePath = base_path().'/resources/js/pages/components/default/';
 
-        $templatePath = base_path() . '/resources/js/pages/components/default/';
-
-        $contents = file_get_contents($templatePath . 'letterhead.html');
+        $contents = file_get_contents($templatePath.'letterhead.html');
         $component = new Component;
         $component->employeeId = 1;
         $component->title = 'letterhead';
@@ -32,7 +29,7 @@ class ComponentSeeder extends Seeder
 
         // $component->save();
 
-        $contents = file_get_contents($templatePath . 'companyLogo.html');
+        $contents = file_get_contents($templatePath.'companyLogo.html');
         $component = new Component;
         $component->employeeId = 1;
         $component->title = 'companyLogo';
@@ -41,8 +38,8 @@ class ComponentSeeder extends Seeder
         $component->contents = $contents;
 
         $component->save();
-        
-        $contents = file_get_contents($templatePath . 'companyAddress.html');
+
+        $contents = file_get_contents($templatePath.'companyAddress.html');
         $component = new Component;
         $component->employeeId = 1;
         $component->title = 'companyAddress';
@@ -51,8 +48,8 @@ class ComponentSeeder extends Seeder
         $component->contents = $contents;
 
         $component->save();
-        
-        $contents = file_get_contents($templatePath . 'bankDetailsBlock.html');
+
+        $contents = file_get_contents($templatePath.'bankDetailsBlock.html');
         $component = new Component;
         $component->employeeId = 1;
         $component->title = 'bankDetailsBlock';
@@ -62,7 +59,7 @@ class ComponentSeeder extends Seeder
 
         $component->save();
 
-        $contents = file_get_contents($templatePath . 'bankDetailsLine.html');
+        $contents = file_get_contents($templatePath.'bankDetailsLine.html');
         $component = new Component;
         $component->employeeId = 1;
         $component->title = 'bankDetailsLine';
@@ -72,7 +69,7 @@ class ComponentSeeder extends Seeder
 
         $component->save();
 
-        $contents = file_get_contents($templatePath . 'companyPostalLine.html');
+        $contents = file_get_contents($templatePath.'companyPostalLine.html');
         $component = new Component;
         $component->employeeId = 1;
         $component->title = 'companyPostalLine';
@@ -81,8 +78,8 @@ class ComponentSeeder extends Seeder
         $component->contents = $contents;
 
         $component->save();
-        
-        $contents = file_get_contents($templatePath . 'companyPostalBlock.html');
+
+        $contents = file_get_contents($templatePath.'companyPostalBlock.html');
         $component = new Component;
         $component->employeeId = 1;
         $component->title = 'companyPostalBlock';
@@ -91,8 +88,8 @@ class ComponentSeeder extends Seeder
         $component->contents = $contents;
 
         $component->save();
-        
-        $contents = file_get_contents($templatePath . 'valediction.html');
+
+        $contents = file_get_contents($templatePath.'valediction.html');
         $component = new Component;
         $component->employeeId = 1;
         $component->title = 'valediction';
@@ -102,7 +99,7 @@ class ComponentSeeder extends Seeder
 
         $component->save();
 
-        $contents = file_get_contents($templatePath . 'salutation.html');
+        $contents = file_get_contents($templatePath.'salutation.html');
         $component = new Component;
         $component->employeeId = 1;
         $component->title = 'salutation';
@@ -112,7 +109,7 @@ class ComponentSeeder extends Seeder
 
         $component->save();
 
-        $contents = file_get_contents($templatePath . 'creditorPostal.html');
+        $contents = file_get_contents($templatePath.'creditorPostal.html');
         $component = new Component;
         $component->employeeId = 1;
         $component->title = 'creditorPostal';
@@ -121,8 +118,8 @@ class ComponentSeeder extends Seeder
         $component->contents = $contents;
 
         $component->save();
-        
-        $contents = file_get_contents($templatePath . 'partyPostal.html');
+
+        $contents = file_get_contents($templatePath.'partyPostal.html');
         $component = new Component;
         $component->employeeId = 1;
         $component->title = 'partyPostal';
@@ -131,9 +128,8 @@ class ComponentSeeder extends Seeder
         $component->contents = $contents;
 
         $component->save();
-        
 
-        $contents = file_get_contents($templatePath . 'partyPhysical.html');
+        $contents = file_get_contents($templatePath.'partyPhysical.html');
         $component = new Component;
         $component->employeeId = 1;
         $component->title = 'partyPhysical';
@@ -142,10 +138,5 @@ class ComponentSeeder extends Seeder
         $component->contents = $contents;
 
         $component->save();
-
-
-
-
-        
     }
 }

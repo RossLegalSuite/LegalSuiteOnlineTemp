@@ -6,7 +6,6 @@ class CreateInvoiceTotalsView extends Migration
 {
     public function up()
     {
-
         DB::statement("
         CREATE OR REPLACE VIEW invoice_totals AS 
         SELECT 
@@ -31,5 +30,4 @@ class CreateInvoiceTotalsView extends Migration
     {
         DB::statement('DROP VIEW IF EXISTS invoice_totals');
     }
-    
 }

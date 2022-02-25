@@ -1,8 +1,8 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 class CreateProvincesTable extends Migration
 {
@@ -15,21 +15,19 @@ class CreateProvincesTable extends Migration
     {
         Schema::create('provinces', function (Blueprint $table) {
             $table->increments('id');
-            $table->string('countryCode',10);
-            $table->string('code',10);
+            $table->string('countryCode', 10);
+            $table->string('code', 10);
             $table->string('description');
-            
+
             $table->unique(['countryCode', 'code']);
 
-            $table->index(['code','description']);
-            
+            $table->index(['code', 'description']);
+
             $table->index(['description']);
 
             $table->foreign('countryCode')
             ->references('code')->on('countries')
             ->onDelete('restrict');
-
-
         });
     }
 

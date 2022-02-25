@@ -2,23 +2,29 @@
 
 namespace App\Http\Controllers\App;
 
-use App\Models\FileNote;
 use App\Custom\DataTablesHelper;
+use App\Custom\Utils;
+use App\Models\FileNote;
+use App\Rules\ValidDate;
+use Datatables;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Datatables;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
-use App\Rules\ValidDate;
-use App\Custom\Utils;
-
+use Maatwebsite\Excel\Concerns\Exportable;
+use Maatwebsite\Excel\Concerns\FromQuery;
+use Maatwebsite\Excel\Concerns\RegistersEventListeners;
+use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use Maatwebsite\Excel\Concerns\WithEvents;
+use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Events\AfterSheet;
+use Maatwebsite\Excel\Events\BeforeExport;
 use Maatwebsite\Excel\Facades\Excel;
-use Maatwebsite\Excel\Concerns\{FromQuery, Exportable, WithHeadings, WithEvents, RegistersEventListeners, ShouldAutoSize};
-use Maatwebsite\Excel\Events\{BeforeExport, AfterSheet};
-use PhpOffice\PhpSpreadsheet\Style\{NumberFormat, Alignment};
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 
-class FileNoteController extends Controller {
-    
+class FileNoteController extends Controller
+{
     private function addColumns(&$query, $request)
     {
         $query->addSelect('file_notes.id');
@@ -26,26 +32,23 @@ class FileNoteController extends Controller {
         $query->addSelect('created.name as createdEmployeeName');
 
         $query->addSelect('file_notes.description');
-        
-        $query->addSelect( DB::raw("CASE WHEN parentType = 'Matter' THEN CONCAT(matters.fileRef, ' - ', matters.description) WHEN parentType = 'Party' THEN CONCAT(parties.code, ' - ', parties.name) WHEN parentType = 'Employee' THEN employees.name  ELSE '' END as parent") );
-    
-        if ( $request->dataFormat === 'export' ) {
-            
-            $query->orderBy('file_notes.date');
-            
-        } else {
 
+        $query->addSelect(DB::raw("CASE WHEN parentType = 'Matter' THEN CONCAT(matters.fileRef, ' - ', matters.description) WHEN parentType = 'Party' THEN CONCAT(parties.code, ' - ', parties.name) WHEN parentType = 'Employee' THEN employees.name  ELSE '' END as parent"));
+
+        if ($request->dataFormat === 'export') {
+            $query->orderBy('file_notes.date');
+        } else {
             $query->addSelect('file_notes.createdById');
             $query->addSelect('file_notes.parentType');
             $query->addSelect('file_notes.matterId');
             $query->addSelect('file_notes.partyId');
             $query->addSelect('file_notes.employeeId');
-            
+
             $query->addSelect('created.id as createdEmployeeId');
-            
+
             $query->addSelect('file_notes.date');
-            $query->addSelect( DB::raw("DATE_FORMAT( CONVERT_TZ(file_notes.date,'+00:00','" . session('timeZone') . "'), '" . Utils::sqlDateFormat() . "') as dateFormatted") ); 
-            $query->addSelect( DB::raw("DATE_FORMAT( CONVERT_TZ(file_notes.date,'+00:00','" . session('timeZone') . "'), '" . Utils::sqlDateTimeFormat() . "') as dateTime") ); 
+            $query->addSelect(DB::raw("DATE_FORMAT( CONVERT_TZ(file_notes.date,'+00:00','".session('timeZone')."'), '".Utils::sqlDateFormat()."') as dateFormatted"));
+            $query->addSelect(DB::raw("DATE_FORMAT( CONVERT_TZ(file_notes.date,'+00:00','".session('timeZone')."'), '".Utils::sqlDateTimeFormat()."') as dateTime"));
 
             $query->addSelect('matters.id as matterId');
             $query->addSelect(DB::raw("CONCAT(matters.fileRef, ' - ', matters.description) as matter"));
@@ -53,30 +56,25 @@ class FileNoteController extends Controller {
             $query->addSelect('matters.description as matterDescription');
 
             $query->addSelect('parties.id as partyId');
-            $query->addSelect("parties.code");
-            $query->addSelect("parties.name");
+            $query->addSelect('parties.code');
+            $query->addSelect('parties.name');
             $query->addSelect(DB::raw("CONCAT(parties.code, ' - ', parties.name) as party"));
 
             $query->addSelect('employees.name as employeeName');
-            
-
         }
     }
 
     private function tableJoins(&$query)
     {
-
         $query
         ->leftJoin('matters', 'matters.id', '=', 'file_notes.matterId')
         ->leftJoin('parties', 'parties.id', '=', 'file_notes.partyId')
         ->leftJoin('employees', 'employees.id', '=', 'file_notes.employeeId')
         ->join('employees as created', 'created.id', '=', 'file_notes.createdById');
-
-    }    
+    }
 
     public function get(Request $request)
     {
-
         $query = DB::table('file_notes');
 
         $this->addColumns($query, $request);
@@ -84,59 +82,42 @@ class FileNoteController extends Controller {
         $this->tableJoins($query);
 
         if ($request->id) {
-
-            $query->where('file_notes.id',$request->id);
-
-        } else if ($request->matterId) {
-
-            $query->where('file_notes.matterId',$request->matterId);
-
-        } else if ($request->partyId) {
-
-            $query->where('file_notes.partyId',$request->partyId);
-
-        } else if ($request->employeeId) {
-
-            $query->where('file_notes.employeeId',$request->employeeId);
-
-        } else if ($request->createdById) {
-
-            $query->where('file_notes.createdById',$request->createdById);
-
-        }    
+            $query->where('file_notes.id', $request->id);
+        } elseif ($request->matterId) {
+            $query->where('file_notes.matterId', $request->matterId);
+        } elseif ($request->partyId) {
+            $query->where('file_notes.partyId', $request->partyId);
+        } elseif ($request->employeeId) {
+            $query->where('file_notes.employeeId', $request->employeeId);
+        } elseif ($request->createdById) {
+            $query->where('file_notes.createdById', $request->createdById);
+        }
 
         DataTablesHelper::AddCommonWhereClauses($query, $request);
-        
-        if ($request->dataFormat === "dataTables") {
 
+        if ($request->dataFormat === 'dataTables') {
             $datatables = Datatables::of($query);
 
-            if ($keyword = $request->get('search')['value'] ) {
-
+            if ($keyword = $request->get('search')['value']) {
                 $datatables
-                ->filterColumn('date', function($query, $keyword) {
-                    $sql = "DATE_FORMAT( CONVERT_TZ(file_notes.date,'+00:00','" . session('timeZone') . "'), '" . Utils::sqlDateFormat() . "') like ?";
+                ->filterColumn('date', function ($query, $keyword) {
+                    $sql = "DATE_FORMAT( CONVERT_TZ(file_notes.date,'+00:00','".session('timeZone')."'), '".Utils::sqlDateFormat()."') like ?";
                     $query->whereRaw($sql, ["%{$keyword}%"]);
                 })
-                ->filterColumn('parent', function($query, $keyword) {
+                ->filterColumn('parent', function ($query, $keyword) {
                     $sql = "CASE WHEN parentType = 'Matter' THEN CONCAT(matters.fileRef, ' - ', matters.description) WHEN parentType = 'Party' THEN CONCAT(parties.code, ' - ', parties.name) WHEN parentType = 'Employee' THEN employees.name  ELSE '' END like ?";
                     $query->whereRaw($sql, ["%{$keyword}%"]);
                 });
-
             }
 
             return $datatables->make(true);
-
-        } else  {
-
+        } else {
             return DataTablesHelper::ReturnData($query, $request);
         }
     }
 
-
     public function store(Request $request)
     {
-
         $returnData = new \stdClass();
 
         $rules = [
@@ -146,9 +127,9 @@ class FileNoteController extends Controller {
             'dateTime' => new ValidDate,
         ];
 
-        $rules['matterId'] = $request->parentType === 'Matter' ? ['required'] : [];       
-        $rules['partyId'] = $request->parentType === 'Party' ? ['required'] : [];       
-        $rules['employeeId'] = $request->parentType === 'Employee' ? ['required'] : [];       
+        $rules['matterId'] = $request->parentType === 'Matter' ? ['required'] : [];
+        $rules['partyId'] = $request->parentType === 'Party' ? ['required'] : [];
+        $rules['employeeId'] = $request->parentType === 'Employee' ? ['required'] : [];
 
         $messages = [
             'matterId.required' => 'Please select a Matter',
@@ -156,18 +137,15 @@ class FileNoteController extends Controller {
             'employeeId.required' => 'Please select an Employee',
         ];
 
+        $validator = Validator::make($request->all(), $rules, $messages);
 
-        $validator = Validator::make($request->all(), $rules, $messages); 
-        
         if ($validator->fails()) {
-
             $returnData->errors = $validator->errors();
-            return json_encode($returnData);            
 
-        }        
+            return json_encode($returnData);
+        }
 
         try {
-
             $record = isset($request->id) ? FileNote::findOrFail($request->id) : new FileNote;
 
             $record->createdById = $request->createdById;
@@ -179,25 +157,21 @@ class FileNoteController extends Controller {
             $record->employeeId = $request->employeeId;
 
             $record->date = Utils::convertDateTime($request->dateTime);
-            
+
             $record->save();
 
             return json_encode($record);
-
         } catch (\Illuminate\Database\QueryException $e) {
-
             $validator->errors()->add('general', Utils::MySqlError($e));
             $returnData->errors = $validator->errors();
-            return json_encode($returnData);            
 
-        } catch(\Exception $e)  {
-
+            return json_encode($returnData);
+        } catch (\Exception $e) {
             $validator->errors()->add('general', $e->getMessage());
             $returnData->errors = $validator->errors();
+
             return json_encode($returnData);
-
         }
-
     }
 
     public function destroy(Request $request)
@@ -207,17 +181,14 @@ class FileNoteController extends Controller {
 
     public function getTablePosition(Request $request)
     {
-
         return DB::table('file_notes')
-        ->where('date', '<' , $request->date)
+        ->where('date', '<', $request->date)
         ->orderBy('date')
         ->count();
-
-    }    
+    }
 
     public function export(Request $request)
     {
-
         $newRequest = new Request;
         $newRequest->tableColumns = false;
         $newRequest->dataFormat = 'export';
@@ -227,7 +198,6 @@ class FileNoteController extends Controller {
         Utils::SetExcelMacros();
 
         return Excel::download(new class($query) implements FromQuery, WithHeadings, WithEvents, ShouldAutoSize {
-        
             public function __construct($query)
             {
                 $this->query = $query;
@@ -237,10 +207,10 @@ class FileNoteController extends Controller {
             {
                 return [
                     'Id',
-                    "Date",
-                    "Created By",
-                    "Description",
-                    "Linked To",
+                    'Date',
+                    'Created By',
+                    'Description',
+                    'Linked To',
                 ];
             }
 
@@ -248,19 +218,18 @@ class FileNoteController extends Controller {
             {
                 return [
 
-                    BeforeExport::class => function(BeforeExport $event) {
-
+                    BeforeExport::class => function (BeforeExport $event) {
                         $event->writer->getProperties()->setTitle('File Notes');
                         $event->writer->getProperties()->setCreator(session('employeeName'));
                         $event->writer->getProperties()->setCompany(session('companyName'));
                     },
                 ];
             }
-            
-            public function query() { return $this->query; }
 
-        },'filenotes.xlsx');
-
+            public function query()
+            {
+                return $this->query;
+            }
+        }, 'filenotes.xlsx');
     }
-
 }

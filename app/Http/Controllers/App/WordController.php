@@ -2,17 +2,17 @@
 
 namespace App\Http\Controllers\App;
 
-use Illuminate\Support\Str;
+use App\Custom\DocumentAssembly;
+use App\Custom\Utils;
 use Illuminate\Http\File;
 use Illuminate\Http\Request;
-use App\Custom\DocumentAssembly;
-use PhpOffice\PhpWord\TemplateProcessor;
+use Illuminate\Support\Str;
 use PhpOffice\PhpWord\Settings;
-use App\Custom\Utils;
+use PhpOffice\PhpWord\TemplateProcessor;
 use Storage;
 
-class WordController extends Controller {
-
+class WordController extends Controller
+{
     // ELEMENT EQUATES
     // 1 XML_ELEMENT_NODE
     // 2 XML_ATTRIBUTE_NODE
@@ -35,72 +35,74 @@ class WordController extends Controller {
 
     //protected $saveMainPart;
 
-    protected $user = array();
-    protected $company = array();
-    protected $matter = array();
-    protected $party = array();
-    protected $employee = array();
+    protected $user = [];
+
+    protected $company = [];
+
+    protected $matter = [];
+
+    protected $party = [];
+
+    protected $employee = [];
 
     //Route::post('saveAsHtml', 'WordController@saveAsHtml'); //See: php-snippets.txt
     //Route::post('create', 'WordController@create'); //See: php-snippets.txt for example to create a Word Document
 
     public function merge(Request $request)
     {
-
         $this->returnData = new \stdClass();
         $this->returnData->error = '';
 
-        $destinationPath = storage_path('app/public') . '/' .  strtolower( session('companyCode')). '/' . session('employeeId') . '/' . $request->destinationFolder;
+        $destinationPath = storage_path('app/public').'/'.strtolower(session('companyCode')).'/'.session('employeeId').'/'.$request->destinationFolder;
 
-        if (!file_exists( $destinationPath ))  mkdir( $destinationPath, 0777, true);
+        if (! file_exists($destinationPath)) {
+            mkdir($destinationPath, 0777, true);
+        }
 
-        $saveAs = $this->returnData->savedFile =  $destinationPath . '/' . $request->destinationFileName;
+        $saveAs = $this->returnData->savedFile = $destinationPath.'/'.$request->destinationFileName;
 
-        Settings::setOutputEscapingEnabled(true);        
-        
+        Settings::setOutputEscapingEnabled(true);
+
         $this->templateProcessor = new DocumentAssembly($request->source);
 
         $this->getBasicData();
 
-        if ( isset($request->id) && isset($request->dataSource) ) {
-            
+        if (isset($request->id) && isset($request->dataSource)) {
             $this->getSourceData($request->dataSource, $request->id);
-            
         }
-        
+
         // Main Body
-        $this->checkIfBlocks( $this->templateProcessor->getPart('Main'), 'Main' );
+        $this->checkIfBlocks($this->templateProcessor->getPart('Main'), 'Main');
 
         // Headers
         $tempDocumentHeaders = $this->templateProcessor->getPart('Headers');
         foreach ($tempDocumentHeaders as $index => $xml) {
-            $this->checkIfBlocks( $xml, 'Headers' , $index );
-        }        
+            $this->checkIfBlocks($xml, 'Headers', $index);
+        }
 
         // Footers
         $tempDocumentFooters = $this->templateProcessor->getPart('Footers');
         foreach ($tempDocumentFooters as $index => $xml) {
-            $this->checkIfBlocks( $xml, 'Footers' , $index );
+            $this->checkIfBlocks($xml, 'Footers', $index);
         }
 
         $this->replaceBasicFields();
 
-        if ( isset($request->dataSource) ) {
+        if (isset($request->dataSource)) {
             $this->replaceSourceFields($request->dataSource);
         }
 
         $this->templateProcessor->saveAs($saveAs);
 
         return json_encode($this->returnData);
-
     }
 
-    protected function getBasicData() {
-
-        $this->user = array(
-            'user-&gt;name' => session('employeeName'), 
-            'user-&gt;email' => session('employeeEmail') 
-        );
+    protected function getBasicData()
+    {
+        $this->user = [
+            'user-&gt;name' => session('employeeName'),
+            'user-&gt;email' => session('employeeEmail'),
+        ];
 
         $companyRequest = new Request;
         $companyRequest->dataFormat = 'mergeArray';
@@ -108,14 +110,11 @@ class WordController extends Controller {
         $CompanyController = new CompanyController;
         $data = $CompanyController->get($companyRequest);
         $this->company = (array) $data[0];
-
     }
 
-
-    protected function getSourceData($dataSource, $id) {
-
-        if ( $dataSource === 'Matters') {
-
+    protected function getSourceData($dataSource, $id)
+    {
+        if ($dataSource === 'Matters') {
             $request = new Request;
             $request->id = $id;
             $request->dataFormat = 'mergeArray';
@@ -123,9 +122,7 @@ class WordController extends Controller {
             $controller = new MatterController;
             $data = $controller->get($request);
             $this->matter = (array) $data[0];
-
-        } else if ( $dataSource === 'Parties') {
-
+        } elseif ($dataSource === 'Parties') {
             $request = new Request;
             $request->id = $id;
             $request->dataFormat = 'mergeArray';
@@ -133,9 +130,7 @@ class WordController extends Controller {
             $controller = new PartyController;
             $data = $controller->get($request);
             $this->party = (array) $data[0];
-
-        } else if ( $dataSource === 'Party Roles') {
-
+        } elseif ($dataSource === 'Party Roles') {
             $request = new Request;
             $request->id = $id;
             $request->dataFormat = 'mergeArray';
@@ -143,9 +138,7 @@ class WordController extends Controller {
             $controller = new MatterPartyController;
             $data = $controller->get($request);
             $this->matterParty = (array) $data[0];
-
-        } else if ( $dataSource === 'Employees') {
-
+        } elseif ($dataSource === 'Employees') {
             $request = new Request;
             $request->id = $id;
             $request->dataFormat = 'mergeArray';
@@ -153,15 +146,13 @@ class WordController extends Controller {
             $controller = new EmployeeController;
             $data = $controller->get($request);
             $this->employee = (array) $data[0];
-
         }
 
         $this->getExtraScreenSourceData($dataSource, $id);
-
     }
 
-    private function getExtraScreenSourceData($dataSource, $id) {
-
+    private function getExtraScreenSourceData($dataSource, $id)
+    {
         $request = new Request;
         $request->dataFormat = 'array';
         $request->parentId = $id;
@@ -169,99 +160,79 @@ class WordController extends Controller {
 
         $extraScreens = $mergeFields = [];
 
-        if ( $dataSource === 'Parties') {
+        if ($dataSource === 'Parties') {
             $extraScreens = $controller->getPartyExtraScreenTitles($request);
-        } else if ( $dataSource === 'Matters') {
+        } elseif ($dataSource === 'Matters') {
             $extraScreens = $controller->getMatterExtraScreenTitles($request);
-        } else if ( $dataSource === 'Party Roles') {
+        } elseif ($dataSource === 'Party Roles') {
             $extraScreens = $controller->getPartyRoleExtraScreenTitles($request);
         }
 
         foreach ($extraScreens as $extraScreen) {
-
             $this->{Str::camel($extraScreen->title)} = new \stdClass;
-
         }
 
-        if ( $dataSource === 'Parties') {
+        if ($dataSource === 'Parties') {
             $mergeFields = $controller->getPartyMergeFields($request);
-        } else if ( $dataSource === 'Matters') {
+        } elseif ($dataSource === 'Matters') {
             $mergeFields = $controller->getMatterMergeFields($request);
-        } else if ( $dataSource === 'Party Roles') {
+        } elseif ($dataSource === 'Party Roles') {
             $mergeFields = $controller->getPartyRoleMergeFields($request);
         }
 
         foreach ($mergeFields as $mergeField) {
-
-            $this->{Str::camel($mergeField->title)}->{Str::camel($mergeField->title) . '-&gt;' . Str::camel($mergeField->label)} = $mergeField->value;
-
+            $this->{Str::camel($mergeField->title)}->{Str::camel($mergeField->title).'-&gt;'.Str::camel($mergeField->label)} = $mergeField->value;
         }
 
         foreach ($extraScreens as $extraScreen) {
-
             $this->{Str::camel($extraScreen->title)} = (array) $this->{Str::camel($extraScreen->title)};
 
             $this->templateProcessor->setValues($this->{Str::camel($extraScreen->title)});
-
         }
-
     }
 
-
-    protected function replaceBasicFields() {
-
+    protected function replaceBasicFields()
+    {
         $this->templateProcessor->setValues($this->user);
 
         $this->templateProcessor->setValues($this->company);
-
     }
 
-    protected function replaceSourceFields($dataSource) {
-
-        if ( $dataSource === 'Matters') {
-
+    protected function replaceSourceFields($dataSource)
+    {
+        if ($dataSource === 'Matters') {
             $this->templateProcessor->setValues($this->matter);
-
-        } else if ( $dataSource === 'Parties') {
-
+        } elseif ($dataSource === 'Parties') {
             $this->templateProcessor->setValues($this->party);
-
-        } else if ( $dataSource === 'Party Roles') {
-
+        } elseif ($dataSource === 'Party Roles') {
             $this->templateProcessor->setValues($this->matterParty);
-
-        } else if ( $dataSource === 'Employees') {
-
+        } elseif ($dataSource === 'Employees') {
             $this->templateProcessor->setValues($this->employee);
-
         }
-
     }
 
-    private function sanatizeIfBlock(&$thisIfBlockCondition) {
-
+    private function sanatizeIfBlock(&$thisIfBlockCondition)
+    {
         $thisIfBlockCondition = $this->convertSmartQuotes($thisIfBlockCondition);
-                
-        $thisIfBlockCondition = $this->convertEqualsSign($thisIfBlockCondition);
-        
-        $thisIfBlockCondition = $this->replaceDataReferences($thisIfBlockCondition);
 
+        $thisIfBlockCondition = $this->convertEqualsSign($thisIfBlockCondition);
+
+        $thisIfBlockCondition = $this->replaceDataReferences($thisIfBlockCondition);
     }
 
-    private function findNextBlock($wholeBlock) {
+    private function findNextBlock($wholeBlock)
+    {
 
         // **********************
-        // Check for IF 
+        // Check for IF
         // **********************
 
         //TRY THIS to match both?
         //preg_match('/(\[\[(?:if|elsif)\((.*)\)\]\](.*))\[\[/U', $wholeBlock, $thisBlock);
 
-
         preg_match('/(\[\[if\((.*)\)\]\](.*))\[\[/U', $wholeBlock, $thisBlock);
 
-        if ( count($thisBlock) > 0 ) {
-
+        if (count($thisBlock) > 0) {
             $thisWholeBlock = $thisBlock[1];
 
             $thisBlockCondition = $thisBlock[2];
@@ -278,8 +249,7 @@ class WordController extends Controller {
         // **********************
         preg_match('/(\[\[elseif\((.*)\)\]\](.*))\[\[/U', $wholeBlock, $thisBlock);
 
-        if ( count($thisBlock) > 0 ) {
-
+        if (count($thisBlock) > 0) {
             $thisWholeBlock = $thisBlock[1];
 
             $thisBlockCondition = $thisBlock[2];
@@ -296,8 +266,7 @@ class WordController extends Controller {
         // **********************
         preg_match('/(\[\[else\]\](.*))\[\[/U', $wholeBlock, $thisBlock);
 
-        if ( count($thisBlock) > 0 ) {
-
+        if (count($thisBlock) > 0) {
             $thisWholeBlock = $thisBlock[1];
 
             $thisBlockContent = $thisBlock[2];
@@ -306,12 +275,10 @@ class WordController extends Controller {
         }
 
         return[];
-
     }
 
-    public function checkIfBlocks($xml, $section, $index = 1) 
+    public function checkIfBlocks($xml, $section, $index = 1)
     {
-
         $regex = <<<'EOD'
         ~(?=                                # Positive lookahead
             (                               # Capturing group start
@@ -325,128 +292,107 @@ EOD;
 
         // One Line: (?=(\[(?:.*?)\[if\((.*?)\)](?:.*?)](?:(?!\[(?:.*?)\[if\().|(?1))*?\[(?:.*?)\[endif](?:.*?)]))
 
-        if ( preg_match_all($regex, $xml, $match) ) {
-
+        if (preg_match_all($regex, $xml, $match)) {
             $wholeBlock = $match[1];
 
             $ifCondition = $match[2];
 
             //logger('$match',$match);
-
         }
-
     }
 
-    public function checkIfBlocks_Previous_Attempt($xml, $section, $index = 1) 
+    public function checkIfBlocks_Previous_Attempt($xml, $section, $index = 1)
     {
-
         $foundBlock = false;
 
         // Check for any if, elseif or else blocks
         preg_match('/\[\[if\(.*\[\[endif]]/U', $xml, $block);
 
-        if ( count($block) > 0 ) {
+        if (count($block) > 0) {
             $foundBlock = true;
         } else {
             preg_match('/\[\[elseif\(.*\[\[endif]]/U', $xml, $block);
         }
 
-        if ( count($block) > 0 ) {
+        if (count($block) > 0) {
             $foundBlock = true;
         } else {
             preg_match('/\[\[else\]\].*\[\[endif]]/U', $xml, $block);
         }
 
-        if ( count($block) > 0 ) {
+        if (count($block) > 0) {
             $foundBlock = true;
         }
-
 
         //preg_match('/\[\[(?:if)|(?:else).*\[\[endif]]/U', $xml, $block);
 
         //logger('count($block)',[count($block)]);
 
-        if ( $foundBlock ) {
-
+        if ($foundBlock) {
             $wholeBlock = $block[0];
 
             $foundIfBlock = $this->findNextBlock($wholeBlock);
 
             //logger('$foundIfBlock',$foundIfBlock);
 
-            if ( count($foundIfBlock) > 0 ) {
-
+            if (count($foundIfBlock) > 0) {
                 try {
-
-                    $result = eval('return ' . $foundIfBlock[3] . ';');
+                    $result = eval('return '.$foundIfBlock[3].';');
 
                     //logger('$result',[$result]);
 
                     if ($result) {
-
-                        $this->templateProcessor->setPart($section, str_replace($wholeBlock, $foundIfBlock[2] , $xml), $index);
-
+                        $this->templateProcessor->setPart($section, str_replace($wholeBlock, $foundIfBlock[2], $xml), $index);
                     } else {
-
                         $this->templateProcessor->setPart($section, str_replace($foundIfBlock[1], '', $xml), $index);
-
                     }
 
                     $newXml = $this->templateProcessor->getPart($section, $index);
 
                     $this->checkIfBlocks($newXml, $section, $index);
-
                 } catch (\Throwable $th) {
-
                     $this->templateProcessor->setPart($section, str_replace($wholeBlock, '', $xml), $index);
 
                     $newXml = $this->templateProcessor->getPart($section, $index);
 
                     $this->checkIfBlocks($newXml, $section, $index);
-
                 }
-
             }
-
         } else {
 
             //logger('No If Blocks found');
         }
-
-
     }
 
-
-    public function checkIfBlocks_Old($xml, $section, $index = 1) 
+    public function checkIfBlocks_Old($xml, $section, $index = 1)
     {
 
         //27 May 2020: Used a regex expert on CodeMentor (https://www.codementor.io/@wiktor.stribizew) to design recursive regex to solve getting nested IF BLOCKS
-        
+
         //Old Regex https://regex101.com/r/IPSmLY/2
 
         //New Regex https://regex101.com/r/d5Cypn/1
 
+        // 1 Mar 2021 - Need to check if the [[ or ]] are not split by word formatting
+        // For example, found this in the [[endif]] of the XML:
 
-// 1 Mar 2021 - Need to check if the [[ or ]] are not split by word formatting
-// For example, found this in the [[endif]] of the XML:
+        // [[if(golf-&gt;handicap &gt;= 10)]]You are a pro
 
-// [[if(golf-&gt;handicap &gt;= 10)]]You are a pro
+        // [</w:t></w:r><w:r w:rsidR=\"001152E5\"><w:t>[endif]]
 
-// [</w:t></w:r><w:r w:rsidR=\"001152E5\"><w:t>[endif]]
-
-// Old Regex
+        // Old Regex
 //         $regex = <<<'EOD'
 //         ~(?=                                # Positive lookahead
 //             (                               # Capturing group start
-//             \[\[if\((.*?)\)]]               # [[if( ...any chars )]] 
+//             \[\[if\((.*?)\)]]               # [[if( ...any chars )]]
 //                 (?:(?!\[\[if\().|(?1))*?    # any char if not starting point for [[if( string or Pattern 1 recursed
-//             \[\[endif]]                     # Right-hand delimiter, [[endif]] 
+//             \[\[endif]]                     # Right-hand delimiter, [[endif]]
 //             )                               # Capturing group end
 //         )
 //         ~x
-// EOD;
+        // EOD;
 
-// 1 Mar 2021 - New Regex with non capturing group (?:.*?) between the [[ and ]]
+        // 1 Mar 2021 - New Regex with non capturing group (?:.*?) between the [[ and ]]
         $regex = <<<'EOD'
         ~(?=                                # Positive lookahead
             (                               # Capturing group start
@@ -459,21 +405,18 @@ EOD;
 EOD;
         // One Line: (?=(\[(?:.*?)\[if\((.*?)\)](?:.*?)](?:(?!\[(?:.*?)\[if\().|(?1))*?\[(?:.*?)\[endif](?:.*?)]))
 
-        if ( preg_match($regex, $xml, $match) ) {
-
+        if (preg_match($regex, $xml, $match)) {
             $wholeBlock = $match[1];
 
             $ifCondition = $match[2];
 
             //logger('$match',$match);
 
-            if ( $this->checkIfBlockValid($ifCondition) ) {
-
+            if ($this->checkIfBlockValid($ifCondition)) {
                 $this->sanatizeIfBlock($ifCondition);
 
                 try {
-                    
-                    $result = eval('return ' . $ifCondition . ';');
+                    $result = eval('return '.$ifCondition.';');
 
                     if ($result) {
 
@@ -485,24 +428,22 @@ EOD;
                         // Delete any remaining elseif OR else blocks
                         $newBlock = preg_replace('/\[(?:.*?)\[else(?:.*?)](?:.*?)\[(?:.*?)\[endif](?:.*?)]/', '', $newBlock);
                         //logger('2 $newBlock',[$newBlock]);
-                        
+
                         // Delete the end of the If Block
                         $newBlock = preg_replace('/\[(?:.*?)\[endif](?:.*?)]$/', '', $newBlock);
 
-                        logger('if condition is true!! $newBlock',[$newBlock]);
-
+                        logger('if condition is true!! $newBlock', [$newBlock]);
 
                         $newXml = str_replace($wholeBlock, $newBlock, $xml);
 
                         $this->checkIfBlocks($newXml, $section, $index);
-                        
                     } else {
-                        
+
                         //Condition is false so  check for elseif OR else;
 
                         logger('Condition is false so checking for elseif OR else');
 
-                        //https://stackoverflow.com/questions/9571231/how-to-get-the-position-of-a-regex-match-in-a-string                        
+                        //https://stackoverflow.com/questions/9571231/how-to-get-the-position-of-a-regex-match-in-a-string
                         //preg_match('/\[else]/', $wholeBlock, $matchElse, PREG_OFFSET_CAPTURE);
 
                         //logger('$matchElse',[$matchElse[1], strpos($wholeBlock,'[[else]')]);
@@ -510,41 +451,32 @@ EOD;
                         //preg_match('/\[elseif/', $wholeBlock, $matchElseIf, PREG_OFFSET_CAPTURE);
 
                         //logger('$matchElseIf',[$matchElseIf[1],strpos($wholeBlock,'[[elseif')] );
-                        
+
                         //if ( [$matchElseIf[1] ) {
 
-
-                        if ( $pos = strpos($wholeBlock,'[elseif(') ) {
-
-                            $newBlock = '[[' . substr($wholeBlock,$pos+5); /// Change [[elseif(...) to [[if(...)
+                        if ($pos = strpos($wholeBlock, '[elseif(')) {
+                            $newBlock = '[['.substr($wholeBlock, $pos + 5); /// Change [[elseif(...) to [[if(...)
 
                             $newXml = str_replace($wholeBlock, $newBlock, $xml);
 
-                            logger('Found [[else if]] so re-calling checkIfBlocks with [[elseif(...) changed to [[if(...) ',[$newBlock]);
+                            logger('Found [[else if]] so re-calling checkIfBlocks with [[elseif(...) changed to [[if(...) ', [$newBlock]);
 
                             $this->checkIfBlocks($newXml, $section, $index);
+                        } elseif ($pos = strpos($wholeBlock, '[[else]]')) {
+                            $newBlock = substr($wholeBlock, $pos + 8);
 
-                        } else if ( $pos = strpos($wholeBlock,'[[else]]') ) {
-
-                            
-                            $newBlock = substr($wholeBlock,$pos+8);
-                            
                             $newBlock = preg_replace('/\[(?:.*?)\[endif](?:.*?)]$/', '', $newBlock);
-                            
-                            logger('Found [[else]] so re-calling checkIfBlocks [[else]] and [[endif]] removed',[$newBlock]);
+
+                            logger('Found [[else]] so re-calling checkIfBlocks [[else]] and [[endif]] removed', [$newBlock]);
 
                             $newBlockXml = str_replace($wholeBlock, $newBlock, $xml);
 
                             $this->templateProcessor->setPart($section, $newBlockXml, $index);
 
-
                             $newXml = $this->templateProcessor->getPart($section, $index);
 
                             $this->checkIfBlocks($newXml, $section, $index);
-
-
                         } else {
-
                             $this->templateProcessor->setPart($section, str_replace($wholeBlock, '', $xml), $index);
 
                             logger('No else or else ifs so re-calling checkIfBlocks without this if block ');
@@ -552,37 +484,26 @@ EOD;
                             $newXml = $this->templateProcessor->getPart($section, $index);
 
                             $this->checkIfBlocks($newXml, $section, $index);
-
                         }
-
                     }
-
                 } catch (\Throwable $th) {
-
                     $this->templateProcessor->setPart($section, str_replace($wholeBlock, '', $xml), $index);
 
                     $newXml = $this->templateProcessor->getPart($section, $index);
 
                     $this->checkIfBlocks($newXml, $section, $index);
-            
                 }
-
-            }    
-
+            }
         } else {
 
             //logger('No more if blocks found by the preg_match',[$xml]);
 
             $this->templateProcessor->setPart($section, $xml, $index);
-
         }
-
     }
-
 
     protected function checkIfBlockValid($ifBlockContents)
     {
-
         $returnValue = true;
 
         // TO DO: For security purposes:
@@ -594,128 +515,92 @@ EOD;
         $ifBlockFields = $allIfBlockFields[0];
 
         foreach ($ifBlockFields as $ifBlockField) {
-
-            if ( preg_match('/(\w+)->(\w+)/', $ifBlockField, $splitField) ) {
-
-                if ( property_exists($this, $splitField[1]) ) {
-
-                    if ( !isset( $this->{$splitField[1]}[$splitField[1] . '->' . $splitField[2]] ) ) {
-                        
-                        $this->returnData->error .= '<br>An error was encountered while trying to merge the document.<br><br>' . $splitField[2] . ' is not a field in ' . $splitField[1];
+            if (preg_match('/(\w+)->(\w+)/', $ifBlockField, $splitField)) {
+                if (property_exists($this, $splitField[1])) {
+                    if (! isset($this->{$splitField[1]}[$splitField[1].'->'.$splitField[2]])) {
+                        $this->returnData->error .= '<br>An error was encountered while trying to merge the document.<br><br>'.$splitField[2].' is not a field in '.$splitField[1];
 
                         return false;
-
                     }
-
                 } else {
+                    $this->returnData->error .= '<br>An error was encountered while trying to merge the document.<br><br>'.$splitField[1].' is not a data table';
 
-                    $this->returnData->error .= '<br>An error was encountered while trying to merge the document.<br><br>' . $splitField[1] . ' is not a data table';
                     return false;
-
                 }
-
             }
-
-
         }
 
         return $returnValue;
+    }
 
-    } 
-
-    protected function replaceDataReferences($string) 
+    protected function replaceDataReferences($string)
     {
-        
+
         //Example: $ifBlock = "matter->branchDescription = "Head Office" OR matter->branchDescription = "Durban"
 
         return preg_replace('/(\w+)-&gt;(\w+)/', '$this->$1["$1-&gt;$2"]', $string);
-        
     }
 
-    protected function convertEqualsSign($string) 
-    { 
-
+    protected function convertEqualsSign($string)
+    {
         $string = preg_replace('/(?<![-])&gt;/', '>', $string);
         $string = preg_replace('/&lt;/', '<', $string);
         $string = preg_replace('/(?<![=<>])=(?!=)/', '==', $string);
 
         return $string;
-
     }
 
-    protected function convertSmartQuotes($string) 
-    { 
+    protected function convertSmartQuotes($string)
+    {
+        $search = ['‘', '’', '“', '”'];
+        $replace = ["'", "'", '"', '"'];
 
-        $search = array('‘', '’', '“', '”');
-        $replace = array("'", "'",'"', '"');
-
-        $string = str_replace($search, $replace, $string); 
+        $string = str_replace($search, $replace, $string);
 
         return $string;
-
     }
-
 
     public function checkDocumentSource(Request $request)
     {
-
         $this->returnData = new \stdClass();
         $this->returnData->error = '';
         $this->returnData->source = 'General';
 
         try {
-
             $this->templateProcessor = new DocumentAssembly($request->source);
 
             $variables = $this->templateProcessor->getVariables();
 
             foreach ($variables as $variable) {
-
-                if ( preg_match('/(\w+)-&gt;(\w+)/', $variable, $splitField) ) {
-
-                    if ( $splitField[1] === 'matter' ) {
-
+                if (preg_match('/(\w+)-&gt;(\w+)/', $variable, $splitField)) {
+                    if ($splitField[1] === 'matter') {
                         $this->returnData->source = 'Matters';
                         break;
-
-                    } else if ( $splitField[1] === 'party' ) {
-
+                    } elseif ($splitField[1] === 'party') {
                         $this->returnData->source = 'Parties';
                         break;
-
-                    } else if ( $splitField[1] === 'matterParty' ) {
-
+                    } elseif ($splitField[1] === 'matterParty') {
                         $this->returnData->source = 'Party Roles';
                         break;
-
-                    } else if ( $splitField[1] === 'employee' ) {
-
+                    } elseif ($splitField[1] === 'employee') {
                         $this->returnData->source = 'Employees';
                         break;
-
                     }
-
                 }
-
             }
-    
 
             return json_encode($this->returnData);
-
         } catch (Exception $e) {
-
             $this->returnData->error = $e->getMessage();
 
             return json_encode($this->returnData);
-
         }
-
     }
 
     /*********************************************************
-     * 
+     *
      * 16 March 2021 - Moved to FileController
-     * 
+     *
      ********************************************************/
     public function convertToPdf(Request $request)
     {
@@ -726,24 +611,22 @@ EOD;
         $this->returnData->error = '';
 
         //$convertPath = '../Ettorney/uploads/' .  strtolower( session('companyCode')) . '/' . session('employeeId');
-        $realPath = storage_path('app/public') . '/' .  strtolower( session('companyCode')) . '/' . session('employeeId');
+        $realPath = storage_path('app/public').'/'.strtolower(session('companyCode')).'/'.session('employeeId');
 
         //$pdfFileName = str_replace(".docx", ".pdf", $request->fileName);
-        $pdfFileName = str_replace("." . pathinfo($request->fileName, PATHINFO_EXTENSION), ".pdf", $request->fileName);
-        
-        $relativePath = strtolower( session('companyCode')). '/' . session('employeeId');
+        $pdfFileName = str_replace('.'.pathinfo($request->fileName, PATHINFO_EXTENSION), '.pdf', $request->fileName);
 
-        $savedFile = $relativePath . '/' . $pdfFileName;
+        $relativePath = strtolower(session('companyCode')).'/'.session('employeeId');
+
+        $savedFile = $relativePath.'/'.$pdfFileName;
 
         $this->returnData->path = $relativePath;
         $this->returnData->fileName = $pdfFileName;
 
         try {
-
             chdir(config('libreOffice.programLocation')); // Change to the LibreOffice program directory
-            
-            //c:\laragon\www\program>./soffice --convert-to pdf "https://ettorney.s3.af-south-1.amazonaws.com/acme/documents/Client%20Letter.docx" --outdir "../Ettorney/public" --headless
 
+            //c:\laragon\www\program>./soffice --convert-to pdf "https://ettorney.s3.af-south-1.amazonaws.com/acme/documents/Client%20Letter.docx" --outdir "../Ettorney/public" --headless
 
             //cd /usr/lib64/libreoffice
 
@@ -755,18 +638,16 @@ EOD;
             //Try this to prove that the permissions wrong
             //HOME=/tmp && soffice --convert-to pdf "https://ettorney.s3.af-south-1.amazonaws.com/acme/documents/Client%20Letter.docx" --outdir "/home/ec2-user" --headless
 
-            $libreOfficeCommand = 'soffice --headless --convert-to pdf "' . $request->source . '" --outdir "' . $realPath . '"';
+            $libreOfficeCommand = 'soffice --headless --convert-to pdf "'.$request->source.'" --outdir "'.$realPath.'"';
 
             //https://superuser.com/questions/627266/convert-file-to-pdf-using-libreoffice-under-user-apache-i-e-when-using-php
-            if ( \Config::get('values.environment') === 'production' ) {
-
-                $libreOfficeCommand = 'HOME=/tmp && ' . $libreOfficeCommand; 
-
+            if (\Config::get('values.environment') === 'production') {
+                $libreOfficeCommand = 'HOME=/tmp && '.$libreOfficeCommand;
             }
 
-            $this->returnData->result = exec ($libreOfficeCommand);
+            $this->returnData->result = exec($libreOfficeCommand);
 
-            $pdfFile = new File(storage_path('app/public') . '/' .$savedFile);
+            $pdfFile = new File(storage_path('app/public').'/'.$savedFile);
 
             $cloudStorage = Storage::disk(session('region'));
 
@@ -775,29 +656,25 @@ EOD;
             // Delete the converted Pdf file from the local disk
             $localStorage = Storage::disk('public');
 
-            if ( $localStorage->exists($savedFile) ) { 
+            if ($localStorage->exists($savedFile)) {
                 $localStorage->delete($savedFile);
             }
 
             // Delete the saved docx from the local disk
-            $docxFile = $relativePath . '/merged/' . $request->fileName;
+            $docxFile = $relativePath.'/merged/'.$request->fileName;
 
-            if ( $localStorage->exists($docxFile) ) { 
+            if ($localStorage->exists($docxFile)) {
                 $localStorage->delete($docxFile);
             }
 
             $this->returnData->url = $cloudStorage->url($savedFile);
 
             return json_encode($this->returnData);
-
         } catch (Exception $e) {
-
             $this->returnData->error = $e->getMessage();
 
-            return json_encode($this->returnData);            
-
+            return json_encode($this->returnData);
         }
-
     }
 
     // public function convertToPdf(Request $request)
@@ -814,13 +691,10 @@ EOD;
     //         // Change to the LibreOffice program directory
     //         chdir('../../program');
 
-            
     //         // *** COmmand Prompt Test ***//
     //         //c:\laragon\www\program>./soffice --convert-to pdf "https://ettorney.s3.af-south-1.amazonaws.com/acme/documents/Client%20Letter.docx" --outdir "..\Ettorney\public" --headless
 
     //         $myCommand = 'soffice --convert-to pdf "' . $source . '" --outdir "' . $destination . '" --headless';
-
-
 
     //         $this->returnData->result = exec ($myCommand);
 
@@ -834,12 +708,11 @@ EOD;
 
     //         $this->returnData->error = $e->getMessage();
 
-    //         return json_encode($this->returnData);            
+    //         return json_encode($this->returnData);
 
     //     }
 
     // }
-
 
     // protected function checkLetterHead() {
 
@@ -875,8 +748,6 @@ EOD;
 
     //             logger('NEW $xml',[$xml]);
 
-
-
     //         }
 
     //     }
@@ -891,16 +762,13 @@ EOD;
 
             // $cloudStorage->writeStream($destination, $pdfFile, ['public']);
 
-
         /*********************TESTING REPEAT ************************ */
 
         // $replacements = array(
         //     array('matter.fileRef' => 'Batman', 'matter.description' => 'Gotham City'),
         //     array('matter.fileRef' => 'Superman', 'matter.description' => 'Metropolis'),
         // );
-        // $this->templateProcessor->cloneBlock(preg_quote('repeat(Matter)'), 0, true, false, $replacements);  
+        // $this->templateProcessor->cloneBlock(preg_quote('repeat(Matter)'), 0, true, false, $replacements);
 
         /********************************************* */
-
-
 }

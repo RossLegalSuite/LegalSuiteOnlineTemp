@@ -1,8 +1,8 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 class CreateFeeNotesForeignKeys extends Migration
 {
@@ -14,7 +14,6 @@ class CreateFeeNotesForeignKeys extends Migration
     public function up()
     {
         Schema::table('fee_notes', function (Blueprint $table) {
-            
             $table->foreign('createdById')
             ->references('id')->on('employees')
             ->onDelete('restrict');
@@ -34,8 +33,6 @@ class CreateFeeNotesForeignKeys extends Migration
             $table->foreign('taxRateId')
             ->references('id')->on('tax_rates')
             ->onDelete('restrict');
-
-        });    
+        });
     }
-
 }

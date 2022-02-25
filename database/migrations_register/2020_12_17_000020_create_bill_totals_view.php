@@ -6,7 +6,6 @@ class CreateBillTotalsView extends Migration
 {
     public function up()
     {
-
         DB::statement("
         CREATE OR REPLACE VIEW bill_totals AS 
         SELECT 
@@ -31,5 +30,4 @@ class CreateBillTotalsView extends Migration
     {
         DB::statement('DROP VIEW IF EXISTS bill_totals');
     }
-    
 }
