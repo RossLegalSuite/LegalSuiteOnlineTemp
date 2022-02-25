@@ -13,23 +13,23 @@ use Maatwebsite\Excel\Writer;
 
 class Utils
 {
-        /* TO DO
-        if ($request->where) $query->where( $request->where['column'], $request->where['value'] );
+    /* TO DO
+    if ($request->where) $query->where( $request->where['column'], $request->where['value'] );
 
-        if ($request->where2) $query->where( $request->where2['column'], $request->where2['value'] );
+    if ($request->where2) $query->where( $request->where2['column'], $request->where2['value'] );
 
-        if ($request->whereIn) $query->whereIn( $request->whereIn['column'], $request->whereIn['value'] );
+    if ($request->whereIn) $query->whereIn( $request->whereIn['column'], $request->whereIn['value'] );
 
-        if ($request->whereNull) $query->whereNull( $request->whereNull );
+    if ($request->whereNull) $query->whereNull( $request->whereNull );
 
-        if ($request->whereRaw) $query->whereRaw($request->whereRaw);
+    if ($request->whereRaw) $query->whereRaw($request->whereRaw);
 
-        if ($request->tableFilter) $query->whereRaw($request->tableFilter);
+    if ($request->tableFilter) $query->whereRaw($request->tableFilter);
 
-        if ($request->tableHaving) $query->havingRaw($request->tableHaving);
+    if ($request->tableHaving) $query->havingRaw($request->tableHaving);
 
-        if ($request->whereClause) $query->whereRaw($request->whereClause);
-        */
+    if ($request->whereClause) $query->whereRaw($request->whereClause);
+    */
 
     public static function convertClarionDate($date)
     {

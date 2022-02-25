@@ -13,20 +13,20 @@ use PhpMimeMailParser\Parser;
 
 class EmailController extends Controller
 {
-        /*
-            https://github.com/php-mime-mail-parser/php-mime-mail-parser
+    /*
+        https://github.com/php-mime-mail-parser/php-mime-mail-parser
 
-            To Install on Windows:
-            1)  Download Thread Safe version of the Mailparse PHP extension
-                from https://pecl.php.net/package/mailparse
-            2)  Put it in the ext directory of PHP
-            3)  Add this to the php.ini
-                extension=php_mailparse.dll; Must be after mbstring as it depends on it
-            4)  Restart the server
+        To Install on Windows:
+        1)  Download Thread Safe version of the Mailparse PHP extension
+            from https://pecl.php.net/package/mailparse
+        2)  Put it in the ext directory of PHP
+        3)  Add this to the php.ini
+            extension=php_mailparse.dll; Must be after mbstring as it depends on it
+        4)  Restart the server
 
-            To Install on Ubuntu, Debian & derivatives (see the php-mime-mail-parser website)
-            but you would probably use something like this: sudo apt install php-cli php-mailparse
-        */
+        To Install on Ubuntu, Debian & derivatives (see the php-mime-mail-parser website)
+        but you would probably use something like this: sudo apt install php-cli php-mailparse
+    */
 
     public function sendEmail(Request $request)
     {
