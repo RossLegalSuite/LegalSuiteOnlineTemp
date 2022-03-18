@@ -80,7 +80,7 @@ require("datatables.net-select-bs4");
 
 window.moment = require("moment");
 
-window.Vue = require("vue");
+window.Vue = require("vue").default;
 
 Vue.use(VueRouter, VueAxios, axios);
 

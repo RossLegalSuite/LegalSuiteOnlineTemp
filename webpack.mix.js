@@ -78,6 +78,6 @@ mix
             "resources/css/datatables-select.css",*/
         ],
         "public/css/program.css"
-    )
+    ).vue();
     //.webpackConfig({devtool: 'inline-source-map'})
     //.version();

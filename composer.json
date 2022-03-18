@@ -19,7 +19,6 @@
         "mikehaertl/php-pdftk": "^0.11",
         "php-imap/php-imap": "^4.5",
         "phpoffice/phpword": "^0.18",
-        "pragmarx/version": "^1.3",
         "yajra/laravel-datatables-oracle": "^9.19",
         "guzzlehttp/guzzle": "^7.2"
     },
